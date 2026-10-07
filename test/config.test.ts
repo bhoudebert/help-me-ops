@@ -3,26 +3,44 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
-import { configPath, loadConfig } from "../src/config.ts";
+import { loadConfig, resolveWorkspace } from "../src/config.ts";
 import { matchPlaybooks, parsePlaybook } from "../src/playbooks.ts";
 import { openToolbox } from "../src/toolbox.ts";
 
-test("config: the example loads; a missing or invalid file says what to do", async () => {
-  const { config } = await loadConfig(resolve("ops.config.example.json"));
+const DEMO = resolve("examples/workspace");
+
+test("config: the demo workspace loads; a missing or invalid file says what to do", async () => {
+  const { config, baseDir } = await loadConfig(DEMO);
+  assert.equal(baseDir, DEMO);
+  assert.deepEqual(Object.keys(config.apps), ["shop"]);
   assert.deepEqual(
-    config.sources.map((s) => s.id),
+    config.apps.shop!.envs.prod!.sources.map((s) => s.id),
     ["app-logs", "orders-db"],
   );
-  assert.equal(configPath({ OPS_CONFIG: "/x/ops.json" }), "/x/ops.json");
-  assert.equal(configPath({}), resolve("ops.config.json"));
-  await assert.rejects(loadConfig("/nowhere/ops.config.json"), /Copy ops.config.example.json to ops.config.json/);
+  await assert.rejects(loadConfig("/nowhere"), /No ops.config.json in \/nowhere\. Copy examples\/workspace/);
   const dir = mkdtempSync(join(tmpdir(), "ops-"));
-  writeFileSync(join(dir, "bad.json"), JSON.stringify({ sources: [{ type: "file-logs", id: "x" }] }));
-  await assert.rejects(loadConfig(join(dir, "bad.json")), /Invalid config/);
+  const bad = (json: string) => {
+    writeFileSync(join(dir, "ops.config.json"), json);
+    return loadConfig(dir);
+  };
+  await assert.rejects(bad("{ nope"), /Invalid config/);
+  await assert.rejects(
+    bad(JSON.stringify({ apps: { a: { envs: { prod: { sources: [{ type: "file-logs", id: "x" }] } } } } })),
+    /Invalid config/,
+  );
+  await assert.rejects(bad(JSON.stringify({ apps: {} })), /declare at least one app/);
+  await assert.rejects(bad(JSON.stringify({ apps: { a: { envs: {} } } })), /at least one environment/);
+});
+
+test("workspace: --workspace, then OPS_WORKSPACE, then the current folder", () => {
+  assert.equal(resolveWorkspace(["search", "--workspace", "/w/a"], { OPS_WORKSPACE: "/w/b" }), "/w/a");
+  assert.equal(resolveWorkspace(["search"], { OPS_WORKSPACE: "/w/b" }), "/w/b");
+  assert.equal(resolveWorkspace([], {}), resolve("."));
+  assert.throws(() => resolveWorkspace(["--workspace"], {}), /--workspace needs a folder/);
 });
 
 test("playbooks: front matter read, README skipped, matched by the words of the report", async () => {
-  const toolbox = await openToolbox(resolve("ops.config.example.json"));
+  const toolbox = await openToolbox(DEMO);
   assert.deepEqual(
     toolbox.playbooks.map((p) => p.id),
     ["order-stuck"],

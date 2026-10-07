@@ -1,7 +1,7 @@
 // A template for a database source. It answers from an in-memory table so the
 // example runs anywhere; replace the table with your client (pg, mysql2, …)
 // connected with a READ-ONLY user, and keep the same Evidence shape.
-import type { Connector, ConnectorFactory, Evidence, SearchInput } from "../../src/connectors/types.ts";
+import type { Connector, ConnectorFactory, Evidence, SearchInput } from "../../../src/connectors/types.ts";
 
 interface OrderRow {
   id: string;

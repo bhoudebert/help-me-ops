@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { fileLogs } from "../src/connectors/fileLogs.ts";
 import { createConnectors } from "../src/connectors/registry.ts";
 
-const logs = fileLogs({ id: "app-logs", description: "app", path: "examples/logs/app.log" });
+const logs = fileLogs({ id: "app-logs", description: "app", path: "examples/workspace/logs/app.log" });
 
 test("file logs: lines with the term, oldest first, with their time", async () => {
   const found = await logs.search({ query: "order=4512" });
@@ -42,8 +42,8 @@ test("file logs: a line without a time is kept only without a window", async () 
 test("registry: built-in and module sources; unique ids; a module must export createConnector", async () => {
   const sources = await createConnectors(
     [
-      { type: "file-logs", id: "app-logs", description: "logs", path: "examples/logs/app.log" },
-      { type: "module", id: "orders-db", description: "orders", module: "examples/connectors/orders-db.ts" },
+      { type: "file-logs", id: "app-logs", description: "logs", path: "examples/workspace/logs/app.log" },
+      { type: "module", id: "orders-db", description: "orders", module: "examples/workspace/connectors/orders-db.ts" },
     ],
     process.cwd(),
   );

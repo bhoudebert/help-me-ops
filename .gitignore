@@ -1,7 +1,9 @@
 node_modules
 .env
-ops.config.json
+/ops/
 cases
 coverage
 docs/guide/.vitepress/dist
 docs/guide/.vitepress/cache
+.vitepress/
+/ops.config.json
