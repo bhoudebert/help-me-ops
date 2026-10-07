@@ -29,6 +29,7 @@ export default defineConfig({
       {
         text: "Fill in the blanks",
         items: [
+          { text: "What is in a workspace", link: "/workspace" },
           { text: "Connect your sources", link: "/connectors" },
           { text: "Write a playbook", link: "/playbooks" },
           { text: "Write an addon", link: "/addons" },

@@ -14,13 +14,13 @@
           ],
           "addons": {
             "order": {
-              "dataFile": "data/prod/orders.json"
+              "path": "data/prod/orders.json"
             },
             "metrics": {
-              "file": "data/prod/metrics.json"
+              "path": "data/prod/metrics.json"
             },
             "health": {
-              "file": "data/prod/health.json"
+              "path": "data/prod/health.json"
             }
           }
         },
@@ -35,13 +35,13 @@
           ],
           "addons": {
             "order": {
-              "dataFile": "data/staging/orders.json"
+              "path": "data/staging/orders.json"
             },
             "metrics": {
-              "file": "data/staging/metrics.json"
+              "path": "data/staging/metrics.json"
             },
             "health": {
-              "file": "data/staging/health.json"
+              "path": "data/staging/health.json"
             }
           }
         }

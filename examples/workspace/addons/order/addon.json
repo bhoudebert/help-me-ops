@@ -1,0 +1,24 @@
+{
+  "apiVersion": 1,
+  "description": "The shop's orders. Demo: reads a JSON file. For real: replace tools.ts with a read-only database query.",
+  "settings": {
+    "path": { "type": "string", "env": "ORDER_DATA_PATH", "description": "JSON file with the orders (demo only)" }
+  },
+  "tools": {
+    "getOrder": {
+      "description": "One order by its number: its user, status and when it last changed. Read-only.",
+      "params": { "id": { "type": "string", "description": "The order number, e.g. 4512" } }
+    },
+    "listOrders": {
+      "description": "Orders in a status, optionally changed since a time: to see how many others are affected. Read-only.",
+      "params": {
+        "status": { "type": "string", "description": "e.g. awaiting_payment, confirmed" },
+        "since": {
+          "type": "string",
+          "optional": true,
+          "description": "Only orders updated at or after this time, ISO 8601"
+        }
+      }
+    }
+  }
+}

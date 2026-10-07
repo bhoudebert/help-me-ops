@@ -32,20 +32,58 @@ of `--addons` and `OPS_ADDONS` (`:`-separated), then `<workspace>/addons/`.
 When two addons share a name the later SHALL win and the report SHALL name
 both folders.
 
-### Requirement: The definition
+### Requirement: A manifest and plain functions
 
-An `addon.ts` SHALL default-export a definition, or a function receiving `{ z, defineTool }`
-(zod and a typed helper for tools) and returning one, so an addon needs no packages of its own. A definition has
-an `apiVersion`, and optionally `settings`, `env`, `tools` and `connectors`. The
+An addon folder holding `addon.json` and `tools.ts` SHALL be loaded without the
+author writing any MCP, zod or evidence code. The manifest declares an
+`apiVersion`, a `description`, `settings` and `tools` with their `params`; each
+tool is an exported function of `tools.ts` taking `(params, context)`, where the
+context holds the app, environment, validated settings, the workspace folder and
+`fetch`. A folder holding both `addon.json` and `addon.ts` SHALL be skipped with
+a reason, and so SHALL a manifest tool without its function, or an exported
+function the manifest does not declare.
+
+#### Scenario: A tool from a function
+
+- **WHEN** `addon.json` declares tool `getOrder` with param `id` and `tools.ts` exports `getOrder`
+- **THEN** `order.getOrder` is served with `app`, `env` and `id`, and calling it runs the function with the validated params and the addon's settings for that environment
+
+### Requirement: Parameters and settings in the manifest
+
+Parameters and settings SHALL be declared as `"string"`, `"number"`,
+`"integer"` or `"boolean"`, or as an object with `type`, `description`,
+`optional` or `default`, `enum`; a setting MAY name the environment variable it
+is read from (typed from its text), and MAY be `secret`. Names SHALL be letters,
+digits and underscores. Invalid parameters SHALL be refused naming the
+parameter; the value of a secret setting SHALL never appear in an error.
+
+### Requirement: Plain data becomes evidence
+
+What a tool function returns, records, one record, a string or nothing, SHALL
+be turned into evidence: the record's `at`, `time` or `timestamp` (an ISO 8601
+date) as its time, its `summary` or else a compact `key=value` line as its
+summary, the record as its data, whose dates and big numbers are made JSON-safe.
+A result SHALL be capped at 100 and the cap said in the result.
+
+### Requirement: The definition in code
+
+An `addon.ts` MAY instead default-export a definition, or a function receiving
+`{ z, defineTool }` and returning one, for full control. A definition has an
+`apiVersion`, and optionally `settings`, `env`, `tools` and `connectors`. The
 folder name, lowercase letters, digits and hyphens, is the addon's name.
+
+### Requirement: An addon owns its dependencies
+
+An addon MAY import packages installed next to it; one that cannot be imported
+SHALL be skipped with the reason, and the others SHALL keep working.
 
 ### Requirement: Namespaced, read-only tools
 
 An addon's tools SHALL be namespaced by the addon, take `app` and `env` like
-the core tools, declare the four MCP hints with `readOnlyHint: true` and
-`destructiveHint: false`, and return `Evidence`; their result SHALL name the
-app, environment and tool. A tool that does not declare them SHALL cause its
-addon to be skipped.
+the core tools, and declare the four MCP hints with `readOnlyHint: true` and
+`destructiveHint: false`; their result SHALL name the app, environment and tool.
+The tools of a manifest addon always declare them; a tool of an `addon.ts` that
+does not SHALL cause its addon to be skipped.
 
 ### Requirement: Settings from the environment
 

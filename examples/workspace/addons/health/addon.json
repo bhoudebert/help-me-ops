@@ -1,0 +1,21 @@
+{
+  "apiVersion": 1,
+  "description": "HTTP health checks of the shop's endpoints and of its payment provider. Demo: recorded checks in a JSON file. For real: one GET per target.",
+  "settings": {
+    "path": { "type": "string", "env": "HEALTH_PATH", "description": "JSON file with the recorded checks (demo only)" }
+  },
+  "tools": {
+    "checkHealth": {
+      "description": "Recorded HTTP checks of the shop's endpoints and of its payment provider, oldest first: the status and the latency of each. Read-only.",
+      "params": {
+        "target": {
+          "type": "string",
+          "optional": true,
+          "description": "Part of the target name, e.g. hooks or provider"
+        },
+        "from": { "type": "string", "optional": true, "description": "Start of the window, ISO 8601" },
+        "to": { "type": "string", "optional": true, "description": "End of the window, ISO 8601" }
+      }
+    }
+  }
+}

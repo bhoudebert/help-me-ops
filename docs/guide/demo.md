@@ -98,7 +98,7 @@ npm run ops -- doctor
 - Ask something **vague**: "the shop is slow". It should ask which environment.
 - **Break the fault**: edit `examples/workspace/data/prod/metrics.json`, and see
   the conclusion lose its evidence.
-- **Break an addon**: set `apiVersion: 2` in `addons/health/addon.ts`, restart,
+- **Break an addon**: set `"apiVersion": 2` in `addons/health/addon.json`, restart,
   and run `doctor`. The addon is skipped with its reason, and the rest works.
 
 ## Make it yours
@@ -108,6 +108,8 @@ The demo is a workspace: `ops.config.json` (apps, environments, sources),
 replace the fixtures one source at a time:
 
 - [Connect your sources](/connectors): logs first, they need no code.
+- [What is in a workspace](/workspace): each folder of the demo, and which
+  ones you can delete.
 - [Write an addon](/addons): `order`, `metrics` and `health` in the demo are
-  templates; each says in its header what to swap for the real client.
+  templates; each says in its `tools.ts` what to swap for the real client.
 - [Write a playbook](/playbooks) for the problem you investigate most often.

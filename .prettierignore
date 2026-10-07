@@ -5,3 +5,4 @@ site
 cases
 docs/guide/.vitepress/dist
 docs/guide/.vitepress/cache
+.claude

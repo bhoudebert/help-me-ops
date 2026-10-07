@@ -55,6 +55,7 @@ export function addonTools(
   workspace: string,
   notes: (addon: string, note: string) => void,
   env: NodeJS.ProcessEnv = process.env,
+  fetchImpl: typeof fetch = globalThis.fetch,
 ): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
   for (const addon of addons) {
@@ -88,12 +89,27 @@ export function addonTools(
           if (typeof found === "string") throw new Error(`${name} is unavailable in ${key}: ${found}`);
           const parsed = tool.inputSchema.parse(own);
           const run = tool.run as (input: unknown, context: unknown) => Promise<unknown>;
-          const evidence = await run(parsed, {
+          const context = {
             app: scope.app.name,
             env: scope.env.name,
             settings: found ?? {},
             workspace,
-          });
+            fetch: fetchImpl,
+          };
+          let evidence;
+          try {
+            evidence = await run(parsed, context);
+          } catch (error) {
+            // A secret setting never reaches the person or the model, even inside an error.
+            const secrets = (definition.secrets ?? [])
+              .map((key) => String(context.settings[key] ?? ""))
+              .filter(Boolean);
+            const message = error instanceof Error ? error.message : String(error);
+            throw new Error(
+              secrets.reduce((text, secret) => text.replaceAll(secret, "***"), message),
+              { cause: error },
+            );
+          }
           return JSON.stringify({ app: scope.app.name, env: scope.env.name, tool: name, evidence }, null, 2);
         },
       });
