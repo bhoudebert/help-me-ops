@@ -16,7 +16,7 @@ breaking it.
 ## Decision
 
 - An **addon** is a folder holding an `addon.ts` whose default export is a
-  definition, or a function receiving `{ z }` and returning one (so an addon
+  definition, or a function receiving `{ z, defineTool }` and returning one (so an addon
   needs no packages of its own; `defineAddon` only types it) and optionally `playbooks/`, `knowledge/`, a `README.md` and an
   `.env.example`. An addon can bring connectors, tools and written knowledge.
   A folder with only Markdown is a valid addon.

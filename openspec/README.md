@@ -10,6 +10,7 @@ record of how it was decided.
 | ---------- | ------------------------------------------------------------------------------------- |
 | workspace  | A team's folder: apps, environments, the scope of a question                          |
 | addons     | Folders dropped in: tools, connector types, playbooks; discovery, settings, isolation |
+| demo       | The demo workspace: a shop in prod and staging, a scenario that is a test             |
 | connectors | Sources of evidence: the contract, read-only, log files, team modules, configuration  |
 | playbooks  | How a team investigates a kind of problem, in Markdown, matched to a report           |
 | toolbox    | The tools shared by every client, their hints and errors                              |
