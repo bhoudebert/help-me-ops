@@ -36,26 +36,49 @@ proposed for a person to make.
 
 ## Status
 
-A skeleton: connectors (log files, a database template), playbooks, a shared
-read-only toolbox, a CLI and an MCP server for Claude Code, Codex and Copilot,
-with specs, decisions, tests, CI and releases. The investigation itself runs
-in the AI clients over MCP, which bring their own model. Next: a plug-in kit
-(a workspace folder per team, apps and environments, searchable runbooks) and
-a demo world to try it without a real system
+Working today, with a demo world to try it on: a **workspace** folder per team
+(apps, environments, sources, playbooks), **addons** dropped in to add tools,
+connector types and written knowledge, a `scope` step so a question in prod is
+never read from staging, one read-only toolbox for Claude Code, Codex and
+Copilot over MCP, and a terminal CLI. The model is the client's; this project
+makes no model calls. Next: searchable runbooks, a checked conclusion, a
+scripted demo and setup helpers
 ([`openspec/changes/plug-in-kit`](openspec/changes/plug-in-kit/proposal.md)).
 
-## Quick start
+## Try it
 
 ```bash
+git clone https://github.com/bhoudebert/help-me-ops.git && cd help-me-ops
 nvm use && npm install
-npm run ops -- --workspace examples/workspace investigate "client u-881 paid but cannot find order 4512"
+claude        # or open the folder in VS Code (Copilot), or add the server to Codex
 ```
 
-The demo workspace in `examples/workspace` is one app (`shop`) with its sources
-and a playbook. To plug in your own, copy it to a folder of your own and point
-to it with `--workspace` or `OPS_WORKSPACE`. Then open the folder in Claude Code (`.mcp.json`), VS Code with Copilot
-(`.vscode/mcp.json`), or add it to Codex
-([clients](https://bhoudebert.github.io/help-me-ops/guide/clients)), and ask.
+Then ask: **"client u-881 paid but cannot find order 4512, what happened?"**
+
+The repository ships a small shop to investigate (`examples/workspace`): logs,
+orders, metrics and health checks in `prod` and `staging`, with a fault in
+`prod` only. The assistant has to find it across four sources, tell prod from
+staging, and conclude with the likely cause, its evidence and what is unknown.
+[The story and what to expect](https://bhoudebert.github.io/help-me-ops/guide/demo).
+No client? The same tools run from the terminal:
+
+```bash
+export OPS_WORKSPACE=examples/workspace
+npm run ops -- scope "orders are stuck in production"
+npm run ops -- search app-logs order=4512 --env prod
+npm run ops -- doctor
+```
+
+## Plug in your own
+
+Copy `examples/workspace` to a folder of your own (in your app's repository, for
+example) and point to it with `--workspace` or `OPS_WORKSPACE`. Replace the
+fixtures one source at a time: logs need no code; a database, metrics or a
+health check are an addon, a folder you drop in `addons/` (the demo's
+`order`, `metrics` and `health` are templates). Write a
+[playbook](https://bhoudebert.github.io/help-me-ops/guide/playbooks) for the
+problem you investigate most often. Credentials stay in the environment, and a
+broken addon is skipped with a reason, never fatal.
 
 ## How it is built
 

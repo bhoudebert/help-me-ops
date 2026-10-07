@@ -15,17 +15,21 @@ nvm use        # Node 24
 npm install
 ```
 
-The demo **workspace** in `examples/workspace` has one app, `shop`, with an
-environment `prod` and two sources that ship with the project: a log file and
-a small orders table, around an order that got stuck. A workspace is a folder:
+The demo **workspace** in `examples/workspace` is one app, `shop`, in `prod` and
+`staging`, with its logs, orders, metrics and health checks recorded as files,
+around an order that got stuck: [the story](/demo). A workspace is a folder:
 `ops.config.json` (apps, environments, sources) and `playbooks/`.
 
-## Try it from the terminal
+## Try it
+
+The fastest way is [the demo](/demo): open the folder in your AI client and ask
+"client u-881 paid but cannot find order 4512". From the terminal, to see what
+the assistant sees:
 
 ```bash
 npm run ops -- --workspace examples/workspace scope "order 4512 is stuck"
-npm run ops -- --workspace examples/workspace sources
-npm run ops -- --workspace examples/workspace search app-logs order=4512
+npm run ops -- --workspace examples/workspace sources --env prod
+npm run ops -- --workspace examples/workspace search app-logs order=4512 --env prod
 npm run ops -- --workspace examples/workspace investigate "client u-881 paid but cannot find order 4512"
 
 ```

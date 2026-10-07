@@ -50,14 +50,26 @@ Write a TypeScript file exporting `createConnector`, and point to it:
 }
 ```
 
-`examples/workspace/connectors/orders-db.ts` is a template: replace its in-memory table
-with your database client, connected with a **read-only user**, and keep the
-same evidence shape:
-
 ```ts
-{ source: "orders-db", at: "2026-10-07T09:58:13Z",
-  summary: "order 4512 of u-881: awaiting_payment since …", data: row }
+// connectors/orders-db.ts
+export const createConnector = ({ id, description }) => ({
+  id,
+  kind: "database",
+  description,
+  async search({ query, limit = 50 }) {
+    // a read-only query with your client; return Evidence:
+    return [
+      { source: id, at: "2026-10-07T09:58:13Z", summary: "order 4512 of u-881: awaiting_payment since …", data: row },
+    ];
+  },
+});
 ```
+
+For a database, a metrics store or a health check you also want tools with
+their own parameters (`order.getOrder`, `metrics.queryMetric`): that is an
+[addon](/addons). The ones in `examples/workspace/addons/` read recorded
+files, and each says in its header what to replace with your real,
+**read-only** client.
 
 ## Good descriptions matter
 

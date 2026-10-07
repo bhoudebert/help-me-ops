@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>help-me-ops · investigate your system with the AI you already use</title>
-<meta name="description" content="Investigate a running system from its logs, metrics and database with Claude Code, Codex or Copilot. Connectors and playbooks you fill in. Read-only.">
+<title>help-me-ops · ask your AI what went wrong in production</title>
+<meta name="description" content="Ask Claude Code, Codex or Copilot what went wrong in production. It searches your logs, database and metrics, follows your playbook, and answers with the cause, the evidence and what is unknown. Read-only, with a demo to try.">
 <style>
   :root { --bg: #f7f5f0; --ink: #1d1b18; --soft: #5f5a52; --rule: #d9d3c7; --accent: #b4441e; --panel: #1f1d1a; --panel-ink: #ece6da; }
   @media (prefers-color-scheme: dark) {
@@ -23,42 +23,91 @@
   pre { background: var(--panel); color: var(--panel-ink); padding: 20px; border-radius: 10px; overflow-x: auto; font: 14px/1.6 ui-monospace, "JetBrains Mono", monospace; margin: 0; white-space: pre-wrap; }
   .q { color: #e8b36a; }
   h2 { font-size: 1.4rem; margin: 56px 0 16px; }
-  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px 20px; }
+  .steps { padding-left: 1.2rem; margin: 0; color: var(--soft); }
+  .steps li { margin: 0 0 10px; }
+  .steps b { color: var(--ink); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+  .two p { margin: 0 0 12px; }
+  .c { color: #9a9285; }
+  .note { color: var(--soft); margin: 14px 0 0; }
+  a { color: var(--accent); }
+  pre b { color: #e8b36a; font-weight: 600; }
+  code { font: 0.9em ui-monospace, "JetBrains Mono", monospace; }
   .grid div { border-top: 2px solid var(--accent); padding-top: 12px; }
   .grid h3 { margin: 0 0 6px; font-size: 1.05rem; }
   .grid p { margin: 0; color: var(--soft); }
   footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 0.9rem; }
   footer a { color: inherit; }
-  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  @media (max-width: 720px) { .grid, .two { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <main>
   <h1>Oh, help me, <em>ops</em>.</h1>
-  <p class="lede">Investigate a running system from its own evidence (logs, metrics, databases, HTTP checks) with the AI you already use: Claude Code, Codex or GitHub Copilot. You bring the sources and the playbooks; it never changes a thing.</p>
+  <p class="lede">Ask your AI assistant what went wrong in production. It searches your logs, database, metrics and health checks, follows your team's playbook, and answers with the likely cause, the evidence, and what it still doesn't know. It never changes a thing.</p>
   <div class="cta">
-    <a class="primary" href="guide/getting-started">Get started</a>
+    <a class="primary" href="guide/demo">Try the demo</a>
+    <a class="secondary" href="guide/getting-started">Get started</a>
     <a class="secondary" href="https://github.com/bhoudebert/help-me-ops">Source on GitHub</a>
   </div>
 
   <pre><span class="q">› client u-881 paid but cannot find order 4512</span>
 
-orders-db  09:58:13  order 4512 of u-881: awaiting_payment
-app-logs   10:00:02  webhook endpoint /hooks/acme-pay returned 503 (queue full)
-app-logs   10:01:03  payment-confirm queue depth=1240, consumers=0 (OOMKilled)
+scope         shop, production
+order         09:58:13  order 4512 of u-881: awaiting_payment
+app-logs      10:00:02  webhook endpoint /hooks/acme-pay returned 503 (queue full)
+health        10:00:00  acme-pay provider status -> 200: the refusal is ours
+metrics       10:01:00  payment_confirm_queue_depth = 1240 jobs
+app-logs      10:01:04  container shop-worker-1 OOMKilled (exit 137)
+staging       same release 2.14.0, memory flat: the fault is prod only
 
-Likely cause: the payment webhook was refused while the confirmation
-worker was down. Next step: replay the webhook for order 4512 once the
-worker is back, and check the other orders of 10:00-10:05.</pre>
+<b>Likely cause:</b> the payment webhook was refused while the confirmation
+worker, slowed since 2.14.0, ran out of memory. Orders 4513 and 4514 are
+stuck the same way.
+<b>Unknown:</b> a leak in 2.14.0, or a limit too low for the load.
+<b>Next step, for a person:</b> restart the worker, replay the webhooks.</pre>
 
-  <h2>You fill in the blanks</h2>
-  <div class="grid">
-    <div><h3>Connectors</h3><p>Where the evidence is. Log files out of the box; a database, metrics or an API through a small module you write once, read-only.</p></div>
-    <div><h3>Playbooks</h3><p>How your team investigates each kind of problem, in Markdown. The assistant follows them before improvising.</p></div>
-    <div><h3>Any AI client</h3><p>One MCP server for Claude Code, Codex and Copilot, and a terminal CLI. Same tools, same method everywhere.</p></div>
+  <h2>How it works</h2>
+  <ol class="steps">
+    <li><b>You ask</b> in plain words, in Claude Code, Codex or GitHub Copilot: the model is the one you already pay for.</li>
+    <li><b>It follows your method.</b> It settles the app and environment, takes your playbook for this kind of problem, and reads your sources, read-only.</li>
+    <li><b>It concludes with its evidence</b>: each line quotes its source and time, and what is unknown is said, not guessed.</li>
+  </ol>
+
+  <h2>Try it in two minutes</h2>
+  <pre>git clone https://github.com/bhoudebert/help-me-ops.git &amp;&amp; cd help-me-ops
+npm install
+claude          <span class="c"># or open the folder in VS Code with Copilot, or add the server to Codex</span></pre>
+  <p class="note">The repository ships a small shop to investigate, in <code>prod</code> and <code>staging</code>, with a fault in <code>prod</code> only. No system of yours needed. <a href="guide/demo">The story and what to expect</a>.</p>
+
+  <h2>Then plug in your own</h2>
+  <div class="two">
+    <pre>ops/                      <span class="c"># in your app's repository</span>
+  ops.config.json         <span class="c"># apps, environments, sources</span>
+  playbooks/              <span class="c"># how your team investigates</span>
+  addons/
+    order/addon.ts        <span class="c"># drop a folder in: it loads</span>
+    metrics/
+    _health/              <span class="c"># _ turns one off</span></pre>
+    <div>
+      <p>Your infrastructure is a folder you own and review like code. <b>Logs need no code.</b> A database, metrics or a health check are an <b>addon</b>: a folder with a few lines, its own settings per environment, credentials read from the environment.</p>
+      <p>Update this project whenever you like: your folder is never touched. A broken addon is skipped with a reason, never fatal.</p>
+      <p><a href="guide/addons">Write an addon</a> · <a href="guide/playbooks">Write a playbook</a> · <a href="guide/connectors">Connect your sources</a></p>
+    </div>
   </div>
 
-  <footer>help-me-ops · MIT · <a href="guide/">guide</a> · <a href="https://github.com/bhoudebert/help-me-ops">GitHub</a></footer>
+  <h2>Built to be trusted with production</h2>
+  <div class="grid">
+    <div><h3>Read-only, enforced</h3><p>Every tool declares it cannot change anything, and a test checks it. A fix is proposed for a person to make.</p></div>
+    <div><h3>Prod is not staging</h3><p>Sources belong to an environment. A question about prod is never answered from staging, and when it is unclear the assistant asks.</p></div>
+    <div><h3>One toolbox, every client</h3><p>One MCP server for Claude Code, Codex and Copilot, and a CLI. Same tools, same method everywhere.</p></div>
+    <div><h3>Your method first</h3><p>Playbooks in Markdown say how your team investigates. The assistant follows them before improvising.</p></div>
+    <div><h3>No keys, no bill from us</h3><p>The model is your client's, on your subscription. This project makes no model calls.</p></div>
+    <div><h3>Specified and tested</h3><p>Requirements per capability, tests against fixtures, decisions recorded. Nothing runs against a real system in CI.</p></div>
+  </div>
+
+  <footer>help-me-ops · MIT · <a href="guide/">guide</a> · <a href="guide/demo">demo</a> · <a href="https://github.com/bhoudebert/help-me-ops">GitHub</a></footer>
 </main>
 </body>
 </html>

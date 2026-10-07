@@ -30,12 +30,12 @@ downloaded: clone and review what you run.
 
 ```ts
 // ops/addons/order/addon.ts
-export default ({ z }) => ({
+export default ({ z, defineTool }) => ({
   apiVersion: 1,
   settings: z.object({ dbUrl: z.string(), tenant: z.string().default("eu") }),
   env: { dbUrl: "ORDER_DB_URL" }, // the variable each setting is read from
   tools: [
-    {
+    defineTool({
       name: "getOrder",
       description: "One order: its status and last update. Read-only.",
       inputSchema: z.object({ id: z.string() }),
@@ -43,10 +43,13 @@ export default ({ z }) => ({
       run: async ({ id }, { app, env, settings }) => [
         { source: "order", at: null, summary: `order ${id} …`, data: {} },
       ],
-    },
+    }),
   ],
 });
 ```
+
+The [demo](/demo) ships three working ones to copy from:
+`examples/workspace/addons/order` (a database), `metrics` and `health`.
 
 - The tool is served as `order.getOrder`, with `app` and `env` added, like the
   core tools. Its result names the app and environment it read.
@@ -59,8 +62,8 @@ export default ({ z }) => ({
 
   `${NAME}` is the environment variable NAME: a credential never sits in the file.
 
-- The default export is a function receiving `{ z }` (zod), so the addon needs
-  no `node_modules` of its own.
+- The default export is a function receiving `{ z, defineTool }` (zod and a
+  typed helper), so the addon needs no `node_modules` of its own.
 - Tools must declare `readOnlyHint: true` and `destructiveHint: false`, or the
   addon is skipped. An addon is code you run with your credentials; Node has no
   sandbox, so give each source a **read-only account**.
