@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "help-me-ops": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/src/mcp.ts"],
+      "env": { "OPS_CONFIG": "${workspaceFolder}/ops.config.json" },
+      "envFile": "${workspaceFolder}/.env"
+    }
+  }
+}

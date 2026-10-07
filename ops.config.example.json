@@ -1,0 +1,17 @@
+{
+  "sources": [
+    {
+      "id": "app-logs",
+      "type": "file-logs",
+      "path": "examples/logs/app.log",
+      "description": "Application logs of the API, payments, worker and support services, one event per line"
+    },
+    {
+      "id": "orders-db",
+      "type": "module",
+      "module": "examples/connectors/orders-db.ts",
+      "description": "Orders table: status and last update of each order (read-only)"
+    }
+  ],
+  "playbooks": "playbooks"
+}

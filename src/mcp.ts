@@ -1,0 +1,44 @@
+// MCP entry point for Claude Code, Codex and GitHub Copilot. Stdout carries the
+// protocol only; anything else goes to stderr.
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+import { openToolbox } from "./toolbox.ts";
+import { createToolDefinitions } from "./tools/index.ts";
+
+const INSTRUCTIONS = `help-me-ops investigates a running system from its own evidence: logs, metrics, databases, HTTP checks. When someone reports a problem ("order 4512 is stuck", "a client cannot find their order", "the API is slow since 10:00"):
+1. listPlaybooks with the problem as the question; if one fits, getPlaybook and follow its steps.
+2. listSources, then searchSource for the identifiers in the report (order number, user, error code), narrowing the time window as you learn.
+3. Build a timeline from the evidence, oldest first, each line quoting its source and time.
+4. Conclude: the most likely cause, how sure you are and why, what is still unknown, and the next step for a person. Never state what no evidence shows.
+Every tool is read-only: never suggest changing data yourself; propose the change for a person to make.`;
+
+const toolbox = await openToolbox();
+const server = new McpServer({ name: "help-me-ops", version: "0.1.0" }, { instructions: INSTRUCTIONS });
+
+for (const tool of createToolDefinitions(toolbox)) {
+  server.registerTool(
+    tool.name,
+    { description: tool.description, inputSchema: tool.inputSchema, annotations: tool.annotations },
+    async (args: unknown) => ({ content: [{ type: "text" as const, text: await tool.run(args) }] }),
+  );
+}
+
+server.registerPrompt(
+  "investigate",
+  {
+    title: "Investigate a problem",
+    description: "Follow the method on a reported problem, e.g. order 4512 is stuck",
+    argsSchema: { question: z.string().describe("The problem as reported") },
+  },
+  ({ question }) => ({
+    messages: [
+      { role: "user" as const, content: { type: "text" as const, text: `${INSTRUCTIONS}\n\nProblem: ${question}` } },
+    ],
+  }),
+);
+
+await server.connect(new StdioServerTransport());
+process.stderr.write(
+  `help-me-ops MCP server ready: ${toolbox.sources.length} source(s), ${toolbox.playbooks.length} playbook(s)\n`,
+);

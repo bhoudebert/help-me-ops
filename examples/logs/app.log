@@ -1,0 +1,10 @@
+2026-10-07T09:58:12Z INFO  api       POST /orders user=u-881 -> order=4512 created, total=89.90 EUR
+2026-10-07T09:58:13Z INFO  payments  order=4512 payment session ps_7Hq2 opened (provider=acme-pay)
+2026-10-07T09:58:41Z INFO  payments  order=4512 customer redirected back from acme-pay
+2026-10-07T09:59:02Z WARN  payments  order=4512 webhook payment.succeeded not received after 20s, waiting
+2026-10-07T10:00:02Z ERROR payments  webhook endpoint /hooks/acme-pay returned 503 to provider (queue full)
+2026-10-07T10:00:02Z WARN  payments  order=4512 still awaiting_payment, next check in 60s
+2026-10-07T10:01:03Z ERROR worker    payment-confirm queue depth=1240, consumers=0 (crashloop: OOMKilled)
+2026-10-07T10:02:03Z WARN  payments  order=4512 still awaiting_payment, giving up automatic checks
+2026-10-07T10:15:30Z INFO  api       GET /orders?user=u-881 -> 0 confirmed orders (order 4512 not shown: awaiting_payment)
+2026-10-07T10:16:02Z INFO  support   ticket T-3321 opened by u-881: "paid but no order in my account"
