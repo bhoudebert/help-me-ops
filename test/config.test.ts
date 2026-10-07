@@ -30,6 +30,7 @@ test("config: the demo workspace loads; a missing or invalid file says what to d
     bad(JSON.stringify({ apps: { a: { envs: { prod: { sources: [{ type: "file-logs", id: "x" }] } } } } })),
     /Invalid config/,
   );
+  await assert.rejects(bad(JSON.stringify({ sources: [] })), /flat "sources" list of an earlier version/);
   await assert.rejects(bad(JSON.stringify({ apps: {} })), /declare at least one app/);
   await assert.rejects(bad(JSON.stringify({ apps: { a: { envs: {} } } })), /at least one environment/);
 });

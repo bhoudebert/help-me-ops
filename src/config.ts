@@ -64,6 +64,11 @@ export async function loadConfig(workspace = resolveWorkspace()): Promise<{ conf
       cause: error,
     });
   }
+  if (typeof json === "object" && json !== null && "sources" in json && !("apps" in json)) {
+    throw new Error(
+      `Invalid config ${path}: it uses the flat "sources" list of an earlier version. Put the sources under apps.<app>.envs.<env>.sources (see examples/workspace/ops.config.json), or point to another workspace with --workspace or OPS_WORKSPACE.`,
+    );
+  }
   const parsed = OpsConfig.safeParse(json);
   if (!parsed.success) throw new Error(`Invalid config ${path}: ${z.prettifyError(parsed.error)}`);
   return { config: parsed.data, baseDir: workspace };
