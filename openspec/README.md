@@ -8,6 +8,7 @@ record of how it was decided.
 
 | Capability | Covers                                                                               |
 | ---------- | ------------------------------------------------------------------------------------ |
+| workspace  | A team's folder: apps, environments, the scope of a question                         |
 | connectors | Sources of evidence: the contract, read-only, log files, team modules, configuration |
 | playbooks  | How a team investigates a kind of problem, in Markdown, matched to a report          |
 | toolbox    | The tools shared by every client, their hints and errors                             |

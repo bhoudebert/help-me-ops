@@ -33,12 +33,12 @@ left out.
 
 ### Requirement: Team modules
 
-A source of type `module` SHALL load a TypeScript file, relative to the config,
+A source of type `module` SHALL load a TypeScript file, relative to the workspace,
 exporting `createConnector`; a module without it SHALL be refused naming the
-file. Source ids SHALL be unique.
+file. Source ids SHALL be unique within an environment.
 
 ### Requirement: Configuration
 
-Sources and the playbooks folder SHALL be read from `ops.config.json` (or
-`OPS_CONFIG`), validated; a missing file SHALL say to copy
-`ops.config.example.json`, an invalid one SHALL say what is wrong.
+The sources of each environment of each app SHALL be read from the
+workspace's `ops.config.json` (see the workspace spec), validated; an invalid
+file SHALL say what is wrong.

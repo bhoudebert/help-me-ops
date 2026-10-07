@@ -9,12 +9,14 @@ Serve the toolbox to Claude Code, Codex and GitHub Copilot.
 ### Requirement: Transport and clients
 
 The server SHALL run on stdio (`npm run mcp`), write only protocol to stdout,
-and ship client configuration: `.mcp.json` (Claude Code), `.vscode/mcp.json`
-(Copilot), and a documented `config.toml` entry (Codex).
+and ship client configuration, pointed at the demo workspace: `.mcp.json` (Claude
+Code), `.vscode/mcp.json` (Copilot), and a documented `config.toml` entry
+(Codex). The workspace SHALL be taken from `--workspace` or `OPS_WORKSPACE`.
 
 ### Requirement: The method in the instructions
 
-The server instructions SHALL give the method: the playbook first, the
+The server instructions SHALL give the method: the scope (app and environment)
+first, asking the person when it is unclear, then the playbook, the
 identifiers of the report searched in the sources, a timeline of quoted
 evidence with source and time, and a conclusion with the likely cause, the
 certainty, the unknowns and the next step for a person; never a claim without
