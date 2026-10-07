@@ -48,11 +48,12 @@ a demo world to try it without a real system
 
 ```bash
 nvm use && npm install
-cp ops.config.example.json ops.config.json
-npm run ops -- investigate "client u-881 paid but cannot find order 4512"
+npm run ops -- --workspace examples/workspace investigate "client u-881 paid but cannot find order 4512"
 ```
 
-Then open the folder in Claude Code (`.mcp.json`), VS Code with Copilot
+The demo workspace in `examples/workspace` is one app (`shop`) with its sources
+and a playbook. To plug in your own, copy it to a folder of your own and point
+to it with `--workspace` or `OPS_WORKSPACE`. Then open the folder in Claude Code (`.mcp.json`), VS Code with Copilot
 (`.vscode/mcp.json`), or add it to Codex
 ([clients](https://bhoudebert.github.io/help-me-ops/guide/clients)), and ask.
 

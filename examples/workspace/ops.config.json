@@ -1,0 +1,26 @@
+{
+  "apps": {
+    "shop": {
+      "description": "Online shop: orders, payments, the confirmation worker",
+      "envs": {
+        "prod": {
+          "sources": [
+            {
+              "id": "app-logs",
+              "type": "file-logs",
+              "path": "logs/app.log",
+              "description": "Application logs of the API, payments, worker and support services, one event per line"
+            },
+            {
+              "id": "orders-db",
+              "type": "module",
+              "module": "connectors/orders-db.ts",
+              "description": "Orders table: status and last update of each order (read-only)"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "playbooks": "playbooks"
+}

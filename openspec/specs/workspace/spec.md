@@ -1,0 +1,46 @@
+# Workspace Specification
+
+## Purpose
+
+Let a team describe its own infrastructure, several apps in several
+environments, in one folder it owns.
+
+## Requirements
+
+### Requirement: One folder per team
+
+A workspace SHALL be one directory holding `ops.config.json` and the
+playbooks folder it names. The CLI and the MCP server SHALL accept
+`--workspace <dir>`, then `OPS_WORKSPACE`, and default to the current
+directory. A directory without `ops.config.json` SHALL be refused, saying to
+copy `examples/workspace`.
+
+#### Scenario: Run from another repository
+
+- **WHEN** the server is started with `--workspace ../shop/ops`
+- **THEN** sources and playbooks are read from that folder only, with paths relative to it
+
+### Requirement: Apps and environments
+
+The configuration SHALL declare at least one app, each with at least one
+environment, each with its sources. Tools that read evidence SHALL take `app`
+and `env`; an app or environment that is the only choice MAY be left out,
+otherwise the tool SHALL refuse and name the choices. Source ids SHALL be unique
+within an environment.
+
+#### Scenario: Same question, two environments
+
+- **WHEN** order 4512 is searched in `shop` `prod` and in `shop` `staging`
+- **THEN** each search reads only that environment's sources, and its result names the app and environment
+
+### Requirement: Resolve the scope
+
+A `scope` tool SHALL list the apps and environments, and propose the likely
+ones for a question with the reason (the words of the question they share, or
+being the only choice), without reading any evidence. When it cannot tell, it
+SHALL say what to ask the person.
+
+#### Scenario: Vague question
+
+- **WHEN** the question names no app and there are several
+- **THEN** no app is proposed and the answer asks which app

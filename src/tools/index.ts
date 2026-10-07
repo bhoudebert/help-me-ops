@@ -1,8 +1,9 @@
 // The toolbox, defined once and shared by every entry point (the MCP server
 // today, an API-mode investigator later). Each tool states its four MCP hints.
 import { z } from "zod";
-import type { Connector } from "../connectors/types.ts";
+import type { SearchInput } from "../connectors/types.ts";
 import { matchPlaybooks, type Playbook } from "../playbooks.ts";
+import { describeScope, resolveScope, type AppSetup } from "../scope.ts";
 
 export interface ToolHints {
   readOnlyHint: boolean;
@@ -20,32 +21,57 @@ export interface ToolDefinition {
 }
 
 export interface Toolbox {
-  sources: Connector[];
+  apps: AppSetup[];
   playbooks: Playbook[];
+}
+
+interface SearchArgs extends SearchInput {
+  app?: string;
+  env?: string;
+  source: string;
 }
 
 const json = (value: unknown) => JSON.stringify(value, null, 2);
 
-export function createToolDefinitions({ sources, playbooks }: Toolbox): ToolDefinition[] {
-  const source = (id: string) => {
-    const found = sources.find((s) => s.id === id);
-    if (!found) throw new Error(`No source "${id}". Known: ${sources.map((s) => s.id).join(", ") || "none"}.`);
-    return found;
-  };
+const appParam = z.string().optional().describe("App, from scope; may be left out when there is only one");
+const envParam = z
+  .string()
+  .optional()
+  .describe("Environment (prod, staging…), from scope; may be left out when there is only one");
+
+export function createToolDefinitions({ apps, playbooks }: Toolbox): ToolDefinition[] {
   return [
+    {
+      name: "scope",
+      description:
+        "The apps and environments this workspace knows, and which ones a problem points at, with why. Call it first: sources belong to an environment, and a problem in prod is not read from staging. If it cannot tell, ask the person which. Reads no evidence.",
+      inputSchema: z.object({ question: z.string().optional().describe("The problem as reported") }),
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      run: async (input) => json(describeScope(apps, (input as { question?: string }).question)),
+    },
     {
       name: "listSources",
       description:
-        "The sources of evidence this installation has (logs, metrics, databases, HTTP checks, custom), each with what it covers. Call it first to know where to look.",
-      inputSchema: z.object({}),
+        "The sources of evidence of one app and environment (logs, metrics, databases, HTTP checks, custom), each with what it covers. Call it to know where to look.",
+      inputSchema: z.object({ app: appParam, env: envParam }),
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-      run: async () => json(sources.map(({ id, kind, description }) => ({ id, kind, description }))),
+      run: async (input) => {
+        const { app, env } = input as { app?: string; env?: string };
+        const scope = resolveScope(apps, app, env);
+        return json({
+          app: scope.app.name,
+          env: scope.env.name,
+          sources: scope.env.sources.map(({ id, kind, description }) => ({ id, kind, description })),
+        });
+      },
     },
     {
       name: "searchSource",
       description:
         "Search one source for a term (an order number, an error code, a user id), optionally within a time window. Read-only. Returns pieces of evidence with their time and a one-line summary; quote them, do not paraphrase them into facts they do not state.",
       inputSchema: z.object({
+        app: appParam,
+        env: envParam,
         source: z.string().describe("Source id, from listSources"),
         query: z.string().min(1).describe("What to look for"),
         from: z.string().optional().describe("Start of the window, ISO 8601"),
@@ -55,8 +81,16 @@ export function createToolDefinitions({ sources, playbooks }: Toolbox): ToolDefi
       // Reads the system it investigates: outside this process, so open-world.
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       run: async (input) => {
-        const args = input as { source: string; query: string; from?: string; to?: string; limit?: number };
-        return json(await source(args.source).search(args));
+        const args = input as SearchArgs;
+        const { app, env } = resolveScope(apps, args.app, args.env);
+        const found = env.sources.find((s) => s.id === args.source);
+        if (!found) {
+          const known = env.sources.map((s) => s.id).join(", ") || "none";
+          throw new Error(`No source "${args.source}" in ${app.name}/${env.name}. Known: ${known}.`);
+        }
+        const { query, from, to, limit } = args;
+        const evidence = await found.search({ query, from, to, limit });
+        return json({ app: app.name, env: env.name, source: found.id, evidence });
       },
     },
     {

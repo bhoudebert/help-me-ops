@@ -3,17 +3,19 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { resolveWorkspace } from "./config.ts";
 import { openToolbox } from "./toolbox.ts";
 import { createToolDefinitions } from "./tools/index.ts";
 
 const INSTRUCTIONS = `help-me-ops investigates a running system from its own evidence: logs, metrics, databases, HTTP checks. When someone reports a problem ("order 4512 is stuck", "a client cannot find their order", "the API is slow since 10:00"):
-1. listPlaybooks with the problem as the question; if one fits, getPlaybook and follow its steps.
-2. listSources, then searchSource for the identifiers in the report (order number, user, error code), narrowing the time window as you learn.
-3. Build a timeline from the evidence, oldest first, each line quoting its source and time.
-4. Conclude: the most likely cause, how sure you are and why, what is still unknown, and the next step for a person. Never state what no evidence shows.
+1. scope with the problem as the question: which app and which environment. If it cannot tell, ask the person; never read prod evidence for a staging question or the reverse.
+2. listPlaybooks with the problem as the question; if one fits, getPlaybook and follow its steps.
+3. listSources for that app and environment, then searchSource for the identifiers in the report (order number, user, error code), narrowing the time window as you learn.
+4. Build a timeline from the evidence, oldest first, each line quoting its source and time.
+5. Conclude: the most likely cause, how sure you are and why, what is still unknown, and the next step for a person. Never state what no evidence shows.
 Every tool is read-only: never suggest changing data yourself; propose the change for a person to make.`;
 
-const toolbox = await openToolbox();
+const toolbox = await openToolbox(resolveWorkspace());
 const server = new McpServer({ name: "help-me-ops", version: "0.1.0" }, { instructions: INSTRUCTIONS });
 
 for (const tool of createToolDefinitions(toolbox)) {
@@ -40,5 +42,5 @@ server.registerPrompt(
 
 await server.connect(new StdioServerTransport());
 process.stderr.write(
-  `help-me-ops MCP server ready: ${toolbox.sources.length} source(s), ${toolbox.playbooks.length} playbook(s)\n`,
+  `help-me-ops MCP server ready: ${toolbox.apps.length} app(s), ${toolbox.playbooks.length} playbook(s)\n`,
 );

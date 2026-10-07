@@ -12,7 +12,7 @@ proposes changes for a person to make.
 
 ## Secrets and data
 
-- `.env` and `ops.config.json` hold credentials and are git-ignored. Never commit them.
+- `.env` holds credentials and is git-ignored, as is a local `ops/` workspace. Never commit credentials; a team's own workspace goes in its own repository, with credentials named by environment variable, not written in it.
 - Evidence (log lines, rows) goes to the model you use (Claude, Codex, Copilot).
   Mask or leave out personal data in your connectors when your policy requires it.
 - `cases/` (investigation records, when they exist) is git-ignored.

@@ -1,7 +1,8 @@
-// Which sources and playbooks this installation has: ops.config.json, which
-// the people running the system fill in (ops.config.example.json shows how).
+// What a team has: a workspace folder holding ops.config.json (apps, their
+// environments, their sources), playbooks/ and, later, knowledge/ and addons/.
+// examples/workspace shows how; ADR 0007.
 import { readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { z } from "zod";
 
 const source = z.discriminatedUnion("type", [
@@ -16,35 +17,58 @@ const source = z.discriminatedUnion("type", [
       type: z.literal("module"),
       id: z.string().min(1),
       description: z.string().min(1),
-      /** A file exporting createConnector, relative to the config file. */
+      /** A file exporting createConnector, relative to the workspace. */
       module: z.string().min(1),
     })
     .loose(),
 ]);
 
+const name = z.string().min(1);
+
+const env = z.object({ sources: z.array(source) });
+
+const app = z.object({
+  description: z.string().default(""),
+  envs: z.record(name, env).refine((envs) => Object.keys(envs).length > 0, "an app needs at least one environment"),
+});
+
 export const OpsConfig = z.object({
-  sources: z.array(source),
-  /** Folder of playbooks, relative to the config file. */
+  apps: z.record(name, app).refine((apps) => Object.keys(apps).length > 0, "declare at least one app"),
+  /** Folder of playbooks, relative to the workspace. */
   playbooks: z.string().default("playbooks"),
 });
 export type OpsConfig = z.infer<typeof OpsConfig>;
-export type SourceConfig = OpsConfig["sources"][number];
+export type SourceConfig = z.infer<typeof source>;
 
-/** The config file: OPS_CONFIG, else ops.config.json in the working directory. */
-export function configPath(env: NodeJS.ProcessEnv = process.env): string {
-  return resolve(env.OPS_CONFIG ?? "ops.config.json");
+export const CONFIG_FILE = "ops.config.json";
+
+/** The workspace folder: --workspace, else OPS_WORKSPACE, else the working directory. */
+export function resolveWorkspace(argv: string[] = process.argv.slice(2), env: NodeJS.ProcessEnv = process.env): string {
+  const at = argv.indexOf("--workspace");
+  const given = at >= 0 ? argv[at + 1] : undefined;
+  if (at >= 0 && !given) throw new Error("--workspace needs a folder.");
+  return resolve(given ?? env.OPS_WORKSPACE ?? ".");
 }
 
-export async function loadConfig(path = configPath()): Promise<{ config: OpsConfig; baseDir: string }> {
+export async function loadConfig(workspace = resolveWorkspace()): Promise<{ config: OpsConfig; baseDir: string }> {
+  const path = join(workspace, CONFIG_FILE);
   let raw: string;
   try {
     raw = await readFile(path, "utf8");
   } catch {
     throw new Error(
-      `No config at ${path}. Copy ops.config.example.json to ops.config.json and describe your sources, or set OPS_CONFIG.`,
+      `No ${CONFIG_FILE} in ${workspace}. Copy examples/workspace to a folder of your own and point to it with --workspace or OPS_WORKSPACE.`,
     );
   }
-  const parsed = OpsConfig.safeParse(JSON.parse(raw));
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`Invalid config ${path}: ${error instanceof Error ? error.message : String(error)}`, {
+      cause: error,
+    });
+  }
+  const parsed = OpsConfig.safeParse(json);
   if (!parsed.success) throw new Error(`Invalid config ${path}: ${z.prettifyError(parsed.error)}`);
-  return { config: parsed.data, baseDir: dirname(path) };
+  return { config: parsed.data, baseDir: workspace };
 }
