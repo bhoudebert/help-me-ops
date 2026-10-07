@@ -1,6 +1,7 @@
 // The toolbox, defined once and shared by every entry point (the MCP server
 // today, an API-mode investigator later). Each tool states its four MCP hints.
 import { z } from "zod";
+import type { AddonReport } from "../addons/loader.ts";
 import type { SearchInput } from "../connectors/types.ts";
 import { matchPlaybooks, type Playbook } from "../playbooks.ts";
 import { describeScope, resolveScope, type AppSetup } from "../scope.ts";
@@ -23,6 +24,12 @@ export interface ToolDefinition {
 export interface Toolbox {
   apps: AppSetup[];
   playbooks: Playbook[];
+  /** Tools the addons bring, already namespaced. */
+  addonTools?: ToolDefinition[];
+  /** What happened to each addon, for doctor and the start-up lines. */
+  addons?: AddonReport[];
+  /** Sources left out, and other things the person should know. */
+  warnings?: string[];
 }
 
 interface SearchArgs extends SearchInput {
@@ -33,14 +40,14 @@ interface SearchArgs extends SearchInput {
 
 const json = (value: unknown) => JSON.stringify(value, null, 2);
 
-const appParam = z.string().optional().describe("App, from scope; may be left out when there is only one");
-const envParam = z
+export const appParam = z.string().optional().describe("App, from scope; may be left out when there is only one");
+export const envParam = z
   .string()
   .optional()
   .describe("Environment (prod, staging…), from scope; may be left out when there is only one");
 
-export function createToolDefinitions({ apps, playbooks }: Toolbox): ToolDefinition[] {
-  return [
+export function createToolDefinitions({ apps, playbooks, addonTools = [] }: Toolbox): ToolDefinition[] {
+  const core: ToolDefinition[] = [
     {
       name: "scope",
       description:
@@ -118,4 +125,5 @@ export function createToolDefinitions({ apps, playbooks }: Toolbox): ToolDefinit
       },
     },
   ];
+  return [...core, ...addonTools];
 }

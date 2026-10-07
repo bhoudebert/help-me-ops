@@ -1,4 +1,5 @@
 // What the terminal commands do, as functions returning text (testable).
+import { formatReport } from "./addons/loader.ts";
 import { matchPlaybooks } from "./playbooks.ts";
 import { createToolDefinitions, type Toolbox } from "./tools/index.ts";
 
@@ -10,8 +11,10 @@ export const USAGE = `Usage: npm run ops -- <command>
   search <source> <query> [--from ISO] [--to ISO] [--limit N]
                                         Search one source, read-only
   investigate "<question>"              The playbook to follow and where to look
+  doctor                                The addons loaded or skipped, and why
 
 Options for any command: --workspace <dir> (or OPS_WORKSPACE; default: the current folder),
+--addons <dir[:dir]> (or OPS_ADDONS) for more addon folders,
 --app <name> and --env <name> (left out when there is only one).
 
 In Claude Code, Codex or Copilot, ask in plain words: "order 4512 is stuck, why?"`;
@@ -57,6 +60,10 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
         limit: limit ? Number(limit) : undefined,
       });
     }
+    case "doctor": {
+      const lines = [...formatReport(toolbox.addons ?? []), ...(toolbox.warnings ?? []).map((w) => `  ! ${w}`)];
+      return ["Addons:", ...(lines.length ? lines : ["  none"])].join("\n");
+    }
     case "investigate": {
       const question = args.join(" ").trim();
       if (!question) throw new Error('Usage: investigate "<question>"');
@@ -79,4 +86,13 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
     default:
       return USAGE;
   }
+}
+
+/** What the person should see when a command or server starts: addons that did not load, sources left out. */
+export function startupNotices(toolbox: Toolbox): string[] {
+  const addons = (toolbox.addons ?? []).filter((r) => r.status !== "loaded" || r.reason || r.notes.length);
+  return [
+    ...formatReport(addons).map((l) => `help-me-ops addon:${l}`),
+    ...(toolbox.warnings ?? []).map((w) => `help-me-ops: ${w}`),
+  ];
 }

@@ -1,7 +1,7 @@
 // A working example connector: plain-text log files, one event per line,
 // starting with an ISO 8601 timestamp. Copy it for your own formats.
 import { readFile } from "node:fs/promises";
-import { type Connector, DEFAULT_LIMIT, type Evidence, type SearchInput } from "./types.ts";
+import { type Connector, DEFAULT_LIMIT, type Evidence, type SearchInput } from "../../src/connectors/types.ts";
 
 const STAMP = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)/;
 

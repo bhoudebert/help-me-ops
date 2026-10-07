@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src", "scripts", "test", "examples"]
+  "include": ["src", "scripts", "test", "examples", "addons"]
 }

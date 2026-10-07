@@ -5,27 +5,23 @@ import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { z } from "zod";
 
-const source = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("file-logs"),
+// A source: its type (a connector type from an addon, or "module" for a file of
+// your own) and the options that type takes, checked when the connector is made.
+const source = z
+  .object({
+    type: z.string().min(1),
     id: z.string().min(1),
     description: z.string().min(1),
-    path: z.string().min(1),
-  }),
-  z
-    .object({
-      type: z.literal("module"),
-      id: z.string().min(1),
-      description: z.string().min(1),
-      /** A file exporting createConnector, relative to the workspace. */
-      module: z.string().min(1),
-    })
-    .loose(),
-]);
+  })
+  .loose();
 
 const name = z.string().min(1);
 
-const env = z.object({ sources: z.array(source) });
+const env = z.object({
+  sources: z.array(source).default([]),
+  /** Settings per addon in this environment, overriding its environment variables. */
+  addons: z.record(name, z.record(z.string(), z.unknown())).default({}),
+});
 
 const app = z.object({
   description: z.string().default(""),
