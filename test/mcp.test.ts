@@ -21,7 +21,7 @@ test("mcp: the server lists its tools with all four hints and answers a search",
     assert.match(client.getInstructions() ?? "", /Every tool is read-only/);
     assert.match(client.getInstructions() ?? "", /scope with the problem/);
     const { tools } = await client.listTools();
-    assert.equal(tools.length, 5);
+    assert.equal(tools.length, 10);
     for (const tool of tools) {
       for (const hint of ["readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint"]) {
         assert.equal(typeof (tool.annotations as any)?.[hint], "boolean", `${tool.name} ${hint}`);
@@ -29,7 +29,7 @@ test("mcp: the server lists its tools with all four hints and answers a search",
     }
     const result = (await client.callTool({
       name: "searchSource",
-      arguments: { source: "app-logs", query: "OOMKilled" },
+      arguments: { env: "prod", source: "app-logs", query: "OOMKilled" },
     })) as any;
     assert.match(result.content[0].text, /"env": "prod"[\s\S]*consumers=0 \(crashloop: OOMKilled\)/);
     const prompt = await client.getPrompt({ name: "investigate", arguments: { question: "order 4512 stuck" } });

@@ -34,8 +34,8 @@ both folders.
 
 ### Requirement: The definition
 
-An `addon.ts` SHALL default-export a definition, or a function receiving `{ z }`
-and returning one, so an addon needs no packages of its own. A definition has
+An `addon.ts` SHALL default-export a definition, or a function receiving `{ z, defineTool }`
+(zod and a typed helper for tools) and returning one, so an addon needs no packages of its own. A definition has
 an `apiVersion`, and optionally `settings`, `env`, `tools` and `connectors`. The
 folder name, lowercase letters, digits and hyphens, is the addon's name.
 

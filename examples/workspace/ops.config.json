@@ -8,16 +8,42 @@
             {
               "id": "app-logs",
               "type": "file-logs",
-              "path": "logs/app.log",
-              "description": "Application logs of the API, payments, worker and support services, one event per line"
-            },
-            {
-              "id": "orders-db",
-              "type": "module",
-              "module": "connectors/orders-db.ts",
-              "description": "Orders table: status and last update of each order (read-only)"
+              "path": "logs/prod.log",
+              "description": "Application logs of the API, payments, worker, deploy and support services, one event per line"
             }
-          ]
+          ],
+          "addons": {
+            "order": {
+              "dataFile": "data/prod/orders.json"
+            },
+            "metrics": {
+              "file": "data/prod/metrics.json"
+            },
+            "health": {
+              "file": "data/prod/health.json"
+            }
+          }
+        },
+        "staging": {
+          "sources": [
+            {
+              "id": "app-logs",
+              "type": "file-logs",
+              "path": "logs/staging.log",
+              "description": "Application logs of the API, payments, worker, deploy and support services, one event per line"
+            }
+          ],
+          "addons": {
+            "order": {
+              "dataFile": "data/staging/orders.json"
+            },
+            "metrics": {
+              "file": "data/staging/metrics.json"
+            },
+            "health": {
+              "file": "data/staging/health.json"
+            }
+          }
         }
       }
     }

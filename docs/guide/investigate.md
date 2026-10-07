@@ -17,7 +17,9 @@ proposed for you to make.
 
 ## Example
 
-With the example sources, "client u-881 paid but cannot find order 4512"
-leads to the order row (`awaiting_payment` since 09:58), the log lines of the
-payment webhook refused with a 503 at 10:00, and the confirmation worker
-crash-looping (OOMKilled) at 10:01.
+In the [demo](/demo), "client u-881 paid but cannot find order 4512" leads to
+the order (`awaiting_payment` since 09:58), the payment webhook refused with a
+503 at 10:00 while the provider answered 200, a queue past 1000 jobs, and the
+confirmation worker OOMKilled at 10:01, after release 2.14.0. The same release
+is fine in staging. Which environment a question is about is the first thing
+the assistant settles (`scope`); when you do not say, it asks.

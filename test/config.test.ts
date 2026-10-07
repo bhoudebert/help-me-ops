@@ -13,10 +13,12 @@ test("config: the demo workspace loads; a missing or invalid file says what to d
   const { config, baseDir } = await loadConfig(DEMO);
   assert.equal(baseDir, DEMO);
   assert.deepEqual(Object.keys(config.apps), ["shop"]);
+  assert.deepEqual(Object.keys(config.apps.shop!.envs), ["prod", "staging"]);
   assert.deepEqual(
     config.apps.shop!.envs.prod!.sources.map((s) => s.id),
-    ["app-logs", "orders-db"],
+    ["app-logs"],
   );
+  assert.deepEqual(Object.keys(config.apps.shop!.envs.staging!.addons), ["order", "metrics", "health"]);
   await assert.rejects(loadConfig("/nowhere"), /No ops.config.json in \/nowhere\. Copy examples\/workspace/);
   const dir = mkdtempSync(join(tmpdir(), "ops-"));
   const bad = (json: string) => {

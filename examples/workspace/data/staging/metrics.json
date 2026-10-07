@@ -1,0 +1,31 @@
+{
+  "series": {
+    "worker_memory_mb": {
+      "description": "shop-worker resident memory, container limit 512 MB",
+      "unit": "MB",
+      "points": [
+        ["2026-10-07T09:40:00Z", 198],
+        ["2026-10-07T09:50:00Z", 201],
+        ["2026-10-07T10:00:00Z", 203]
+      ]
+    },
+    "payment_confirm_queue_depth": {
+      "description": "jobs waiting in the payment-confirm queue",
+      "unit": "jobs",
+      "points": [
+        ["2026-10-07T09:40:00Z", 0],
+        ["2026-10-07T09:50:00Z", 0],
+        ["2026-10-07T10:00:00Z", 0]
+      ]
+    },
+    "worker_cpu_percent": {
+      "description": "shop-worker CPU",
+      "unit": "%",
+      "points": [
+        ["2026-10-07T09:40:00Z", 4],
+        ["2026-10-07T09:50:00Z", 6],
+        ["2026-10-07T10:00:00Z", 5]
+      ]
+    }
+  }
+}

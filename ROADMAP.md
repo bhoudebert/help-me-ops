@@ -2,15 +2,13 @@
 
 ## Next
 
-- **The plug-in kit** (`openspec/changes/plug-in-kit/`): a workspace folder
-  per team with apps and environments, searchable runbooks, a checked
-  conclusion (cause, evidence, unknowns), a demo world with fake services and
-  a scripted terminal demo. The model stays in the client (Claude Code, Codex,
-  Copilot). Extension by **addons**: a folder dropped in `addons/` is loaded,
-  nothing to register (ADR 0008).
+- **The rest of the plug-in kit** (`openspec/changes/plug-in-kit/`):
+  searchable runbooks (`knowledge/`), a checked conclusion (cause, evidence,
+  unknowns, every quote from a result), a scripted terminal demo (`ops demo`)
+  and setup helpers (`ops init`, `ops doctor`, `ops addon check`).
 - **Connectors people ask for first**: PostgreSQL and MySQL (read-only user),
   Loki or Elasticsearch logs, Prometheus metrics (CPU, memory, queue depth),
-  an HTTP health check. Each a module following `examples/workspace/connectors/`.
+  an HTTP health check. Each an addon following `examples/workspace/addons/`.
 - **A terminal investigator** calling a model API, if people without an MCP
   client ask for it.
 - **Case files**: an investigation saved with its question, steps, evidence
@@ -24,6 +22,11 @@
 
 ## Done lately
 
+- The demo world: a shop in prod and staging with logs, orders, metrics and
+  health checks, a playbook, and a scenario replayed as a test.
+- Addons: a folder dropped in is loaded, with tools, settings, connector types
+  and playbooks; a broken one is skipped with a reason (ADR 0008).
+- Workspaces with apps and environments, and the `scope` tool (ADR 0007).
 - The skeleton: connectors (a log file, a database template), playbooks in
   Markdown, a shared read-only toolbox, CLI and MCP entry points for Claude
   Code, Codex and Copilot, specs, ADRs, guide, site, CI and releases.

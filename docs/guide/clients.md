@@ -34,7 +34,11 @@ Copilot Chat in agent mode.
 ```text
 client u-881 paid but cannot find order 4512, what happened?
 the payment queue is backing up since 10:00, why?
+is the payment worker healthy on staging?
 ```
+
+The first one is the [demo](/demo): the answer is in the files of
+`examples/workspace`.
 
 In Claude Code, `/mcp__help-me-ops__investigate <problem>` sends the method
 and the problem in one go.

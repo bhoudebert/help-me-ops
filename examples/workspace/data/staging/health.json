@@ -1,0 +1,25 @@
+{
+  "checks": [
+    {
+      "at": "2026-10-07T09:55:00Z",
+      "target": "shop /hooks/acme-pay",
+      "status": 200,
+      "ms": 10,
+      "note": "webhook endpoint answering"
+    },
+    {
+      "at": "2026-10-07T10:00:00Z",
+      "target": "shop /hooks/acme-pay",
+      "status": 200,
+      "ms": 11,
+      "note": "webhook endpoint answering"
+    },
+    {
+      "at": "2026-10-07T10:00:00Z",
+      "target": "acme-pay-sandbox provider status",
+      "status": 200,
+      "ms": 70,
+      "note": "operational"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 // What an addon is, for the people who write one (ADR 0008). An addon is a
 // folder with an addon.ts whose default export is a definition, or a function
-// receiving { z } and returning one, so an addon needs no packages of its own.
+// receiving { z, defineTool } and returning one, so an addon needs no packages
+// of its own.
 import type { z } from "zod";
 import type { Connector, Evidence } from "../connectors/types.ts";
 import type { ToolHints } from "../tools/index.ts";
@@ -49,15 +50,23 @@ export interface AddonDefinition {
   connectors?: Record<string, ConnectorType>;
 }
 
+/** What the core hands an addon that exports a function: zod, and the typed tool helper. */
+export interface AddonApi {
+  z: typeof z;
+  defineTool: typeof defineTool;
+}
+
 /** What an addon.ts may export as default. */
-export type AddonExport = AddonDefinition | ((api: { z: typeof z }) => AddonDefinition | Promise<AddonDefinition>);
+export type AddonExport = AddonDefinition | ((api: AddonApi) => AddonDefinition | Promise<AddonDefinition>);
 
 /** Typing helpers: they return what they are given. */
 export const defineAddon = (addon: AddonExport): AddonExport => addon;
-export const defineTool = <I extends z.ZodObject>(tool: {
+export function defineTool<I extends z.ZodObject>(tool: {
   name: string;
   description: string;
   inputSchema: I;
   annotations: ToolHints;
   run(input: z.infer<I>, context: AddonContext): Promise<Evidence[]>;
-}): AddonTool => tool as unknown as AddonTool;
+}): AddonTool {
+  return tool as unknown as AddonTool;
+}
