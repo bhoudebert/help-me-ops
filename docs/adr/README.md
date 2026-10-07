@@ -9,5 +9,6 @@
 | [0005](0005-tooling.md)                    | Node 24 without a build, TypeScript 7, ESLint and Prettier                 | accepted |
 | [0006](0006-commits-and-releases.md)       | Conventional Commits and automated releases                                | accepted |
 | [0007](0007-workspace-and-client-model.md) | The client hosts the model; a workspace folder with apps and environments  | accepted |
+| [0008](0008-addons.md)                     | Extend through addons: a folder dropped in, loaded at startup              | accepted |
 
 New records start from [template.md](template.md).
