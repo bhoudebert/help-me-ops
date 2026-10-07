@@ -10,7 +10,7 @@ import { createConnectors } from "../src/connectors/registry.ts";
 
 const types = connectorTypes((await loadAddons(addonFolders(process.cwd(), []))).addons);
 
-const logs = fileLogs({ id: "app-logs", description: "app", path: "examples/workspace/logs/app.log" });
+const logs = fileLogs({ id: "app-logs", description: "app", path: "examples/workspace/logs/prod.log" });
 
 test("file logs: lines with the term, oldest first, with their time", async () => {
   const found = await logs.search({ query: "order=4512" });
@@ -44,23 +44,26 @@ test("file logs: a line without a time is kept only without a window", async () 
 });
 
 test("registry: built-in and module sources; unique ids; a module must export createConnector", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "ops-"));
+  writeFileSync(
+    join(dir, "mine.ts"),
+    'export const createConnector = ({ id, description }) => ({ id, kind: "custom", description, search: async () => [] });\n',
+  );
   const { connectors: sources } = await createConnectors(
     [
-      { type: "file-logs", id: "app-logs", description: "logs", path: "examples/workspace/logs/app.log" },
-      { type: "module", id: "orders-db", description: "orders", module: "examples/workspace/connectors/orders-db.ts" },
+      { type: "file-logs", id: "app-logs", description: "logs", path: "examples/workspace/logs/prod.log" },
+      { type: "module", id: "mine", description: "mine", module: "mine.ts" },
     ],
-    process.cwd(),
+    dir,
     types,
   );
   assert.deepEqual(
     sources.map((s) => [s.id, s.kind]),
     [
       ["app-logs", "logs"],
-      ["orders-db", "database"],
+      ["mine", "custom"],
     ],
   );
-  const [row] = await sources[1]!.search({ query: "4512" });
-  assert.equal(row!.summary, "order 4512 of u-881: awaiting_payment since 2026-10-07T09:58:13Z");
 
   await assert.rejects(
     createConnectors(
@@ -73,7 +76,6 @@ test("registry: built-in and module sources; unique ids; a module must export cr
     ),
     /Two sources are named same/,
   );
-  const dir = mkdtempSync(join(tmpdir(), "ops-"));
   writeFileSync(join(dir, "empty.ts"), "export const nothing = 1;\n");
   await assert.rejects(
     createConnectors([{ type: "module", id: "bad", description: "b", module: "empty.ts" }], dir),

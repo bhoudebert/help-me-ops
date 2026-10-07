@@ -1,0 +1,113 @@
+{
+  "id": "stuck-order",
+  "question": "Client u-881 paid but cannot find order 4512",
+  "scope": { "app": "shop", "env": "prod" },
+  "playbook": "order-stuck",
+  "steps": [
+    {
+      "why": "Which app and environment?",
+      "tool": "scope",
+      "input": { "question": "Client u-881 paid but cannot find order 4512 in production" }
+    },
+    {
+      "why": "Does the team have a method for this?",
+      "tool": "listPlaybooks",
+      "input": { "question": "Client u-881 paid but cannot find order 4512" }
+    },
+    { "why": "The order itself", "tool": "order.getOrder", "input": { "env": "prod", "id": "4512" } },
+    {
+      "why": "Its story in the logs",
+      "tool": "searchSource",
+      "input": { "env": "prod", "source": "app-logs", "query": "order=4512" }
+    },
+    {
+      "why": "The order waited for a webhook: what happened to it?",
+      "tool": "searchSource",
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "webhook endpoint",
+        "from": "2026-10-07T09:58:00Z",
+        "to": "2026-10-07T10:05:00Z"
+      }
+    },
+    {
+      "why": "Who refused the webhook: us or the provider?",
+      "tool": "health.checkHealth",
+      "input": { "env": "prod", "from": "2026-10-07T09:55:00Z", "to": "2026-10-07T10:06:00Z" }
+    },
+    {
+      "why": "Why was the queue full?",
+      "tool": "metrics.queryMetric",
+      "input": { "env": "prod", "metric": "payment_confirm_queue_depth" }
+    },
+    {
+      "why": "Why did the worker slow down?",
+      "tool": "metrics.queryMetric",
+      "input": { "env": "prod", "metric": "worker_memory_mb" }
+    },
+    {
+      "why": "What happened to the worker, and what changed before?",
+      "tool": "searchSource",
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "worker",
+        "from": "2026-10-07T09:30:00Z",
+        "to": "2026-10-07T10:05:00Z"
+      }
+    },
+    {
+      "why": "Who else is affected?",
+      "tool": "order.listOrders",
+      "input": { "env": "prod", "status": "awaiting_payment", "since": "2026-10-07T09:58:00Z" }
+    },
+    {
+      "why": "Is staging, same release, fine?",
+      "tool": "metrics.queryMetric",
+      "input": { "env": "staging", "metric": "worker_memory_mb" }
+    }
+  ],
+  "conclusion": {
+    "cause": "The payment webhook for order 4512 was refused with a 503 because the payment-confirm queue was full; the shop-worker, slowed by growing memory since release 2.14.0, was then OOMKilled. The order stayed awaiting_payment; orders 4513 and 4514 are in the same state.",
+    "certainty": "likely",
+    "evidence": [
+      {
+        "source": "order",
+        "at": "2026-10-07T09:58:13Z",
+        "quote": "order 4512 of u-881: awaiting_payment since 2026-10-07T09:58:13Z"
+      },
+      {
+        "source": "app-logs",
+        "at": "2026-10-07T10:00:02Z",
+        "quote": "webhook endpoint /hooks/acme-pay returned 503 to provider (queue full)"
+      },
+      {
+        "source": "health",
+        "at": "2026-10-07T10:00:00Z",
+        "quote": "acme-pay provider status -> 200 in 90ms (operational)"
+      },
+      {
+        "source": "metrics",
+        "at": "2026-10-07T10:01:00Z",
+        "quote": "payment_confirm_queue_depth = 1240 jobs at 2026-10-07T10:01:00Z"
+      },
+      {
+        "source": "app-logs",
+        "at": "2026-10-07T10:01:04Z",
+        "quote": "container shop-worker-1 OOMKilled (exit 137), restart 1"
+      },
+      { "source": "app-logs", "at": "2026-10-07T09:50:14Z", "quote": "41 jobs/min (190 jobs/min before 2.14.0)" },
+      {
+        "source": "metrics",
+        "at": "2026-10-07T10:00:00Z",
+        "quote": "worker_memory_mb = 498 MB at 2026-10-07T10:00:00Z"
+      }
+    ],
+    "unknowns": [
+      "Whether release 2.14.0 introduced a memory leak or only exposed a limit too low for the load: staging runs the same release with no pressure.",
+      "Whether acme-pay retries the refused webhook by itself."
+    ],
+    "next": "Restart or scale shop-worker, then replay the payment webhook for orders 4512, 4513 and 4514, and tell u-881. Then look at the memory behaviour of 2.14.0 under load."
+  }
+}

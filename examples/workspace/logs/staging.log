@@ -1,0 +1,6 @@
+2026-10-07T09:30:11Z INFO  deploy    shop-worker 2.14.0 rolled out (replicas=1, memory limit 512MB)
+2026-10-07T09:58:20Z INFO  api       POST /orders user=u-test -> order=88 created, total=12.00 EUR
+2026-10-07T09:58:21Z INFO  payments  order=88 payment session ps_t1 opened (provider=acme-pay-sandbox)
+2026-10-07T09:58:25Z INFO  payments  order=88 webhook payment.succeeded received
+2026-10-07T09:58:26Z INFO  worker    order=88 confirmed (payment.succeeded handled in 0.4s)
+2026-10-07T10:00:30Z INFO  worker    rss=203MB of 512MB limit, payment-confirm backlog=0

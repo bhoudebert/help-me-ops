@@ -5,7 +5,7 @@ import { readdir } from "node:fs/promises";
 import { delimiter, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { z } from "zod";
-import { ADDON_API_VERSION, type AddonDefinition, type AddonExport } from "./types.ts";
+import { ADDON_API_VERSION, defineTool, type AddonDefinition, type AddonExport } from "./types.ts";
 
 export type Origin = "built-in" | "extra" | "workspace";
 
@@ -91,7 +91,7 @@ const Definition = z.object({
 async function loadDefinition(file: string): Promise<AddonDefinition> {
   const module = (await import(pathToFileURL(file).href)) as { default?: AddonExport };
   if (module.default === undefined) throw new Error("addon.ts has no default export");
-  const raw = typeof module.default === "function" ? await module.default({ z }) : module.default;
+  const raw = typeof module.default === "function" ? await module.default({ z, defineTool }) : module.default;
   const version = (raw as { apiVersion?: unknown } | null)?.apiVersion;
   if (version !== ADDON_API_VERSION) {
     throw new Error(`written for addon API ${String(version)}, this version supports ${ADDON_API_VERSION}`);

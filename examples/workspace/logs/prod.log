@@ -1,10 +1,19 @@
+2026-10-07T09:31:07Z INFO  deploy    shop-worker 2.14.0 rolled out (replicas=2, memory limit 512MB)
+2026-10-07T09:40:02Z INFO  worker    order=4511 confirmed (payment.succeeded handled in 1.2s)
+2026-10-07T09:50:14Z WARN  worker    payment-confirm backlog=620, 41 jobs/min (190 jobs/min before 2.14.0)
+2026-10-07T09:55:30Z WARN  worker    rss=431MB of 512MB limit, GC pauses 1.8s
 2026-10-07T09:58:12Z INFO  api       POST /orders user=u-881 -> order=4512 created, total=89.90 EUR
 2026-10-07T09:58:13Z INFO  payments  order=4512 payment session ps_7Hq2 opened (provider=acme-pay)
 2026-10-07T09:58:41Z INFO  payments  order=4512 customer redirected back from acme-pay
 2026-10-07T09:59:02Z WARN  payments  order=4512 webhook payment.succeeded not received after 20s, waiting
 2026-10-07T10:00:02Z ERROR payments  webhook endpoint /hooks/acme-pay returned 503 to provider (queue full)
 2026-10-07T10:00:02Z WARN  payments  order=4512 still awaiting_payment, next check in 60s
+2026-10-07T10:00:30Z WARN  worker    rss=498MB of 512MB limit, GC pauses 4.1s
+2026-10-07T10:00:41Z WARN  payments  order=4513 webhook payment.succeeded not received, waiting
 2026-10-07T10:01:03Z ERROR worker    payment-confirm queue depth=1240, consumers=0 (crashloop: OOMKilled)
+2026-10-07T10:01:04Z ERROR worker    container shop-worker-1 OOMKilled (exit 137), restart 1
+2026-10-07T10:01:44Z ERROR worker    container shop-worker-1 OOMKilled (exit 137), restart 2, backoff 20s
 2026-10-07T10:02:03Z WARN  payments  order=4512 still awaiting_payment, giving up automatic checks
+2026-10-07T10:03:12Z WARN  payments  order=4514 webhook payment.succeeded not received, waiting
 2026-10-07T10:15:30Z INFO  api       GET /orders?user=u-881 -> 0 confirmed orders (order 4512 not shown: awaiting_payment)
 2026-10-07T10:16:02Z INFO  support   ticket T-3321 opened by u-881: "paid but no order in my account"

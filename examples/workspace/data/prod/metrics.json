@@ -1,0 +1,37 @@
+{
+  "series": {
+    "worker_memory_mb": {
+      "description": "shop-worker resident memory, container limit 512 MB",
+      "unit": "MB",
+      "points": [
+        ["2026-10-07T09:40:00Z", 212],
+        ["2026-10-07T09:45:00Z", 260],
+        ["2026-10-07T09:50:00Z", 330],
+        ["2026-10-07T09:55:00Z", 431],
+        ["2026-10-07T10:00:00Z", 498],
+        ["2026-10-07T10:01:00Z", 512]
+      ]
+    },
+    "payment_confirm_queue_depth": {
+      "description": "jobs waiting in the payment-confirm queue; the webhook endpoint refuses above 1000",
+      "unit": "jobs",
+      "points": [
+        ["2026-10-07T09:40:00Z", 12],
+        ["2026-10-07T09:50:00Z", 620],
+        ["2026-10-07T09:55:00Z", 840],
+        ["2026-10-07T10:00:00Z", 1012],
+        ["2026-10-07T10:01:00Z", 1240]
+      ]
+    },
+    "worker_cpu_percent": {
+      "description": "shop-worker CPU",
+      "unit": "%",
+      "points": [
+        ["2026-10-07T09:40:00Z", 38],
+        ["2026-10-07T09:50:00Z", 71],
+        ["2026-10-07T10:00:00Z", 96],
+        ["2026-10-07T10:01:00Z", 0]
+      ]
+    }
+  }
+}
