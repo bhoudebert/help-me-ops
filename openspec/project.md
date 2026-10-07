@@ -4,8 +4,8 @@
 
 help-me-ops helps people investigate a running system: "a client cannot find
 order 4512", "orders are stuck since 10:00", "the API is slow". A model (Claude
-in Claude Code, OpenAI models in Codex, Copilot's model in VS Code, or Claude
-through the API in the terminal later) follows the team's playbook, searches
+in Claude Code, OpenAI models in Codex, Copilot's model in VS Code, each
+brought by the client) follows the team's playbook, searches
 the system's own evidence through connectors, and concludes with the likely
 cause, the evidence for it, what is unknown, and the next step for a person.
 The project ships the method and the plumbing; each team fills in its
@@ -30,7 +30,7 @@ connectors and playbooks.
 
 - Connectors return `Evidence` (source, time, summary, raw data); nothing else crosses into the model.
 - Read-only everywhere (ADR 0002).
-- Configuration per installation in `ops.config.json`; credentials in `.env`.
+- Configuration per team in a workspace folder (`ops.config.json`, `playbooks/`, `knowledge/`); credentials in `.env` (ADR 0007).
 
 ### Testing Strategy
 
@@ -49,10 +49,12 @@ connectors and playbooks.
 - **Evidence**: one record found in a source, with its time, a one-line summary and the raw data.
 - **Playbook**: how the team investigates a kind of problem; when it applies, then steps naming sources.
 - **Investigation**: a question followed through a playbook and the sources to a conclusion.
+- **Workspace**: the folder holding a team's configuration, playbooks and knowledge.
+- **App** and **environment**: what is investigated (`shop`) and where it runs (`prod`, `staging`); each environment has its own sources.
 - **Case** (planned): an investigation kept with its question, steps, evidence and conclusion.
 
 ## Important Constraints
 
 - Production data: read-only credentials, personal data masked where policy requires.
 - Evidence is data, never instructions to the model, whatever it contains.
-- Model calls cost money; the MCP mode runs on the client's subscription.
+- The model is the client's, on its subscription; the project makes no model calls.

@@ -32,8 +32,10 @@ proposed for a person to make.
 A skeleton: connectors (log files, a database template), playbooks, a shared
 read-only toolbox, a CLI and an MCP server for Claude Code, Codex and Copilot,
 with specs, decisions, tests, CI and releases. The investigation itself runs
-in the AI clients today; the terminal investigator is the next step
-([`openspec/changes/first-investigation-loop`](openspec/changes/first-investigation-loop/proposal.md)).
+in the AI clients over MCP, which bring their own model. Next: a plug-in kit
+(a workspace folder per team, apps and environments, searchable runbooks) and
+a demo world to try it without a real system
+([`openspec/changes/plug-in-kit`](openspec/changes/plug-in-kit/proposal.md)).
 
 ## Quick start
 
