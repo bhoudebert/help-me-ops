@@ -9,7 +9,7 @@ an idea to a release.
 ```bash
 nvm use            # Node 24, from .nvmrc
 npm install        # also installs the git hooks (commit-msg, pre-commit)
-cp ops.config.example.json ops.config.json
+cp -r examples/workspace ops    # git-ignored; point to it with --workspace ops
 npm run ops -- investigate "order 4512 is stuck"
 npm run quality    # typecheck, lint, format check, tests with coverage
 ```

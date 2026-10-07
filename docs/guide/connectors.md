@@ -1,8 +1,25 @@
 # Connect your sources
 
 A **source** is where evidence lives: a log file or service, a metrics store,
-a database, an HTTP endpoint. Each is served by a **connector**, listed in
-`ops.config.json`.
+a database, an HTTP endpoint. Each is served by a **connector**, listed under
+its app and environment in the workspace's `ops.config.json`:
+
+```json
+{
+  "apps": {
+    "shop": {
+      "description": "Online shop: orders, payments",
+      "envs": {
+        "prod": { "sources": [ … ] },
+        "staging": { "sources": [ … ] }
+      }
+    }
+  }
+}
+```
+
+Each environment has its own sources, so a search in `prod` never reads
+`staging`. The entries below go in a `sources` list.
 
 ## Log files: built in
 
@@ -30,7 +47,7 @@ Write a TypeScript file exporting `createConnector`, and point to it:
 }
 ```
 
-`examples/connectors/orders-db.ts` is a template: replace its in-memory table
+`examples/workspace/connectors/orders-db.ts` is a template: replace its in-memory table
 with your database client, connected with a **read-only user**, and keep the
 same evidence shape:
 
@@ -47,5 +64,5 @@ covers, in the words of your system.
 ## Rules
 
 - Read-only credentials, always. Connectors only search.
-- Credentials in `.env`, never in `ops.config.json`.
+- Credentials in `.env`, never in the workspace files.
 - Mask personal data in the summary when your policy requires it.

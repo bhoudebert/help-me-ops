@@ -10,7 +10,7 @@
   nothing to register (ADR 0008).
 - **Connectors people ask for first**: PostgreSQL and MySQL (read-only user),
   Loki or Elasticsearch logs, Prometheus metrics (CPU, memory, queue depth),
-  an HTTP health check. Each a module following `examples/connectors/`.
+  an HTTP health check. Each a module following `examples/workspace/connectors/`.
 - **A terminal investigator** calling a model API, if people without an MCP
   client ask for it.
 - **Case files**: an investigation saved with its question, steps, evidence

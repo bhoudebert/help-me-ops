@@ -10,7 +10,7 @@ server's instructions, so each client investigates the same way.
 
 ```bash [Claude Code]
 cd help-me-ops
-claude          # the project ships .mcp.json: approve the "help-me-ops" server
+claude          # the project ships .mcp.json (demo workspace): approve the "help-me-ops" server
 ```
 
 ```toml [Codex]
@@ -18,12 +18,12 @@ claude          # the project ships .mcp.json: approve the "help-me-ops" server
 [mcp_servers.help-me-ops]
 command = "node"
 args = ["--env-file-if-exists=/abs/path/help-me-ops/.env", "/abs/path/help-me-ops/src/mcp.ts"]
-env = { OPS_CONFIG = "/abs/path/help-me-ops/ops.config.json" }
+env = { OPS_WORKSPACE = "/abs/path/to/your/workspace" }
 ```
 
 ```text [Copilot (VS Code)]
 Open the folder in VS Code: .vscode/mcp.json declares the server
-(with OPS_CONFIG and your .env). Start it from the MCP view, then use
+(with OPS_WORKSPACE and your .env). Start it from the MCP view, then use
 Copilot Chat in agent mode.
 ```
 
@@ -39,6 +39,10 @@ the payment queue is backing up since 10:00, why?
 In Claude Code, `/mcp__help-me-ops__investigate <problem>` sends the method
 and the problem in one go.
 
-Paths in `ops.config.json` (log files, connector modules, playbooks) are read
-relative to the config file, so the server works from any folder once
-`OPS_CONFIG` points to it.
+The shipped client files point at the demo workspace (`examples/workspace`);
+change `--workspace` / `OPS_WORKSPACE` to yours. Paths in `ops.config.json`
+(log files, connector modules, playbooks) are read relative to the workspace,
+so the server works from any folder.
+
+With several apps or environments, the model first calls `scope` and asks you
+which one when your question does not say.

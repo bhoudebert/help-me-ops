@@ -1,7 +1,7 @@
 # Write a playbook
 
 A playbook says how your team investigates a kind of problem. It is a Markdown
-file in `playbooks/`, readable by people on call as much as by the model.
+file in the workspace's `playbooks/`, readable by people on call as much as by the model.
 
 ```markdown
 ---
@@ -16,4 +16,4 @@ when: a client cannot find their order, an order is stuck, paid but no order
 - **`when`** uses the words people report the problem with: that is how a
   playbook is matched to a question.
 - **Steps** name the sources to search, in the order you would.
-- Start from `playbooks/order-stuck.md` and fill in its `_TODO_` blanks.
+- Start from `examples/workspace/playbooks/order-stuck.md` and fill in its `_TODO_` blanks.

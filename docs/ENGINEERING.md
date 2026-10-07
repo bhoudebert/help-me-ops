@@ -7,12 +7,15 @@ How help-me-ops is built. For the why of each choice, see `docs/adr/`.
 ```
 CLI (src/cli.ts) ──┐                      ┌─▶ connectors (src/connectors/)
                    ├─▶ toolbox ─▶ tools ──┤      file-logs, team modules
-MCP (src/mcp.ts) ──┘  (src/toolbox.ts)    └─▶ playbooks (playbooks/*.md)
+MCP (src/mcp.ts) ──┘  (src/toolbox.ts)    └─▶ playbooks (<workspace>/playbooks/*.md)
    Claude Code, Codex, Copilot
 ```
 
-- `src/config.ts` reads and validates `ops.config.json` (`OPS_CONFIG`); paths
-  in it are relative to the file.
+- `src/config.ts` finds the workspace (`--workspace`, `OPS_WORKSPACE`) and
+  validates its `ops.config.json`: apps, environments, sources; paths in it
+  are relative to the workspace.
+- `src/scope.ts` resolves the app and environment a read applies to, and
+  proposes them from a question.
 - `src/connectors/registry.ts` turns sources into connectors: built-in types,
   or modules exporting `createConnector`.
 - `src/playbooks.ts` reads Markdown playbooks (front matter `name`, `when`) and
@@ -57,7 +60,7 @@ is open-world (it reaches the investigated system).
 
 ## Tests
 
-`npm test` runs against `examples/` (a log file and a database template around
+`npm test` runs against `examples/workspace` (a log file and a database template around
 order 4512), and starts the MCP server through a real MCP client. Coverage
 thresholds: lines 80, functions 80, branches 65.
 
@@ -67,13 +70,13 @@ thresholds: lines 80, functions 80, branches 65.
 src/
   cli.ts, commands.ts   terminal entry point and commands
   mcp.ts                MCP server on stdio
-  config.ts             ops.config.json, validated
-  toolbox.ts            config → connectors and playbooks
+  config.ts             the workspace and its ops.config.json, validated
+  scope.ts              app and environment of a read
+  toolbox.ts            workspace → apps, connectors, playbooks
   connectors/           the contract, file-logs, the registry
   playbooks.ts          Markdown playbooks, matching
   tools/index.ts        the tools, defined once
-examples/               sample logs, a database connector template
-playbooks/              the team's playbooks (order-stuck.md to start)
+examples/workspace/     the demo workspace: config, logs, a database template, a playbook
 openspec/               specs per capability, proposed changes
 docs/                   ADRs, the change path, the guide, these notes
 site/                   the project page
