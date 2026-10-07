@@ -34,7 +34,10 @@ Each environment has its own sources, so a search in `prod` never reads
 
 One event per line, starting with an ISO 8601 timestamp.
 
-## Anything else: a small module
+## Anything else: an addon, or a small module
+
+A connector type can come from an [addon](/addons). For a single source of
+your own, a module is the lightest way:
 
 Write a TypeScript file exporting `createConnector`, and point to it:
 

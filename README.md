@@ -63,8 +63,9 @@ to it with `--workspace` or `OPS_WORKSPACE`. Then open the folder in Claude Code
   served over MCP and the CLI (ADR 0004).
 - **Read-only by design**: connectors only search, tools declare it, tests
   check it (ADR 0002).
-- **Extension by files a team owns**: connector modules and Markdown playbooks
-  (ADR 0003).
+- **Extension by files a team owns**: Markdown playbooks, connector modules and
+  addons, folders dropped in and loaded at startup, a broken one skipped
+  rather than fatal (ADR 0003, 0008).
 - **Specified and tested**: OpenSpec requirements per capability, tests against
   fixtures, never a real system or a model API.
 

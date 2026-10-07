@@ -40,7 +40,8 @@ itself runs in an AI client, which brings its own model:
 
 ## Make it yours
 
-0. Copy `examples/workspace` to a folder of your own (in your app's repository, for example) and point to it with `--workspace` or `OPS_WORKSPACE`.
-1. [Connect your sources](/connectors): describe them in `ops.config.json`, per app and environment, write a module for any that is not a log file.
-2. [Write a playbook](/playbooks) for the problem you investigate most often.
-3. Ask: "order 4512 is stuck, why?"
+1. Copy `examples/workspace` to a folder of your own (in your app's repository, for example) and point to it with `--workspace` or `OPS_WORKSPACE`.
+2. [Connect your sources](/connectors): describe them in `ops.config.json`, per app and environment, write a module for any that is not a log file.
+3. [Write a playbook](/playbooks) for the problem you investigate most often.
+4. [Write an addon](/addons) for a domain of your own: tools with their own settings, more source types.
+5. Ask: "order 4512 is stuck, why?"
