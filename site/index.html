@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>help-me-ops · investigate your system with the AI you already use</title>
+<meta name="description" content="Investigate a running system from its logs, metrics and database with Claude Code, Codex or Copilot. Connectors and playbooks you fill in. Read-only.">
+<style>
+  :root { --bg: #f7f5f0; --ink: #1d1b18; --soft: #5f5a52; --rule: #d9d3c7; --accent: #b4441e; --panel: #1f1d1a; --panel-ink: #ece6da; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151412; --ink: #ece6da; --soft: #a39c90; --rule: #34312c; --accent: #e07a4f; --panel: #0d0c0b; --panel-ink: #ece6da; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 56px 16px 80px; }
+  h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.05; margin: 0 0 12px; letter-spacing: -0.02em; }
+  h1 em { color: var(--accent); font-style: normal; }
+  .lede { font-size: 1.15rem; color: var(--soft); max-width: 640px; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 28px 0 48px; }
+  .cta a { padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+  .cta .primary { background: var(--accent); color: #fff; }
+  .cta .secondary { border: 1px solid var(--rule); color: var(--ink); }
+  pre { background: var(--panel); color: var(--panel-ink); padding: 20px; border-radius: 10px; overflow-x: auto; font: 14px/1.6 ui-monospace, "JetBrains Mono", monospace; margin: 0; white-space: pre-wrap; }
+  .q { color: #e8b36a; }
+  h2 { font-size: 1.4rem; margin: 56px 0 16px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid div { border-top: 2px solid var(--accent); padding-top: 12px; }
+  .grid h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .grid p { margin: 0; color: var(--soft); }
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 0.9rem; }
+  footer a { color: inherit; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Oh, help me, <em>ops</em>.</h1>
+  <p class="lede">Investigate a running system from its own evidence (logs, metrics, databases, HTTP checks) with the AI you already use: Claude Code, Codex or GitHub Copilot. You bring the sources and the playbooks; it never changes a thing.</p>
+  <div class="cta">
+    <a class="primary" href="guide/getting-started">Get started</a>
+    <a class="secondary" href="https://github.com/bhoudebert/help-me-ops">Source on GitHub</a>
+  </div>
+
+  <pre><span class="q">› client u-881 paid but cannot find order 4512</span>
+
+orders-db  09:58:13  order 4512 of u-881: awaiting_payment
+app-logs   10:00:02  webhook endpoint /hooks/acme-pay returned 503 (queue full)
+app-logs   10:01:03  payment-confirm queue depth=1240, consumers=0 (OOMKilled)
+
+Likely cause: the payment webhook was refused while the confirmation
+worker was down. Next step: replay the webhook for order 4512 once the
+worker is back, and check the other orders of 10:00-10:05.</pre>
+
+  <h2>You fill in the blanks</h2>
+  <div class="grid">
+    <div><h3>Connectors</h3><p>Where the evidence is. Log files out of the box; a database, metrics or an API through a small module you write once, read-only.</p></div>
+    <div><h3>Playbooks</h3><p>How your team investigates each kind of problem, in Markdown. The assistant follows them before improvising.</p></div>
+    <div><h3>Any AI client</h3><p>One MCP server for Claude Code, Codex and Copilot, and a terminal CLI. Same tools, same method everywhere.</p></div>
+  </div>
+
+  <footer>help-me-ops · MIT · <a href="guide/">guide</a> · <a href="https://github.com/bhoudebert/help-me-ops">GitHub</a></footer>
+</main>
+</body>
+</html>
