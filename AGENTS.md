@@ -60,6 +60,15 @@ The full path every feature follows, from idea to release, is in
 - TypeScript 7 is the compiler (`npm run typecheck`); the `typescript` package
   is the TypeScript 6 API alias for tooling. Do not "fix" that.
 
+## Investigating, as opposed to developing
+
+When asked to investigate a problem ("order 4512 is stuck"), use the
+`help-me-ops` MCP tools (`scope`, `listSources`, `searchSource`, the addon
+tools), not the shell. Files under `examples/workspace` (logs, data) stand for a
+remote system: read them only through the tools, as a real investigation would.
+If the tools are missing, the project server needs approving (`/mcp` in Claude
+Code) rather than working around it.
+
 ## Useful commands
 
 ```

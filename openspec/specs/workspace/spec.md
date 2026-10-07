@@ -13,7 +13,8 @@ A workspace SHALL be one directory holding `ops.config.json` and the
 playbooks folder it names. The CLI and the MCP server SHALL accept
 `--workspace <dir>`, then `OPS_WORKSPACE`, and default to the current
 directory. A directory without `ops.config.json` SHALL be refused, saying to
-copy `examples/workspace`.
+copy `examples/workspace`. A configuration in the earlier flat format (a
+top-level `sources` list) SHALL be refused, saying where sources go now.
 
 #### Scenario: Run from another repository
 
