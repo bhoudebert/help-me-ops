@@ -12,3 +12,4 @@
 | [0008](0008-addons.md)                     | Extend through addons: a folder dropped in, loaded at startup              | accepted |
 
 New records start from [template.md](template.md).
+| [0009](0009-addon-authoring.md) | Write an addon as a manifest and plain functions, with no MCP knowledge | accepted |

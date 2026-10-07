@@ -27,6 +27,12 @@ fresh clone.
   parameters (environment, ids), playbooks and knowledge; real ones live in the
   team's own repository, next to the code. A failing addon is skipped with a
   reason, never fatal; `ops addon check` and `ops doctor` verify them.
+- **Addons without MCP knowledge** (ADR 0009): the default way to write one is
+  an `addon.json` manifest and a `tools.ts` of plain functions; the core builds
+  the MCP tool, sets the read-only hints and turns what the function returns
+  into evidence. An addon owns its dependencies (a database driver, installed
+  next to it). `ops init addon` scaffolds one from a `file`, `api` or `sql`
+  template, and `datadog`, `github` and `rest` ship ready.
 - **Knowledge search**: runbooks, playbooks, ADRs and past notes searched by
   plain full-text, returned with their file path. Embeddings later, behind the
   same tool, if needed.
@@ -61,7 +67,7 @@ fresh clone.
 - Code: configuration v2, scope resolution, knowledge index, conclusion
   validator, demo world and scripted model.
 - ADRs: 0007 (the client hosts the model; a workspace folder; apps and
-  environments), 0008 (addons).
+  environments), 0008 (addons), 0009 (writing an addon).
 
 ## Sequence
 
