@@ -36,8 +36,9 @@ One event per line, starting with an ISO 8601 timestamp.
 
 ## Anything else: an addon, or a small module
 
-A connector type can come from an [addon](/addons). For a single source of
-your own, a module is the lightest way:
+A database, metrics or an API are best an [addon](/addons): a manifest and plain
+functions, no code about the assistant. For a text source of your own (a log
+format), a module is the lightest way:
 
 Write a TypeScript file exporting `createConnector`, and point to it:
 

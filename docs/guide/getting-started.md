@@ -15,7 +15,7 @@ nvm use        # Node 24
 npm install
 ```
 
-The demo **workspace** in `examples/workspace` is one app, `shop`, in `prod` and
+The demo [**workspace**](/workspace) in `examples/workspace` is one app, `shop`, in `prod` and
 `staging`, with its logs, orders, metrics and health checks recorded as files,
 around an order that got stuck: [the story](/demo). A workspace is a folder:
 `ops.config.json` (apps, environments, sources) and `playbooks/`.
@@ -47,5 +47,5 @@ itself runs in an AI client, which brings its own model:
 1. Copy `examples/workspace` to a folder of your own (in your app's repository, for example) and point to it with `--workspace` or `OPS_WORKSPACE`.
 2. [Connect your sources](/connectors): describe them in `ops.config.json`, per app and environment, write a module for any that is not a log file.
 3. [Write a playbook](/playbooks) for the problem you investigate most often.
-4. [Write an addon](/addons) for a domain of your own: tools with their own settings, more source types.
+4. [Write an addon](/addons) for a database, an API or metrics: an `addon.json` and a `tools.ts` of plain functions.
 5. Ask: "order 4512 is stuck, why?"

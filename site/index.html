@@ -82,18 +82,45 @@ claude          <span class="c"># or open the folder in VS Code with Copilot, or
   <p class="note">The repository ships a small shop to investigate, in <code>prod</code> and <code>staging</code>, with a fault in <code>prod</code> only. No system of yours needed. <a href="guide/demo">The story and what to expect</a>.</p>
 
   <h2>Then plug in your own</h2>
+  <p class="note" style="margin:0 0 18px">Your infrastructure is a folder you keep in your own repository and review like code. <b>No AI or MCP knowledge needed</b>: to add a database, Datadog, GitHub or your own API, you write a manifest and a plain function.</p>
   <div class="two">
+    <pre><span class="c"># addons/order/addon.json</span>
+{
+  "apiVersion": 1,
+  "settings": {
+    "dbUrl": { "type": "string", "env": "ORDER_DB_URL", "secret": true }
+  },
+  "tools": {
+    "getOrder": {
+      "description": "One order: status and last change",
+      "params": { "id": "string" }
+    }
+  }
+}</pre>
+    <pre><span class="c"># addons/order/tools.ts</span>
+import pg from "pg";
+
+export async function getOrder({ id }, { settings }) {
+  const db = new pg.Client(settings.dbUrl);
+  await db.connect();
+  const { rows } = await db.query(
+    "SELECT * FROM orders WHERE id = $1", [id]);
+  await db.end();
+  return rows;  <span class="c">// the assistant quotes these</span>
+}</pre>
+  </div>
+  <div class="two" style="margin-top:24px">
     <pre>ops/                      <span class="c"># in your app's repository</span>
   ops.config.json         <span class="c"># apps, environments, sources</span>
   playbooks/              <span class="c"># how your team investigates</span>
   addons/
-    order/addon.ts        <span class="c"># drop a folder in: it loads</span>
-    metrics/
+    order/                <span class="c"># drop a folder in: it loads</span>
+    datadog/
     _health/              <span class="c"># _ turns one off</span></pre>
     <div>
-      <p>Your infrastructure is a folder you own and review like code. <b>Logs need no code.</b> A database, metrics or a health check are an <b>addon</b>: a folder with a few lines, its own settings per environment, credentials read from the environment.</p>
-      <p>Update this project whenever you like: your folder is never touched. A broken addon is skipped with a reason, never fatal.</p>
-      <p><a href="guide/addons">Write an addon</a> · <a href="guide/playbooks">Write a playbook</a> · <a href="guide/connectors">Connect your sources</a></p>
+      <p><b>The tool is served to every client as <code>order.getOrder</code></b>, for each environment, always read-only. You never write the MCP part.</p>
+      <p>Credentials come from the environment, never from a file. A missing driver or a mistake skips that addon with a reason; the rest keeps working. Updating this project never touches your folder.</p>
+      <p><a href="guide/addons">Write an addon</a> · <a href="guide/workspace">What is in a workspace</a> · <a href="guide/playbooks">Write a playbook</a></p>
     </div>
   </div>
 
