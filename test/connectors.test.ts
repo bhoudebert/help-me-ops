@@ -3,8 +3,12 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { fileLogs } from "../src/connectors/fileLogs.ts";
+import { fileLogs } from "../addons/logs/fileLogs.ts";
+import { addonFolders, loadAddons } from "../src/addons/loader.ts";
+import { connectorTypes } from "../src/addons/runtime.ts";
 import { createConnectors } from "../src/connectors/registry.ts";
+
+const types = connectorTypes((await loadAddons(addonFolders(process.cwd(), []))).addons);
 
 const logs = fileLogs({ id: "app-logs", description: "app", path: "examples/workspace/logs/app.log" });
 
@@ -40,12 +44,13 @@ test("file logs: a line without a time is kept only without a window", async () 
 });
 
 test("registry: built-in and module sources; unique ids; a module must export createConnector", async () => {
-  const sources = await createConnectors(
+  const { connectors: sources } = await createConnectors(
     [
       { type: "file-logs", id: "app-logs", description: "logs", path: "examples/workspace/logs/app.log" },
       { type: "module", id: "orders-db", description: "orders", module: "examples/workspace/connectors/orders-db.ts" },
     ],
     process.cwd(),
+    types,
   );
   assert.deepEqual(
     sources.map((s) => [s.id, s.kind]),
@@ -64,6 +69,7 @@ test("registry: built-in and module sources; unique ids; a module must export cr
         { type: "file-logs", id: "same", description: "b", path: "y.log" },
       ],
       process.cwd(),
+      types,
     ),
     /Two sources are named same/,
   );
@@ -72,5 +78,19 @@ test("registry: built-in and module sources; unique ids; a module must export cr
   await assert.rejects(
     createConnectors([{ type: "module", id: "bad", description: "b", module: "empty.ts" }], dir),
     /does not export createConnector/,
+  );
+});
+
+test("registry: a type nobody provides is left out; wrong options are refused", async () => {
+  const left = await createConnectors([{ type: "postgres", id: "db", description: "d" }], process.cwd(), types);
+  assert.deepEqual(left.connectors, []);
+  assert.match(left.skipped[0]!, /source db: no connector type "postgres"/);
+  await assert.rejects(
+    createConnectors([{ type: "file-logs", id: "x", description: "d" }], process.cwd(), types),
+    /Source x \(file-logs\)/,
+  );
+  await assert.rejects(
+    createConnectors([{ type: "module", id: "m", description: "d" }], process.cwd(), types),
+    /a module source needs "module"/,
   );
 });

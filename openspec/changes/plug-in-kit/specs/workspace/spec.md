@@ -13,4 +13,5 @@ A workspace SHALL also hold `knowledge/` (see the knowledge delta) and
 ### Requirement: Secrets stay out of the file
 
 The configuration SHALL name environment variables for credentials, never hold
-their values.
+their values. (Addon settings do, with `${NAME}`; the options of a source come
+with the addon-check change.)

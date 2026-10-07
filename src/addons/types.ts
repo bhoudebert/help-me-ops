@@ -1,0 +1,63 @@
+// What an addon is, for the people who write one (ADR 0008). An addon is a
+// folder with an addon.ts whose default export is a definition, or a function
+// receiving { z } and returning one, so an addon needs no packages of its own.
+import type { z } from "zod";
+import type { Connector, Evidence } from "../connectors/types.ts";
+import type { ToolHints } from "../tools/index.ts";
+
+/** The addon API this core understands; an addon declares the one it was written for. */
+export const ADDON_API_VERSION = 1;
+
+/** What a tool or a connector of an addon is told about where it runs. */
+export interface AddonContext {
+  app: string;
+  env: string;
+  /** The addon's settings for this app and environment, validated. */
+  settings: Record<string, unknown>;
+  /** The workspace folder, to resolve relative paths. */
+  workspace: string;
+}
+
+export interface AddonTool {
+  /** Namespaced by the addon when served: `order.getOrder`. */
+  name: string;
+  description: string;
+  /** The tool's own parameters; `app` and `env` are added for it. */
+  inputSchema: z.ZodObject;
+  /** All four hints; `readOnlyHint: true` and `destructiveHint: false` are required (ADR 0002). */
+  annotations: ToolHints;
+  run(input: never, context: AddonContext): Promise<Evidence[]>;
+}
+
+/** A kind of source, usable as `type` in ops.config.json. */
+export interface ConnectorType {
+  /** The options a source of this type takes, besides its id and description. */
+  options: z.ZodObject;
+  create(
+    options: { id: string; description: string } & Record<string, unknown>,
+    context: { workspace: string },
+  ): Connector;
+}
+
+export interface AddonDefinition {
+  apiVersion: number;
+  /** Settings of the addon, per app and environment. */
+  settings?: z.ZodObject;
+  /** Environment variable read for each setting, which the configuration may override. */
+  env?: Record<string, string>;
+  tools?: AddonTool[];
+  connectors?: Record<string, ConnectorType>;
+}
+
+/** What an addon.ts may export as default. */
+export type AddonExport = AddonDefinition | ((api: { z: typeof z }) => AddonDefinition | Promise<AddonDefinition>);
+
+/** Typing helpers: they return what they are given. */
+export const defineAddon = (addon: AddonExport): AddonExport => addon;
+export const defineTool = <I extends z.ZodObject>(tool: {
+  name: string;
+  description: string;
+  inputSchema: I;
+  annotations: ToolHints;
+  run(input: z.infer<I>, context: AddonContext): Promise<Evidence[]>;
+}): AddonTool => tool as unknown as AddonTool;

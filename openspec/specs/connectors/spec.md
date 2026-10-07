@@ -21,7 +21,7 @@ read-only credentials.
 
 ### Requirement: Log files
 
-The built-in `file-logs` connector SHALL return the lines containing the query
+The built-in `file-logs` connector (an addon, `addons/logs`) SHALL return the lines containing the query
 (case ignored), in file order, with the time read from an ISO 8601 timestamp at
 the start of the line; within a time window, lines without a time SHALL be
 left out.
@@ -35,7 +35,8 @@ left out.
 
 A source of type `module` SHALL load a TypeScript file, relative to the workspace,
 exporting `createConnector`; a module without it SHALL be refused naming the
-file. Source ids SHALL be unique within an environment.
+file. A source of any other type SHALL be served by the connector type of an
+addon (see the addons spec). Source ids SHALL be unique within an environment.
 
 ### Requirement: Configuration
 

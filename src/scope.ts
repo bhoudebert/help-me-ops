@@ -6,6 +6,8 @@ import type { Connector } from "./connectors/types.ts";
 export interface EnvSetup {
   name: string;
   sources: Connector[];
+  /** Settings the configuration gives each addon in this environment. */
+  addons: Record<string, Record<string, unknown>>;
 }
 
 export interface AppSetup {

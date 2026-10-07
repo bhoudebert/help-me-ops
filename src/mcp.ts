@@ -3,6 +3,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { resolveAddonDirs } from "./addons/loader.ts";
+import { startupNotices } from "./commands.ts";
 import { resolveWorkspace } from "./config.ts";
 import { openToolbox } from "./toolbox.ts";
 import { createToolDefinitions } from "./tools/index.ts";
@@ -15,9 +17,10 @@ const INSTRUCTIONS = `help-me-ops investigates a running system from its own evi
 5. Conclude: the most likely cause, how sure you are and why, what is still unknown, and the next step for a person. Never state what no evidence shows.
 Every tool is read-only: never suggest changing data yourself; propose the change for a person to make.`;
 
-const toolbox = await openToolbox(resolveWorkspace());
+const toolbox = await openToolbox(resolveWorkspace(), resolveAddonDirs());
 const server = new McpServer({ name: "help-me-ops", version: "0.1.0" }, { instructions: INSTRUCTIONS });
 
+for (const notice of startupNotices(toolbox)) process.stderr.write(`${notice}\n`);
 for (const tool of createToolDefinitions(toolbox)) {
   server.registerTool(
     tool.name,
@@ -42,5 +45,5 @@ server.registerPrompt(
 
 await server.connect(new StdioServerTransport());
 process.stderr.write(
-  `help-me-ops MCP server ready: ${toolbox.apps.length} app(s), ${toolbox.playbooks.length} playbook(s)\n`,
+  `help-me-ops MCP server ready: ${toolbox.apps.length} app(s), ${toolbox.addons?.filter((a) => a.status === "loaded").length ?? 0} addon(s), ${toolbox.playbooks.length} playbook(s)\n`,
 );
