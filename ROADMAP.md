@@ -6,9 +6,12 @@
   searchable runbooks (`knowledge/`), a checked conclusion (cause, evidence,
   unknowns, every quote from a result), a scripted terminal demo (`ops demo`)
   and setup helpers (`ops init`, `ops doctor`, `ops addon check`).
-- **Connectors people ask for first**: PostgreSQL and MySQL (read-only user),
-  Loki or Elasticsearch logs, Prometheus metrics (CPU, memory, queue depth),
-  an HTTP health check. Each an addon following `examples/workspace/addons/`.
+- **Writing an addon without MCP knowledge** (ADR 0009): a manifest and plain
+  functions, an `ops init addon` scaffold, and shipped addons for Datadog,
+  GitHub and a team's own REST API.
+- **More addons people ask for**: PostgreSQL and MySQL (read-only user, from
+  the `sql` scaffold), Loki or Elasticsearch logs, Prometheus metrics. Each an
+  addon following `examples/workspace/addons/`.
 - **A terminal investigator** calling a model API, if people without an MCP
   client ask for it.
 - **Case files**: an investigation saved with its question, steps, evidence
