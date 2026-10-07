@@ -17,6 +17,8 @@ export interface AddonContext {
   settings: Record<string, unknown>;
   /** The workspace folder, to resolve relative paths. */
   workspace: string;
+  /** fetch, for calling an API; tests hand in a fake. */
+  fetch: typeof fetch;
 }
 
 export interface AddonTool {
@@ -46,6 +48,8 @@ export interface AddonDefinition {
   settings?: z.ZodObject;
   /** Environment variable read for each setting, which the configuration may override. */
   env?: Record<string, string>;
+  /** Names of settings never to print. */
+  secrets?: string[];
   tools?: AddonTool[];
   connectors?: Record<string, ConnectorType>;
 }

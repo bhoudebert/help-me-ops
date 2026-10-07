@@ -5,6 +5,7 @@ import { readdir } from "node:fs/promises";
 import { delimiter, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { z } from "zod";
+import { loadManifestAddon } from "./manifest.ts";
 import { ADDON_API_VERSION, defineTool, type AddonDefinition, type AddonExport } from "./types.ts";
 
 export type Origin = "built-in" | "extra" | "workspace";
@@ -119,9 +120,10 @@ export async function loadAddons(folders: AddonFolder[]): Promise<{ addons: Load
       .sort((a, b) => a.name.localeCompare(b.name))) {
       const dir = join(root, entry.name);
       const file = join(dir, "addon.ts");
+      const manifest = join(dir, "addon.json");
       const playbooks = dirOrNull(join(dir, "playbooks"));
       const knowledge = dirOrNull(join(dir, "knowledge"));
-      if (!existsSync(file) && !playbooks && !knowledge) continue;
+      if (!existsSync(file) && !existsSync(manifest) && !playbooks && !knowledge) continue;
       const entryReport: AddonReport = { name: entry.name, dir, origin, status: "loaded", notes: [] };
       report.push(entryReport);
       if (!NAME.test(entry.name)) {
@@ -132,9 +134,16 @@ export async function loadAddons(folders: AddonFolder[]): Promise<{ addons: Load
         continue;
       }
       let definition: AddonDefinition | null = null;
-      if (existsSync(file)) {
+      if (existsSync(file) && existsSync(manifest)) {
+        Object.assign(entryReport, {
+          status: "skipped",
+          reason: "it has both addon.json and addon.ts: keep one",
+        });
+        continue;
+      }
+      if (existsSync(file) || existsSync(manifest)) {
         try {
-          definition = await loadDefinition(file);
+          definition = existsSync(manifest) ? await loadManifestAddon(dir, entry.name) : await loadDefinition(file);
         } catch (error) {
           Object.assign(entryReport, {
             status: "skipped",
