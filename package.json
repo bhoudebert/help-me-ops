@@ -1,0 +1,61 @@
+{
+  "name": "help-me-ops",
+  "version": "0.1.0",
+  "description": "Investigate a running system from its logs, metrics and database, with Claude, Codex or Copilot: connectors and playbooks you fill in",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "ops": "node --env-file-if-exists=.env src/cli.ts",
+    "mcp": "node --env-file-if-exists=.env src/mcp.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test 'test/**/*.test.ts'",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-exclude='test/**' --test-coverage-exclude='scripts/**' --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=65 'test/**/*.test.ts'",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "quality": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage",
+    "docs:dev": "vitepress dev docs/guide",
+    "docs:build": "vitepress build docs/guide",
+    "prepare": "simple-git-hooks"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.4",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.9",
+    "simple-git-hooks": "^2.14.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-eslint": "^8.71.0",
+    "vitepress": "^1.6.4"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged",
+    "commit-msg": "npx commitlint --edit $1"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": "prettier --write"
+  },
+  "license": "MIT",
+  "author": "Benjamin Houdebert",
+  "overrides": {
+    "vite": "^6.4.3"
+  }
+}
