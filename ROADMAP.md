@@ -2,13 +2,16 @@
 
 ## Next
 
-- **The investigation loop** (`openspec/changes/first-investigation-loop/`):
-  a model follows the matching playbook through the sources, builds a timeline
-  and concludes with the cause, the evidence and what is still unknown. From
-  the terminal with an API key, and the same method over MCP.
+- **The plug-in kit** (`openspec/changes/plug-in-kit/`): a workspace folder
+  per team with apps and environments, searchable runbooks, a checked
+  conclusion (cause, evidence, unknowns), a demo world with fake services and
+  a scripted terminal demo. The model stays in the client (Claude Code, Codex,
+  Copilot).
 - **Connectors people ask for first**: PostgreSQL and MySQL (read-only user),
   Loki or Elasticsearch logs, Prometheus metrics (CPU, memory, queue depth),
   an HTTP health check. Each a module following `examples/connectors/`.
+- **A terminal investigator** calling a model API, if people without an MCP
+  client ask for it.
 - **Case files**: an investigation saved with its question, steps, evidence
   and conclusion, so the next one starts from what is known.
 

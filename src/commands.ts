@@ -49,8 +49,8 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
           ? `Playbook: ${playbook.name} (${playbook.id})\n\n${playbook.body}`
           : "No playbook matches: write one in playbooks/ (copy order-stuck.md).",
         `\nSources:\n${where || "  none configured"}`,
-        "\nThe automated investigation (a model following the playbook through the sources) is the next step:",
-        "openspec/changes/first-investigation-loop. Today, run it from Claude Code, Codex or Copilot over MCP.",
+        "\nThe model follows the playbook in your AI client, over MCP (Claude Code, Codex, Copilot).",
+        "The plug-in kit and demo world are proposed in openspec/changes/plug-in-kit.",
       ].join("\n");
     }
     default:

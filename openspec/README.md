@@ -14,6 +14,6 @@ record of how it was decided.
 | mcp-server | The server for Claude Code, Codex and Copilot: tools, instructions, prompt           |
 | cli        | The terminal commands                                                                |
 
-| Change                                                                   | Status   |
-| ------------------------------------------------------------------------ | -------- |
-| [first-investigation-loop](changes/first-investigation-loop/proposal.md) | proposed |
+| Change                                         | Status   |
+| ---------------------------------------------- | -------- |
+| [plug-in-kit](changes/plug-in-kit/proposal.md) | proposed |
