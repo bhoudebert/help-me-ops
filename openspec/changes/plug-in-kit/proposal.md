@@ -22,6 +22,11 @@ fresh clone.
 - **Apps and environments** in the configuration: each app has environments,
   each environment its sources. Tools take `app` and `env`; a `scope` tool
   resolves them from the question and the configuration.
+- **Addons** (ADR 0008): a folder dropped in `addons/` is loaded at startup,
+  nothing to register. An addon brings connectors, tools with their own
+  parameters (environment, ids), playbooks and knowledge; real ones live in the
+  team's own repository, next to the code. A failing addon is skipped with a
+  reason, never fatal; `ops addon check` and `ops doctor` verify them.
 - **Knowledge search**: runbooks, playbooks, ADRs and past notes searched by
   plain full-text, returned with their file path. Embeddings later, behind the
   same tool, if needed.
@@ -41,6 +46,7 @@ fresh clone.
 
 ## Not in this change
 
+- Fetching addons from a URL or a registry, and sandboxing addons.
 - An investigator calling a model API from the terminal. Deferred; the
   `Model` seam exists only for the scripted demo.
 - Packaging on npm. The server is run from a clone, pointed at a folder.
@@ -49,13 +55,13 @@ fresh clone.
 
 ## Impact
 
-- Specs: new `workspace`, `knowledge`, `conclusion` and `demo` capabilities
+- Specs: new `workspace`, `addons`, `knowledge`, `conclusion` and `demo` capabilities
   (deltas here); `toolbox`, `cli` and `mcp-server` change (app and env
   parameters, new tools and commands).
 - Code: configuration v2, scope resolution, knowledge index, conclusion
   validator, demo world and scripted model.
-- ADR: 0007 (the client hosts the model; a workspace folder; apps and
-  environments).
+- ADRs: 0007 (the client hosts the model; a workspace folder; apps and
+  environments), 0008 (addons).
 
 ## Sequence
 

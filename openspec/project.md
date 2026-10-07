@@ -30,7 +30,7 @@ connectors and playbooks.
 
 - Connectors return `Evidence` (source, time, summary, raw data); nothing else crosses into the model.
 - Read-only everywhere (ADR 0002).
-- Configuration per team in a workspace folder (`ops.config.json`, `playbooks/`, `knowledge/`); credentials in `.env` (ADR 0007).
+- Configuration per team in a workspace folder (`ops.config.json`, `playbooks/`, `knowledge/`, `addons/`); credentials in `.env` (ADR 0007). Extensions are addons (ADR 0008).
 
 ### Testing Strategy
 
@@ -49,6 +49,7 @@ connectors and playbooks.
 - **Evidence**: one record found in a source, with its time, a one-line summary and the raw data.
 - **Playbook**: how the team investigates a kind of problem; when it applies, then steps naming sources.
 - **Investigation**: a question followed through a playbook and the sources to a conclusion.
+- **Addon**: a folder dropped in an addons folder and loaded at startup; it brings connectors, tools, playbooks and knowledge for one domain (`order`, `aaa`).
 - **Workspace**: the folder holding a team's configuration, playbooks and knowledge.
 - **App** and **environment**: what is investigated (`shop`) and where it runs (`prod`, `staging`); each environment has its own sources.
 - **Case** (planned): an investigation kept with its question, steps, evidence and conclusion.

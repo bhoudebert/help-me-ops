@@ -6,7 +6,8 @@
   per team with apps and environments, searchable runbooks, a checked
   conclusion (cause, evidence, unknowns), a demo world with fake services and
   a scripted terminal demo. The model stays in the client (Claude Code, Codex,
-  Copilot).
+  Copilot). Extension by **addons**: a folder dropped in `addons/` is loaded,
+  nothing to register (ADR 0008).
 - **Connectors people ask for first**: PostgreSQL and MySQL (read-only user),
   Loki or Elasticsearch logs, Prometheus metrics (CPU, memory, queue depth),
   an HTTP health check. Each a module following `examples/connectors/`.
