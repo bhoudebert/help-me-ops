@@ -1,0 +1,19 @@
+# Specifications
+
+`specs/<capability>/spec.md` describes what the system does today, as
+requirements with scenarios. `changes/` holds proposals that add or modify
+requirements before they are implemented; once built, a change is folded into
+the specs and its folder moves to `changes/archive/` (dated), kept as the
+record of how it was decided.
+
+| Capability | Covers                                                                               |
+| ---------- | ------------------------------------------------------------------------------------ |
+| connectors | Sources of evidence: the contract, read-only, log files, team modules, configuration |
+| playbooks  | How a team investigates a kind of problem, in Markdown, matched to a report          |
+| toolbox    | The tools shared by every client, their hints and errors                             |
+| mcp-server | The server for Claude Code, Codex and Copilot: tools, instructions, prompt           |
+| cli        | The terminal commands                                                                |
+
+| Change                                                                   | Status   |
+| ------------------------------------------------------------------------ | -------- |
+| [first-investigation-loop](changes/first-investigation-loop/proposal.md) | proposed |
