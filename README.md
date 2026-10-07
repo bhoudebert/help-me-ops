@@ -1,5 +1,12 @@
 # help-me-ops
 
+[![CI](https://github.com/bhoudebert/help-me-ops/actions/workflows/ci.yml/badge.svg)](https://github.com/bhoudebert/help-me-ops/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/bhoudebert/help-me-ops/actions/workflows/codeql.yml/badge.svg)](https://github.com/bhoudebert/help-me-ops/actions/workflows/codeql.yml)
+[![Release](https://img.shields.io/github/v/release/bhoudebert/help-me-ops?display_name=tag&sort=semver)](https://github.com/bhoudebert/help-me-ops/releases)
+[![Node 24](https://img.shields.io/badge/node-%E2%89%A524-339933?logo=node.js&logoColor=white)](.nvmrc)
+[![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![Conventional Commits](https://img.shields.io/badge/commits-conventional-fe5196?logo=conventionalcommits&logoColor=white)](CONTRIBUTING.md)
+
 **Oh, help me, ops.** Investigate a running system from its own evidence (logs,
 metrics, databases, HTTP checks) with the AI you already use: Claude Code,
 Codex or GitHub Copilot.
