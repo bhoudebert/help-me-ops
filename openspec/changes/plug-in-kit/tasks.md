@@ -11,5 +11,6 @@
 - [ ] Conclusion: schema, evidence check, `check_conclusion`, MCP instructions with the same layout
 - [ ] Scripted model and `ops demo`, tested against the demo world
 - [x] `ops init workspace`
-- [ ] Setup helpers: `ops doctor` checks, `ops addon check`, MCP setup tools
+- [x] `ops addon check`
+- [ ] Setup helpers: `ops doctor` checks, MCP setup tools
 - [ ] Guide ("Plug in your infrastructure", "Write an addon", "Try the demo" per client), README, site, roadmap

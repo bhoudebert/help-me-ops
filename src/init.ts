@@ -122,6 +122,7 @@ export async function initAddon(workspace: string, args: string[]): Promise<stri
     `  ${template === "sql" ? 3 : 2}. Give it its settings under the environment that uses it, in ops.config.json:`,
     `       "addons": { "${name}": { ... } }   (the addon.json lists the settings; credentials as "\${VARIABLE}")`,
     `  ${template === "sql" ? 4 : 3}. npm run ops -- --workspace ${workspace} doctor   # the addon must show as loaded`,
+    `  ${template === "sql" ? 5 : 4}. npm run ops -- addon check ${target}   # ok / warn / FAIL, with the fix; edit check.json for the samples`,
     "Read-only: use an account that can only read.",
   ].join("\n");
 }

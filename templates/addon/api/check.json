@@ -1,0 +1,28 @@
+[
+  {
+    "name": "get an item",
+    "tool": "getItem",
+    "input": {
+      "id": "7"
+    },
+    "settings": {
+      "url": "https://api.example.com",
+      "token": "a-test-token"
+    },
+    "responses": {
+      "GET https://api.example.com/items/7": {
+        "status": 200,
+        "body": {
+          "id": "7",
+          "state": "open",
+          "updated_at": "2026-10-07T10:00:00Z"
+        }
+      }
+    },
+    "expect": {
+      "minRecords": 1,
+      "summaryIncludes": "item 7",
+      "withTime": true
+    }
+  }
+]

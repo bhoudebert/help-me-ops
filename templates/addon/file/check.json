@@ -1,0 +1,17 @@
+[
+  {
+    "name": "find a line",
+    "tool": "search",
+    "input": {
+      "term": "4512"
+    },
+    "settings": {
+      "path": "sample.log"
+    },
+    "expect": {
+      "minRecords": 1,
+      "summaryIncludes": "4512",
+      "withTime": true
+    }
+  }
+]

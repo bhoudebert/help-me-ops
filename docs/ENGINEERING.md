@@ -19,6 +19,7 @@ MCP (src/mcp.ts) ──┘  (src/toolbox.ts)    └─▶ playbooks (<workspace>
   evidence from what the functions return), turns definitions into settings,
   namespaced tools and connector types (`runtime.ts`), and holds the API of the
   advanced `addon.ts` form (`types.ts`). `addons/` at the root holds the built-ins.
+- `src/addons/check.ts` is `ops addon check`: loads an addon like the server, checks its settings against the workspace, and runs the samples of its `check.json` against recorded answers; the shipped addons and the templates carry a `check.json`.
 - `src/init.ts` scaffolds an addon (`ops init addon`) by copying a folder of
   `templates/addon/` (`file`, `api`, `sql`) with the name filled in, and a whole
   workspace (`ops init workspace`) from `templates/workspace/` and a generated

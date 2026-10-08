@@ -1,0 +1,30 @@
+[
+  {
+    "name": "the releases",
+    "tool": "releases",
+    "input": {
+      "limit": 3
+    },
+    "settings": {
+      "token": "a-test-token",
+      "repos": "acme/shop"
+    },
+    "responses": {
+      "GET https://api.github.com/repos/acme/shop/releases?per_page=3": {
+        "body": [
+          {
+            "tag_name": "v2.14.0",
+            "name": "Release 2.14.0",
+            "published_at": "2026-10-07T09:30:00Z",
+            "body": "notes"
+          }
+        ]
+      }
+    },
+    "expect": {
+      "minRecords": 1,
+      "summaryIncludes": "v2.14.0",
+      "withTime": true
+    }
+  }
+]

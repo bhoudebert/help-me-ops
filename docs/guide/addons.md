@@ -177,6 +177,86 @@ cannot check what it does. So:
 
 The assistant proposes fixes; a person applies them.
 
+## Check it before you drop it in
+
+```bash
+npm run ops -- --workspace my-workspace addon check my-workspace/addons/billing
+```
+
+It loads your addon the way the server does and reports one line per check:
+
+```
+Checking /home/me/my-workspace/addons/billing
+  ok    name "billing"
+  ok    files: addon.json and tools.ts
+  ok    loads: apiVersion 1, 1 tool(s), 2 setting(s)
+  ok    tool billing.getInvoice(id): read-only
+  ok    setting token (variable BILLING_TOKEN), secret
+  ok    settings in shop/prod: valid
+  note  no block for "billing" in ops.config.json for shop/staging: idle there (set it up with a block, or with its variables)
+  ok    sample "an invoice": 1 record(s), 1 with a time
+
+All 8 checks passed: this addon is ready to be dropped into a workspace.
+```
+
+`ok` is right, `note` is information, `warn` is worth a look, `FAIL` must be fixed and comes with how
+(a missing `pg` says `npm install pg` in the workspace; a function in `tools.ts`
+that `addon.json` does not declare says which). The command **exits with a
+non-zero code when anything failed**, so it fits a CI job or a hook.
+
+A folder starting with `_` (or `.`) is **off** for the server, which is normal:
+it is checked anyway under its real name, with a note that says so.
+
+It checks the **settings of each environment** against your `ops.config.json`: a
+block with a wrong or missing setting is a failure; an environment without a
+block, or a `${VARIABLE}` that is not set on this machine, is only a note
+(one line for all the environments concerned), because the addon is then simply
+idle there.
+
+### Sample calls, with no network: `check.json`
+
+Put a `check.json` next to the addon to test its tools against **recorded
+answers**. `init addon --template file` and `--template api` already write one.
+
+```json
+[
+  {
+    "name": "an invoice",
+    "tool": "getInvoice",
+    "input": { "id": "7" },
+    "settings": { "url": "https://billing.example.com", "token": "a-test-token" },
+    "responses": {
+      "GET https://billing.example.com/invoices/7": { "body": { "status": "paid", "paid_at": "2026-10-07T10:00:00Z" } }
+    },
+    "expect": { "minRecords": 1, "summaryIncludes": "paid", "withTime": true }
+  }
+]
+```
+
+| Field           | What                                                                                                                                           |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tool`, `input` | the tool and its parameters, as the assistant would give them                                                                                  |
+| `settings`      | the settings for the call (use test values, never real secrets)                                                                                |
+| `responses`     | the answers to the requests the tool makes, by `"METHOD url"`. A request with no entry **fails the sample**: a check never touches the network |
+| `expect`        | what must hold: `minRecords` (default 1), `maxRecords`, `summaryIncludes` (a text), `withTime` (every record has a time)                       |
+
+A sample also fails when a record has an **empty summary**, or when the value of a
+**secret setting appears in the evidence** (a token printed into a line the
+assistant would quote). Use it to pin down what your function returns, so a later
+change that breaks it is caught before an investigation.
+
+### One real call: `--call`
+
+To try a tool against your real system once, with the settings of an environment
+(read-only, as the assistant would call it):
+
+```bash
+npm run ops -- --workspace my-workspace addon check my-workspace/addons/billing \
+  --call getInvoice --input '{"id":"7"}' --env prod
+```
+
+It prints the first records it got. Use a read-only account.
+
 ## When something is wrong
 
 An addon that cannot load is **skipped with one line saying why**, and the rest

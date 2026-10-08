@@ -1,7 +1,7 @@
 # Addons: delta
 
 The loader, discovery, settings, connector types, isolation, the manifest
-with plain functions and the scaffold are folded into `openspec/specs/addons`. What remains
+with plain functions, the scaffold and the check are folded into `openspec/specs/addons`. What remains
 (ADR 0009):
 
 ## ADDED Requirements
@@ -12,11 +12,6 @@ The repository SHALL ship `github` (pull requests, releases and issues through
 its API, with a read-only token and a list of repositories), tested against
 fixtures and a local fake. (`rest`, `datadog` and `git` are folded into
 `openspec/specs/addons`.)
-
-### Requirement: Check an addon
-
-`ops addon check <dir>` SHALL verify the manifest, the settings, the tools, and
-a sample call against fixtures, and exit non-zero on a failure.
 
 ### Requirement: Credentials of every source
 
