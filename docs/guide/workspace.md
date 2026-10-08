@@ -6,7 +6,7 @@ in your own repository and point help-me-ops at it (`--workspace`, or
 `OPS_WORKSPACE`). The demo is `examples/my-workspace`; copy it to start.
 
 ```
-workspace/
+my-workspace/
   ops.config.json     which apps and environments, and their sources
   addons/             what can be read: databases, APIs, metrics … (see Write an addon)
   playbooks/          how your team investigates each kind of problem

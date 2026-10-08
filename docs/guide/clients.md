@@ -43,8 +43,15 @@ The first one is the [demo](/demo): the answer is in the files of
 In Claude Code, `/mcp__help-me-ops__investigate <problem>` sends the method
 and the problem in one go.
 
-The shipped client files point at the demo workspace (`examples/my-workspace`);
-change `--workspace` / `OPS_WORKSPACE` to yours. Paths in `ops.config.json`
+The shipped client files (`.mcp.json`, `.vscode/mcp.json`) point at the **demo
+workspace** (`examples/my-workspace`), so a client started in this repository
+investigates the demo; change `--workspace` / `OPS_WORKSPACE` to yours. Without
+either, the server reads the current folder.
+
+**Which workspace is loaded?** The server prints it on start-up
+(`workspace /path/…`), the model is told it, and the `scope` answer starts with
+it. Ask "which workspace are you reading?" any time. From the terminal,
+`npm run ops -- doctor` prints it first. Paths in `ops.config.json`
 (log files, connector modules, playbooks) are read relative to the workspace,
 so the server works from any folder.
 
