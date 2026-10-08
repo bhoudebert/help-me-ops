@@ -60,7 +60,7 @@ orders, metrics and health checks in `prod` and `staging`, with a fault in
 `prod` only. The assistant has to find it across four sources, tell prod from
 staging, and conclude with the likely cause, its evidence and what is unknown.
 [The story and what to expect](https://bhoudebert.github.io/help-me-ops/guide/demo).
-No client? The same tools run from the terminal:
+Want to see it on a real database? [The same shop on PostgreSQL in Docker](https://bhoudebert.github.io/help-me-ops/guide/database): the assistant finds that three customers paid and have no order. No client? The same tools run from the terminal:
 
 ```bash
 export OPS_WORKSPACE=examples/my-workspace

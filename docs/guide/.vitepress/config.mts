@@ -23,6 +23,7 @@ export default defineConfig({
           { text: "Getting started", link: "/getting-started" },
           { text: "Claude Code, Codex and Copilot", link: "/clients" },
           { text: "Try the demo", link: "/demo" },
+          { text: "…with a real database", link: "/database" },
           { text: "Investigate a problem", link: "/investigate" },
         ],
       },

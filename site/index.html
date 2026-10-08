@@ -80,6 +80,7 @@ stuck the same way.
 npm install
 claude          <span class="c"># or open the folder in VS Code with Copilot, or add the server to Codex</span></pre>
   <p class="note">The repository ships a small shop to investigate, in <code>prod</code> and <code>staging</code>, with a fault in <code>prod</code> only. No system of yours needed. <a href="guide/demo">The story and what to expect</a>.</p>
+  <p class="note">Want more than files? <b>The same shop runs on a real PostgreSQL in Docker.</b> The assistant reads the payments table and finds what no log says: three customers paid 165.20 EUR and have no order, while a <code>SELECT</code>-only user makes a write impossible. <a href="guide/database">Five minutes, with Docker</a>.</p>
 
   <h2>Then plug in your own</h2>
   <p class="note" style="margin:0 0 18px">Your infrastructure is a folder you keep in your own repository and review like code. <b>No AI or MCP knowledge needed</b>: to add a database, Datadog, GitHub or your own API, you write a manifest and a plain function.</p>

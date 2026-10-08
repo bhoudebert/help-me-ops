@@ -81,6 +81,12 @@ And it concludes, quoting each line with its source and time:
 
 It does not replay anything itself: nothing in help-me-ops can change a system.
 
+## With a real database
+
+The same story runs on a real PostgreSQL in Docker, where the assistant finds that
+the three customers **paid** (165.20 EUR) and have no order:
+[same investigation, with a real database](/database).
+
 ## Without a model
 
 The same tools work from the terminal, to see what the assistant sees:
