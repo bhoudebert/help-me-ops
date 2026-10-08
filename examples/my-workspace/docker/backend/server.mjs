@@ -7,13 +7,14 @@
 //   node docker/backend/server.mjs                         # or without Docker
 //
 // Two things on each port: the shop's own REST API (/orders, /health), and a
-// fake Datadog (/api/..., see datadog.mjs). It only reads: anything but GET is
+// mock of Datadog (/api/..., see datadog.mjs) and of GitHub (/repos/..., github.mjs). It only reads: anything but GET is
 // answered 405, but for Datadog's log search, a POST that changes nothing.
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { datadogApi } from "./datadog.mjs";
+import { githubApi } from "./github.mjs";
 
 export const DEMO_TOKEN = "demo-token";
 
@@ -27,6 +28,7 @@ export function shopApi(workspace, env) {
       response.end(JSON.stringify(body));
     };
     if (await datadogApi(workspace, env, request, response, new URL(request.url ?? "/", "http://backend"))) return;
+    if (githubApi(workspace, request, response, new URL(request.url ?? "/", "http://backend"))) return;
     if (request.method !== "GET") return send(405, { error: "read-only: only GET" });
     if (request.headers.authorization !== `Bearer ${DEMO_TOKEN}`)
       return send(401, { error: "a Bearer token is needed" });

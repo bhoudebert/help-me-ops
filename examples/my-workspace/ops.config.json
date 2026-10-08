@@ -37,6 +37,11 @@
             },
             "git": {
               "repo": "${SHOP_REPO}"
+            },
+            "github": {
+              "token": "${GITHUB_TOKEN}",
+              "repos": "shop-co/shop",
+              "baseUrl": "${SHOP_API_PROD_URL}"
             }
           }
         },
@@ -74,6 +79,11 @@
             },
             "git": {
               "repo": "${SHOP_REPO}"
+            },
+            "github": {
+              "token": "${GITHUB_TOKEN}",
+              "repos": "shop-co/shop",
+              "baseUrl": "${SHOP_API_STAGING_URL}"
             }
           }
         }

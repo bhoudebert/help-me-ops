@@ -1,0 +1,44 @@
+[
+  {
+    "tag_name": "v2.14.0",
+    "name": "Release 2.14.0",
+    "published_at": "2026-10-07T09:30:00Z",
+    "created_at": "2026-10-07T09:30:00Z",
+    "author": {
+      "login": "bob",
+      "type": "User"
+    },
+    "prerelease": false,
+    "draft": false,
+    "body": "Faster confirmations (batches of 500, cache of confirmed orders). Worker memory limit 512Mi.",
+    "html_url": "https://github.example/shop-co/shop/releases/tag/v2.14.0"
+  },
+  {
+    "tag_name": "v2.13.2",
+    "name": "Release 2.13.2",
+    "published_at": "2026-10-02T09:30:00Z",
+    "created_at": "2026-10-02T09:30:00Z",
+    "author": {
+      "login": "bob",
+      "type": "User"
+    },
+    "prerelease": false,
+    "draft": false,
+    "body": "Typo fix in the confirmation email.",
+    "html_url": "https://github.example/shop-co/shop/releases/tag/v2.13.2"
+  },
+  {
+    "tag_name": "v2.13.0",
+    "name": "Release 2.13.0",
+    "published_at": "2026-09-25T15:40:00Z",
+    "created_at": "2026-09-25T15:40:00Z",
+    "author": {
+      "login": "bob",
+      "type": "User"
+    },
+    "prerelease": false,
+    "draft": false,
+    "body": "Payments are confirmed one job at a time.",
+    "html_url": "https://github.example/shop-co/shop/releases/tag/v2.13.0"
+  }
+]
