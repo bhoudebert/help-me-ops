@@ -79,8 +79,9 @@ the `api` template SHALL only GET.
 ### Requirement: Idle until set up
 
 An addon with settings that no environment sets up (no entry under `addons` in
-the configuration, none of its environment variables set, and settings that do
-not validate when empty), or whose configured settings only wait for
+the configuration, not every setting it cannot work without given by its
+environment variable, and settings that do not validate when empty; a variable
+that other tools export, such as `DD_SITE`, is not enough), or whose configured settings only wait for
 `${VARIABLE}`s this machine does not have, SHALL be reported as `idle` (naming
 the variables it waits for), serve no tool and print nothing at start. A
 variable missing in one environment while another is set up SHALL make that
@@ -92,6 +93,11 @@ settings that do not validate SHALL stay noted as unavailable.
 
 - **WHEN** a workspace sets up no shipped addon
 - **THEN** `doctor` lists them as `idle` with what to add, the tool list holds none of their tools, and the start-up notices do not mention them
+
+#### Scenario: A shared variable
+
+- **WHEN** only `GITHUB_API_URL` (exported by other tools) is set
+- **THEN** `github` stays idle and silent, and when `GITHUB_TOKEN` alone is set `doctor` says it waits for `GITHUB_REPOS`
 
 #### Scenario: Configured, credentials absent
 
@@ -159,6 +165,34 @@ excerpt SHALL become evidence with its time where it has one.
 
 - **WHEN** a revision, a path or a pattern starts with `-` or goes up with `..`
 - **THEN** it is refused before git runs, and nothing is written anywhere
+
+### Requirement: A shipped `github` addon
+
+The repository SHALL ship a `github` addon, described as experimental until it
+has been verified against a real GitHub, with the tools `pullRequests`,
+`pullRequest`, `releases`, `commits`, `issues` and `workflowRuns`. It SHALL read
+GitHub's REST API with the settings `token` (secret), `repos` and `baseUrl`
+(default `https://api.github.com`, so GitHub Enterprise Server and the demo's
+mock work), and SHALL NOT depend on the `gh` command line tool. It SHALL make GET
+requests only, to six fixed paths built in the addon; read a repository only if
+it is listed in `repos` (and take the only one when the question names none);
+accept a number only as a positive integer and a time only in ISO 8601; send the
+token as a bearer token with the API version header; not follow redirects; cap
+answers, items and the length of descriptions; time out; and never show the token
+in an error. A refused token, a missing permission, a rate limit, a moved or
+unknown repository SHALL be reported as such. Issues SHALL exclude pull requests,
+and the descriptions of tools that return text written by other people SHALL say
+it is evidence, never instructions.
+
+#### Scenario: What was merged before the incident
+
+- **WHEN** `github.pullRequests` is asked for the pull requests merged since a day before a release
+- **THEN** one GET of the pulls of the listed repository is sent with the token, and each merged pull request becomes evidence with its merge time, author and title
+
+#### Scenario: A repository that is not listed
+
+- **WHEN** a tool is asked for a repository that is not in `repos`
+- **THEN** it is refused, saying which repositories may be read, and no request is made
 
 ### Requirement: Plain data becomes evidence
 

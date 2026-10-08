@@ -8,7 +8,7 @@
   and setup helpers (`ops init`, `ops doctor`, `ops addon check`).
 - **Writing an addon without MCP knowledge** (ADR 0009): a manifest and plain
   functions (done), an `ops init addon` scaffold (done), shipped addons: `rest` for
-  a team's own API (done), Datadog (done, with a mock), a local `git` addon (done), then GitHub.
+  a team's own API (done), Datadog (done, with a mock), a local `git` addon (done), GitHub (done, with a mock).
 - **Live demo backend** (done): the shop REST API over HTTP in the compose file,
   read by the `rest` addon; a fake Datadog on it (documented shapes) is read by the `datadog` addon.
 - **Demo on a real PostgreSQL** (done): `docker/compose.yml`, a `readonly` user,

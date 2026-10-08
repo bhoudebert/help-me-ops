@@ -1,0 +1,154 @@
+[
+  {
+    "number": 421,
+    "title": "Release 2.14.0",
+    "state": "closed",
+    "user": {
+      "login": "bob",
+      "type": "User"
+    },
+    "created_at": "2026-10-07T09:10:00Z",
+    "updated_at": "2026-10-07T09:22:00Z",
+    "closed_at": "2026-10-07T09:22:00Z",
+    "merged_at": "2026-10-07T09:22:00Z",
+    "draft": false,
+    "head": {
+      "ref": "release/2.14.0"
+    },
+    "base": {
+      "ref": "main"
+    },
+    "html_url": "https://github.example/shop-co/shop/pull/421",
+    "body": "Version bump.",
+    "additions": 1,
+    "deletions": 1,
+    "changed_files": 1,
+    "_files": [
+      {
+        "filename": "package.json",
+        "status": "modified",
+        "additions": 1,
+        "deletions": 1,
+        "changes": 2
+      }
+    ],
+    "merged_by": {
+      "login": "carol",
+      "type": "User"
+    }
+  },
+  {
+    "number": 418,
+    "title": "Lower the worker memory limit to 512Mi",
+    "state": "closed",
+    "user": {
+      "login": "carol",
+      "type": "User"
+    },
+    "created_at": "2026-10-06T10:40:00Z",
+    "updated_at": "2026-10-06T11:05:00Z",
+    "closed_at": "2026-10-06T11:05:00Z",
+    "merged_at": "2026-10-06T11:05:00Z",
+    "draft": false,
+    "head": {
+      "ref": "carol/worker-memory"
+    },
+    "base": {
+      "ref": "main"
+    },
+    "html_url": "https://github.example/shop-co/shop/pull/418",
+    "body": "Free some room on the nodes. Load test 3 looked fine.",
+    "additions": 1,
+    "deletions": 1,
+    "changed_files": 1,
+    "_files": [
+      {
+        "filename": "deploy/worker.yaml",
+        "status": "modified",
+        "additions": 1,
+        "deletions": 1,
+        "changes": 2
+      }
+    ],
+    "merged_by": {
+      "login": "bob",
+      "type": "User"
+    }
+  },
+  {
+    "number": 412,
+    "title": "Speed up confirmations: batches of 500 and a cache of confirmed orders",
+    "state": "closed",
+    "user": {
+      "login": "bob",
+      "type": "User"
+    },
+    "created_at": "2026-10-05T14:00:00Z",
+    "updated_at": "2026-10-05T16:30:00Z",
+    "closed_at": "2026-10-05T16:30:00Z",
+    "merged_at": "2026-10-05T16:30:00Z",
+    "draft": false,
+    "head": {
+      "ref": "bob/batch-confirm"
+    },
+    "base": {
+      "ref": "main"
+    },
+    "html_url": "https://github.example/shop-co/shop/pull/412",
+    "body": "Throughput is 4x on the load test. The cache skips duplicate webhooks.",
+    "additions": 16,
+    "deletions": 6,
+    "changed_files": 1,
+    "_files": [
+      {
+        "filename": "src/worker/confirm.js",
+        "status": "modified",
+        "additions": 16,
+        "deletions": 6,
+        "changes": 22
+      }
+    ],
+    "merged_by": {
+      "login": "alice",
+      "type": "User"
+    }
+  },
+  {
+    "number": 405,
+    "title": "Fix the typo in the confirmation email",
+    "state": "closed",
+    "user": {
+      "login": "carol",
+      "type": "User"
+    },
+    "created_at": "2026-10-02T09:00:00Z",
+    "updated_at": "2026-10-02T09:20:00Z",
+    "closed_at": "2026-10-02T09:20:00Z",
+    "merged_at": "2026-10-02T09:20:00Z",
+    "draft": false,
+    "head": {
+      "ref": "carol/typo"
+    },
+    "base": {
+      "ref": "main"
+    },
+    "html_url": "https://github.example/shop-co/shop/pull/405",
+    "body": "",
+    "additions": 1,
+    "deletions": 1,
+    "changed_files": 1,
+    "_files": [
+      {
+        "filename": "src/api/webhook.js",
+        "status": "modified",
+        "additions": 1,
+        "deletions": 1,
+        "changes": 2
+      }
+    ],
+    "merged_by": {
+      "login": "alice",
+      "type": "User"
+    }
+  }
+]

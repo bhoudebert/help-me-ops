@@ -1,0 +1,55 @@
+[
+  {
+    "number": 421,
+    "title": "Release 2.14.0",
+    "state": "closed",
+    "user": {
+      "login": "bob",
+      "type": "User"
+    },
+    "labels": [],
+    "created_at": "2026-10-07T09:10:00Z",
+    "updated_at": "2026-10-07T09:22:00Z",
+    "body": "",
+    "html_url": "https://github.example/shop-co/shop/issues/421",
+    "pull_request": {
+      "url": "https://api.github.example/repos/shop-co/shop/pulls/421"
+    }
+  },
+  {
+    "number": 409,
+    "title": "Load test: worker memory 380MB after 10 minutes",
+    "state": "open",
+    "user": {
+      "login": "dave",
+      "type": "User"
+    },
+    "labels": [
+      {
+        "name": "perf"
+      }
+    ],
+    "created_at": "2026-10-05T18:00:00Z",
+    "updated_at": "2026-10-06T09:00:00Z",
+    "body": "In load test 3 the shop-worker was at 380MB after ten minutes at 200 jobs/s. Not sure it is a problem.",
+    "html_url": "https://github.example/shop-co/shop/issues/409"
+  },
+  {
+    "number": 377,
+    "title": "Order emails arrive twice",
+    "state": "closed",
+    "user": {
+      "login": "erin",
+      "type": "User"
+    },
+    "labels": [
+      {
+        "name": "bug"
+      }
+    ],
+    "created_at": "2026-09-28T08:00:00Z",
+    "updated_at": "2026-10-01T12:00:00Z",
+    "body": "Seen twice this week for the same order.",
+    "html_url": "https://github.example/shop-co/shop/issues/377"
+  }
+]

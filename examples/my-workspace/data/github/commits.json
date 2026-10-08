@@ -1,0 +1,66 @@
+[
+  {
+    "sha": "ef6753c0a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    "commit": {
+      "author": {
+        "name": "Bob Keller",
+        "date": "2026-10-07T09:20:00Z"
+      },
+      "message": "Release 2.14.0"
+    },
+    "author": {
+      "login": "bob",
+      "type": "User"
+    },
+    "html_url": "https://github.example/shop-co/shop/commit/ef6753c0a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    "_files": ["package.json"]
+  },
+  {
+    "sha": "51b4436f1a2b3c4d5e6f708192a3b4c5d6e7f801",
+    "commit": {
+      "author": {
+        "name": "Carol Diaz",
+        "date": "2026-10-06T11:00:00Z"
+      },
+      "message": "Lower the worker memory limit to 512Mi\n\nFree some room on the nodes."
+    },
+    "author": {
+      "login": "carol",
+      "type": "User"
+    },
+    "html_url": "https://github.example/shop-co/shop/commit/51b4436f1a2b3c4d5e6f708192a3b4c5d6e7f801",
+    "_files": ["deploy/worker.yaml"]
+  },
+  {
+    "sha": "6e0ff87a1b2c3d4e5f60718293a4b5c6d7e8f902",
+    "commit": {
+      "author": {
+        "name": "Bob Keller",
+        "date": "2026-10-05T16:20:00Z"
+      },
+      "message": "Speed up confirmations: batches of 500 and a cache of confirmed orders\n\nThroughput is 4x on the load test."
+    },
+    "author": {
+      "login": "bob",
+      "type": "User"
+    },
+    "html_url": "https://github.example/shop-co/shop/commit/6e0ff87a1b2c3d4e5f60718293a4b5c6d7e8f902",
+    "_files": ["src/worker/confirm.js"]
+  },
+  {
+    "sha": "09bb4ea1a2b3c4d5e6f708192a3b4c5d6e7f8a03",
+    "commit": {
+      "author": {
+        "name": "Carol Diaz",
+        "date": "2026-10-02T09:10:00Z"
+      },
+      "message": "Fix the typo in the confirmation email"
+    },
+    "author": {
+      "login": "carol",
+      "type": "User"
+    },
+    "html_url": "https://github.example/shop-co/shop/commit/09bb4ea1a2b3c4d5e6f708192a3b4c5d6e7f8a03",
+    "_files": ["src/api/webhook.js", "package.json"]
+  }
+]

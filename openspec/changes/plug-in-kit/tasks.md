@@ -6,7 +6,7 @@
 - [x] Demo world: app `shop` (prod and staging), fake services as addons (`logs`, `order`, `metrics`), the stuck-order scenario as a test
 - [x] Addon authoring without MCP knowledge: `addon.json` and `tools.ts`, plain data to evidence, uniform settings (`path`), the demo addons converted
 - [x] `ops init addon` with the file, api and sql templates
-- [ ] Shipped addons: `rest` (done), `datadog` (done, with a fake), `git` (local, done), `github` (remote), tested against fixtures
+- [x] Shipped addons: `rest`, `datadog` (with a mock), `git` (local), `github` (with a mock), tested against fixtures
 - [ ] Knowledge search: index, `search_knowledge`, tests
 - [ ] Conclusion: schema, evidence check, `check_conclusion`, MCP instructions with the same layout
 - [ ] Scripted model and `ops demo`, tested against the demo world

@@ -87,6 +87,22 @@ the addon.
 - **WHEN** the repository is read for what changed before 09:31 on 7 October
 - **THEN** both the cache that is never emptied and the lowered memory limit appear, so the conclusion can name two candidates and keep what is unknown
 
+### Requirement: A mock GitHub, optional
+
+The demo backend SHALL also answer, on the same ports, the documented shapes of
+six GitHub REST endpoints (pulls, a pull request and its files, releases,
+commits, issues, workflow runs) for one repository, `shop-co/shop`, from
+recorded data (`data/github/`) that tells the same story as the demo repository:
+the batching and cache pull request, the memory limit pull request, the 2.14.0
+release, its deployments and one failed build. It SHALL authenticate with a bearer
+token (`401` otherwise), answer `404` for any other repository and `405` for
+anything but GET. The documentation SHALL say it is a stand-in, not GitHub.
+
+#### Scenario: What was merged
+
+- **WHEN** the github addon lists the pull requests merged since 5 October
+- **THEN** pull requests 421, 418 and 412 come back, newest first
+
 ### Requirement: The scenario is a test
 
 A scenario file (`examples/my-workspace/scenarios/`) SHALL hold the question, the

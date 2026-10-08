@@ -43,12 +43,24 @@ export function resolveSettings(
   return parsed.data as Settings;
 }
 
-/** Is the addon set up in this environment: an entry in the configuration, one of its variables, or nothing to set. */
-function isConfigured(addon: LoadedAddon, overrides: Settings | undefined, env: NodeJS.ProcessEnv): boolean {
+/** The environment variables of the settings an addon cannot work without; a required setting with no variable is `null`. */
+function requiredVariables(addon: LoadedAddon): (string | null)[] {
   const definition = addon.definition;
-  if (!definition?.settings || overrides !== undefined) return true;
-  if (Object.values(definition.env ?? {}).some((name) => env[name] !== undefined)) return true;
-  return definition.settings.safeParse({}).success;
+  const missing = definition?.settings?.safeParse({});
+  if (!definition || !missing || missing.success) return [];
+  const fields = new Set(missing.error.issues.map((issue) => String(issue.path[0])));
+  return [...fields].map((field) => definition.env?.[field] ?? null);
+}
+
+/**
+ * Is the addon set up in this environment: an entry in the configuration, or
+ * every setting it cannot work without given by its environment variable, or
+ * nothing it needs. One shared variable (a DD_SITE, a GITHUB_API_URL that some
+ * other tool exports) is not a decision to use the addon.
+ */
+function isConfigured(addon: LoadedAddon, overrides: Settings | undefined, env: NodeJS.ProcessEnv): boolean {
+  if (!addon.definition?.settings || overrides !== undefined) return true;
+  return requiredVariables(addon).every((name) => name !== null && env[name] !== undefined);
 }
 
 /** The connector types the addons bring, by the `type` they answer to; a later addon wins. */
@@ -84,6 +96,11 @@ export function addonTools(
     const settings = new Map<string, Settings | string>();
     let setUp = false;
     const waiting = new Set<string>();
+    // Some of its variables are set, not all: say which are missing rather than only "no environment sets it up".
+    const some = Object.values(definition.env ?? {}).some((name) => env[name] !== undefined);
+    const partial = some
+      ? requiredVariables(addon).filter((name): name is string => name !== null && env[name] === undefined)
+      : [];
     for (const app of apps) {
       for (const environment of app.envs) {
         const key = `${app.name}/${environment.name}`;
@@ -106,10 +123,11 @@ export function addonTools(
       }
     }
     if (!setUp) {
+      const names = waiting.size ? [...waiting] : partial;
       idle(
         addon.name,
-        waiting.size
-          ? `waiting for ${[...waiting].join(", ")}: set ${waiting.size > 1 ? "them" : "it"} (in .env, for example) to turn it on`
+        names.length
+          ? `waiting for ${names.join(", ")}: set ${names.length > 1 ? "them" : "it"} (in .env, for example) to turn it on`
           : `no environment sets it up: add "addons": { "${addon.name}": { … } } in ops.config.json`,
       );
       continue;

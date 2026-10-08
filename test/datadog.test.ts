@@ -11,6 +11,9 @@ import { test } from "node:test";
 import { openToolbox } from "../src/toolbox.ts";
 import { createToolDefinitions } from "../src/tools/index.ts";
 
+// The machine's own variables must not decide these tests.
+for (const name of ["DD_API_KEY", "DD_APP_KEY", "DD_SITE", "DD_BASE_URL"]) delete process.env[name];
+
 const recorded = (name: string) => readFileSync(join("test/fixtures/datadog", name), "utf8");
 const KEYS = { apiKey: "api-s3cret", appKey: "app-s3cret" };
 
