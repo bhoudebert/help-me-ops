@@ -141,6 +141,34 @@ the documentation SHALL say it may not work as is.
 - **WHEN** `datadog.searchLogs` is called with `service:payments status:error` and a time range
 - **THEN** one POST of the documented search body is sent, and each returned log becomes evidence with its timestamp and a `status service: message` line
 
+### Requirement: Check an addon
+
+`ops addon check <folder>` SHALL load the addon the way the server does and
+report each check on its own line, `ok`, `warn` or `FAIL`, with a fix for the
+failures it knows (a missing package, an undeclared or missing function, a wrong
+`apiVersion`, both forms in one folder, no manifest), and SHALL exit non-zero if
+any check failed. It SHALL list the tools with their parameters and the
+settings with their variables; check the settings of each environment of the
+workspace (a block with invalid settings is a failure, an absent block or a
+variable not set only a warning, since the addon is then idle); and run the sample
+calls of an optional `check.json` against recorded answers, never over the
+network, failing a sample that returns too few or too many records, an empty
+summary, a missing time when one is expected, a text not expected, a request with
+no recorded answer, or a secret setting in the evidence. With `--call` it SHALL
+run one real call with the settings of an environment. It SHALL warn about a tool
+or parameter the assistant would find undescribed. A command that does not exist
+SHALL be reported as an error.
+
+#### Scenario: A tool the manifest declares but tools.ts lacks
+
+- **WHEN** `addon.json` declares `getInvoice` and `tools.ts` does not export it
+- **THEN** the check fails with that message and the fix, and the command exits with a non-zero code
+
+#### Scenario: A sample that leaks
+
+- **WHEN** a sample returns a record whose text holds the value of a secret setting
+- **THEN** the sample fails saying a secret setting appears in the evidence
+
 ### Requirement: Shipped addons are documented
 
 Every shipped addon SHALL have a page in the guide (`docs/guide/ready-made/`) on
