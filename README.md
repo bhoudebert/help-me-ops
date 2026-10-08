@@ -69,6 +69,22 @@ npm run ops -- search app-logs order=4512 --env prod
 npm run ops -- doctor
 ```
 
+## Ready-made addons
+
+| Addon                                           | Reads                           | You need                               | Status            |
+| ----------------------------------------------- | ------------------------------- | -------------------------------------- | ----------------- |
+| [logs](docs/guide/ready-made/logs.md)           | text log files                  | the file                               | ready             |
+| [rest](docs/guide/ready-made/rest.md)           | your own HTTP API, `GET` only   | URL, allowed paths, a read-only token  | ready             |
+| [git](docs/guide/ready-made/git.md)             | a repository on disk            | `git` and an up-to-date clone          | ready             |
+| [PostgreSQL](docs/guide/ready-made/postgres.md) | a database, `SELECT` only       | the `pg` driver, a read-only user      | template and demo |
+| [datadog](docs/guide/ready-made/datadog.md)     | logs, metrics, monitors         | API key, application key (read scopes) | experimental      |
+| [github](docs/guide/ready-made/github.md)       | pull requests, releases, builds | a fine-grained read-only token         | experimental      |
+
+They stay idle until you turn one on (a block in `ops.config.json`, secrets in
+`.env`, then `npm run ops -- doctor`). The [catalog](docs/guide/ready-made/index.md)
+explains the four steps; each page lists what it needs, its settings and tools,
+its safety, how to try it without an account, and what to do when it does not work.
+
 ## Plug in your own
 
 Copy `examples/my-workspace` to a folder of your own (in your app's repository, for
