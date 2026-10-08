@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "id": "AQAAAZt-1",
+      "type": "log",
+      "attributes": {
+        "timestamp": "2026-10-07T10:00:02Z",
+        "status": "error",
+        "service": "payments",
+        "host": "shop-prod-1",
+        "message": "webhook endpoint /hooks/acme-pay returned 503 to provider (queue full)",
+        "tags": ["env:prod", "service:payments"],
+        "attributes": { "http": { "status_code": 503 } }
+      }
+    },
+    {
+      "id": "AQAAAZt-2",
+      "type": "log",
+      "attributes": {
+        "timestamp": "2026-10-07T10:01:04Z",
+        "status": "error",
+        "service": "worker",
+        "host": "shop-prod-1",
+        "message": "container shop-worker-1 OOMKilled (exit 137), restart 1",
+        "tags": ["env:prod", "service:worker"],
+        "attributes": {}
+      }
+    }
+  ],
+  "links": { "next": "https://api.datadoghq.com/api/v2/logs/events?page%5Bcursor%5D=eyJhZnRlciI6ImFiYyJ9" },
+  "meta": {
+    "elapsed": 31,
+    "page": { "after": "eyJhZnRlciI6ImFiYyJ9" },
+    "request_id": "pddv1ChZ",
+    "status": "done",
+    "warnings": []
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "res_type": "time_series",
+  "from_date": 1791366000000,
+  "to_date": 1791369600000,
+  "query": "avg:payment_confirm_queue_depth{env:prod}",
+  "message": "",
+  "group_by": [],
+  "series": [
+    {
+      "metric": "payment_confirm_queue_depth",
+      "display_name": "payment_confirm_queue_depth",
+      "aggr": "avg",
+      "scope": "env:prod",
+      "expression": "avg:payment_confirm_queue_depth{env:prod}",
+      "query_index": 0,
+      "interval": 60,
+      "length": 4,
+      "start": 1791366000000,
+      "end": 1791367260000,
+      "pointlist": [
+        [1791366000000, 12],
+        [1791366600000, 620],
+        [1791366900000, null],
+        [1791367260000, 1240]
+      ],
+      "tag_set": [],
+      "unit": [
+        {
+          "family": "custom",
+          "name": "job",
+          "plural": "jobs",
+          "scale_factor": 1,
+          "short_name": "job"
+        },
+        null
+      ]
+    }
+  ]
+}
