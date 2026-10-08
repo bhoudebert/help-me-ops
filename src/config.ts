@@ -1,6 +1,6 @@
 // What a team has: a workspace folder holding ops.config.json (apps, their
 // environments, their sources), playbooks/ and, later, knowledge/ and addons/.
-// examples/workspace shows how; ADR 0007.
+// examples/my-workspace shows how; ADR 0007.
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { z } from "zod";
@@ -53,7 +53,7 @@ export async function loadConfig(workspace = resolveWorkspace()): Promise<{ conf
     raw = await readFile(path, "utf8");
   } catch {
     throw new Error(
-      `No ${CONFIG_FILE} in ${workspace}. Copy examples/workspace to a folder of your own and point to it with --workspace or OPS_WORKSPACE.`,
+      `No ${CONFIG_FILE} in ${workspace}. Copy examples/my-workspace to a folder of your own and point to it with --workspace or OPS_WORKSPACE.`,
     );
   }
   let json: unknown;
@@ -66,7 +66,7 @@ export async function loadConfig(workspace = resolveWorkspace()): Promise<{ conf
   }
   if (typeof json === "object" && json !== null && "sources" in json && !("apps" in json)) {
     throw new Error(
-      `Invalid config ${path}: it uses the flat "sources" list of an earlier version. Put the sources under apps.<app>.envs.<env>.sources (see examples/workspace/ops.config.json), or point to another workspace with --workspace or OPS_WORKSPACE.`,
+      `Invalid config ${path}: it uses the flat "sources" list of an earlier version. Put the sources under apps.<app>.envs.<env>.sources (see examples/my-workspace/ops.config.json), or point to another workspace with --workspace or OPS_WORKSPACE.`,
     );
   }
   const parsed = OpsConfig.safeParse(json);

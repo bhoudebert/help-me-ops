@@ -4,7 +4,7 @@
       "type": "stdio",
       "command": "node",
       "args": ["${workspaceFolder}/src/mcp.ts"],
-      "env": { "OPS_WORKSPACE": "${workspaceFolder}/examples/workspace" },
+      "env": { "OPS_WORKSPACE": "${workspaceFolder}/examples/my-workspace" },
       "envFile": "${workspaceFolder}/.env"
     }
   }

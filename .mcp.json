@@ -2,7 +2,7 @@
   "mcpServers": {
     "help-me-ops": {
       "command": "node",
-      "args": ["--env-file-if-exists=.env", "src/mcp.ts", "--workspace", "examples/workspace"]
+      "args": ["--env-file-if-exists=.env", "src/mcp.ts", "--workspace", "examples/my-workspace"]
     }
   }
 }

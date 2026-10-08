@@ -65,7 +65,7 @@ is open-world (it reaches the investigated system).
 
 ## Tests
 
-`npm test` runs against `examples/workspace`, the demo world (a shop in prod and
+`npm test` runs against `examples/my-workspace`, the demo world (a shop in prod and
 staging: logs, orders, metrics, health, around order 4512; `test/demo.test.ts`
 replays its scenario through the real tools), and starts the MCP server through a real MCP client. Coverage
 thresholds: lines 80, functions 80, branches 65.
@@ -84,7 +84,7 @@ addons/                 built-in addons (logs: the file-logs connector type)
   connectors/           the contract, file-logs, the registry
   playbooks.ts          Markdown playbooks, matching
   tools/index.ts        the tools, defined once
-examples/workspace/     the demo workspace: config, logs, data, addons, a playbook, a scenario
+examples/my-workspace/     the demo workspace: config, logs, data, addons, a playbook, a scenario
 openspec/               specs per capability, proposed changes
 docs/                   ADRs, the change path, the guide, these notes
 site/                   the project page

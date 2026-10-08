@@ -41,7 +41,7 @@ Open the folder; start the server from the MCP view; use Copilot Chat in agent m
 
 ```toml [Codex]
 # see "Claude Code, Codex and Copilot" for the config.toml entry,
-# with OPS_WORKSPACE = "/abs/path/help-me-ops/examples/workspace"
+# with OPS_WORKSPACE = "/abs/path/help-me-ops/examples/my-workspace"
 ```
 
 :::
@@ -86,7 +86,7 @@ It does not replay anything itself: nothing in help-me-ops can change a system.
 The same tools work from the terminal, to see what the assistant sees:
 
 ```bash
-export OPS_WORKSPACE=examples/workspace
+export OPS_WORKSPACE=examples/my-workspace
 npm run ops -- scope "orders are stuck in production"
 npm run ops -- search app-logs order=4512 --env prod
 npm run ops -- doctor
@@ -96,7 +96,7 @@ npm run ops -- doctor
 
 - Ask about **staging**: "is the payment worker healthy on staging?"
 - Ask something **vague**: "the shop is slow". It should ask which environment.
-- **Break the fault**: edit `examples/workspace/data/prod/metrics.json`, and see
+- **Break the fault**: edit `examples/my-workspace/data/prod/metrics.json`, and see
   the conclusion lose its evidence.
 - **Break an addon**: set `"apiVersion": 2` in `addons/health/addon.json`, restart,
   and run `doctor`. The addon is skipped with its reason, and the rest works.
@@ -104,7 +104,7 @@ npm run ops -- doctor
 ## Make it yours
 
 The demo is a workspace: `ops.config.json` (apps, environments, sources),
-`playbooks/`, `addons/`. Copy `examples/workspace` to your own repository, and
+`playbooks/`, `addons/`. Copy `examples/my-workspace` to your own repository, and
 replace the fixtures one source at a time:
 
 - [Connect your sources](/connectors): logs first, they need no code.
