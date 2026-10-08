@@ -15,7 +15,7 @@ nvm use        # Node 24
 npm install
 ```
 
-The demo [**workspace**](/workspace) in `examples/workspace` is one app, `shop`, in `prod` and
+The demo [**workspace**](/workspace) in `examples/my-workspace` is one app, `shop`, in `prod` and
 `staging`, with its logs, orders, metrics and health checks recorded as files,
 around an order that got stuck: [the story](/demo). A workspace is a folder:
 `ops.config.json` (apps, environments, sources) and `playbooks/`.
@@ -27,14 +27,14 @@ The fastest way is [the demo](/demo): open the folder in your AI client and ask
 the assistant sees:
 
 ```bash
-npm run ops -- --workspace examples/workspace scope "order 4512 is stuck"
-npm run ops -- --workspace examples/workspace sources --env prod
-npm run ops -- --workspace examples/workspace search app-logs order=4512 --env prod
-npm run ops -- --workspace examples/workspace investigate "client u-881 paid but cannot find order 4512"
+npm run ops -- --workspace examples/my-workspace scope "order 4512 is stuck"
+npm run ops -- --workspace examples/my-workspace sources --env prod
+npm run ops -- --workspace examples/my-workspace search app-logs order=4512 --env prod
+npm run ops -- --workspace examples/my-workspace investigate "client u-881 paid but cannot find order 4512"
 
 ```
 
-Set `OPS_WORKSPACE=examples/workspace` to leave `--workspace` out. With one
+Set `OPS_WORKSPACE=examples/my-workspace` to leave `--workspace` out. With one
 app and one environment they need no `--app` or `--env`; with several, the
 `scope` command shows which fits a question.
 
@@ -44,7 +44,7 @@ itself runs in an AI client, which brings its own model:
 
 ## Make it yours
 
-1. Copy `examples/workspace` to a folder of your own (in your app's repository, for example) and point to it with `--workspace` or `OPS_WORKSPACE`.
+1. Copy `examples/my-workspace` to a folder of your own (in your app's repository, for example) and point to it with `--workspace` or `OPS_WORKSPACE`.
 2. [Connect your sources](/connectors): describe them in `ops.config.json`, per app and environment, write a module for any that is not a log file.
 3. [Write a playbook](/playbooks) for the problem you investigate most often.
 4. [Write an addon](/addons) for a database, an API or metrics: an `addon.json` and a `tools.ts` of plain functions.

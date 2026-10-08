@@ -7,7 +7,7 @@ import { test } from "node:test";
 import { openToolbox } from "../src/toolbox.ts";
 import { createToolDefinitions } from "../src/tools/index.ts";
 
-const workspace = resolve("examples/workspace");
+const workspace = resolve("examples/my-workspace");
 const scenario = JSON.parse(readFileSync(join(workspace, "scenarios/stuck-order.json"), "utf8")) as {
   question: string;
   scope: { app: string; env: string };

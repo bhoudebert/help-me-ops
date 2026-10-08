@@ -55,7 +55,7 @@ claude        # or open the folder in VS Code (Copilot), or add the server to Co
 
 Then ask: **"client u-881 paid but cannot find order 4512, what happened?"**
 
-The repository ships a small shop to investigate (`examples/workspace`): logs,
+The repository ships a small shop to investigate (`examples/my-workspace`): logs,
 orders, metrics and health checks in `prod` and `staging`, with a fault in
 `prod` only. The assistant has to find it across four sources, tell prod from
 staging, and conclude with the likely cause, its evidence and what is unknown.
@@ -63,7 +63,7 @@ staging, and conclude with the likely cause, its evidence and what is unknown.
 No client? The same tools run from the terminal:
 
 ```bash
-export OPS_WORKSPACE=examples/workspace
+export OPS_WORKSPACE=examples/my-workspace
 npm run ops -- scope "orders are stuck in production"
 npm run ops -- search app-logs order=4512 --env prod
 npm run ops -- doctor
@@ -71,7 +71,7 @@ npm run ops -- doctor
 
 ## Plug in your own
 
-Copy `examples/workspace` to a folder of your own (in your app's repository, for
+Copy `examples/my-workspace` to a folder of your own (in your app's repository, for
 example) and point to it with `--workspace` or `OPS_WORKSPACE`. Replace the
 fixtures one source at a time: logs need no code; a database, metrics, an API or
 a health check are an addon, a folder you drop in `addons/` with two small

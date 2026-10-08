@@ -13,13 +13,14 @@ test("mcp: the server lists its tools with all four hints and answers a search",
     new StdioClientTransport({
       command: process.execPath,
       args: ["src/mcp.ts"],
-      env: { PATH: process.env.PATH ?? "", OPS_WORKSPACE: resolve("examples/workspace") },
+      env: { PATH: process.env.PATH ?? "", OPS_WORKSPACE: resolve("examples/my-workspace") },
       stderr: "pipe",
     }),
   );
   try {
     assert.match(client.getInstructions() ?? "", /Every tool is read-only/);
     assert.match(client.getInstructions() ?? "", /scope with the problem/);
+    assert.match(client.getInstructions() ?? "", /Workspace loaded: .*examples\/my-workspace/);
     const { tools } = await client.listTools();
     assert.equal(tools.length, 10);
     for (const tool of tools) {

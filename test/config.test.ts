@@ -7,7 +7,7 @@ import { loadConfig, resolveWorkspace } from "../src/config.ts";
 import { matchPlaybooks, parsePlaybook } from "../src/playbooks.ts";
 import { openToolbox } from "../src/toolbox.ts";
 
-const DEMO = resolve("examples/workspace");
+const DEMO = resolve("examples/my-workspace");
 
 test("config: the demo workspace loads; a missing or invalid file says what to do", async () => {
   const { config, baseDir } = await loadConfig(DEMO);
@@ -19,7 +19,7 @@ test("config: the demo workspace loads; a missing or invalid file says what to d
     ["app-logs"],
   );
   assert.deepEqual(Object.keys(config.apps.shop!.envs.staging!.addons), ["order", "metrics", "health"]);
-  await assert.rejects(loadConfig("/nowhere"), /No ops.config.json in \/nowhere\. Copy examples\/workspace/);
+  await assert.rejects(loadConfig("/nowhere"), /No ops.config.json in \/nowhere\. Copy examples\/my-workspace/);
   const dir = mkdtempSync(join(tmpdir(), "ops-"));
   const bad = (json: string) => {
     writeFileSync(join(dir, "ops.config.json"), json);

@@ -3,10 +3,10 @@
 A **workspace** is one folder that describes your infrastructure: what to
 investigate, where the evidence is, and how your team investigates. You keep it
 in your own repository and point help-me-ops at it (`--workspace`, or
-`OPS_WORKSPACE`). The demo is `examples/workspace`; copy it to start.
+`OPS_WORKSPACE`). The demo is `examples/my-workspace`; copy it to start.
 
 ```
-workspace/
+my-workspace/
   ops.config.json     which apps and environments, and their sources
   addons/             what can be read: databases, APIs, metrics … (see Write an addon)
   playbooks/          how your team investigates each kind of problem
@@ -36,7 +36,7 @@ workspace/
 
 ## Start from the demo
 
-1. Copy `examples/workspace` to `ops/` in your app's repository.
+1. Copy `examples/my-workspace` to `ops/` in your app's repository.
 2. In `ops.config.json`, rename the app and environments, and point `sources`
    at your logs.
 3. Keep the `order`, `metrics` and `health` addons as templates: change what

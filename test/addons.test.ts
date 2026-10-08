@@ -190,9 +190,13 @@ test("addons: tools are namespaced, read one environment, and an unconfigured en
   );
 });
 
+const notices0 = (toolbox: Parameters<typeof startupNotices>[0]) => startupNotices(toolbox).join("\n");
+
 test("addons: doctor and the start-up notices say what was skipped, left out or unavailable", async () => {
   const toolbox = await openToolbox(workspaceWithAddons());
   const doctor = await runCommand(toolbox, "doctor", []);
+  assert.match(doctor, /^Workspace: .+/);
+  assert.match(notices0(toolbox), /help-me-ops workspace: .+/);
   assert.match(doctor, /logs\s+loaded\s+\(built-in\)/);
   assert.match(doctor, /old\s+skipped\s+\(workspace\).*addon API 9/);
   assert.match(doctor, /! unavailable in shop\/staging/);
@@ -200,7 +204,7 @@ test("addons: doctor and the start-up notices say what was skipped, left out or 
   const notices = startupNotices(toolbox).join("\n");
   assert.match(notices, /old\s+skipped/);
   assert.doesNotMatch(notices, /logs\s+loaded/);
-  assert.equal(await runCommand({ apps: [], playbooks: [] }, "doctor", []), "Addons:\n  none");
+  assert.equal(await runCommand({ apps: [], playbooks: [] }, "doctor", []), "Workspace: unknown\nAddons:\n  none");
   // The sources that do load are untouched by the one that did not.
   const sources = JSON.parse(await runCommand(toolbox, "sources", ["--env", "prod"]));
   assert.deepEqual(

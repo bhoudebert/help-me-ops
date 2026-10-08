@@ -68,7 +68,7 @@ export const createConnector = ({ id, description }) => ({
 
 For a database, a metrics store or a health check you also want tools with
 their own parameters (`order.getOrder`, `metrics.queryMetric`): that is an
-[addon](/addons). The ones in `examples/workspace/addons/` read recorded
+[addon](/addons). The ones in `examples/my-workspace/addons/` read recorded
 files, and each says in its header what to replace with your real,
 **read-only** client.
 
