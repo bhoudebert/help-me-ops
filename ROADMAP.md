@@ -8,16 +8,23 @@
   and setup helpers (`ops init`, `ops doctor`, `ops addon check`).
 - **Writing an addon without MCP knowledge** (ADR 0009): a manifest and plain
   functions (done), an `ops init addon` scaffold (done), shipped addons: `rest` for
-  a team's own API (done), then GitHub and Datadog.
+  a team's own API (done), Datadog (done, with a fake), then a local `git` addon
+  and GitHub.
 - **Live demo backend** (done): the shop REST API over HTTP in the compose file,
-  read by the `rest` addon; a fake Datadog on it comes with the `datadog` addon.
+  read by the `rest` addon; a fake Datadog on it (documented shapes) is read by the `datadog` addon.
 - **Demo on a real PostgreSQL** (done): `docker/compose.yml`, a `readonly` user,
   the `_shopdb` addon; see the guide.
 - **More addons people ask for**: PostgreSQL and MySQL (read-only user, from
   the `sql` scaffold), Loki or Elasticsearch logs, Prometheus metrics. Each an
   addon following `examples/my-workspace/addons/`.
-- **A terminal investigator** calling a model API, if people without an MCP
-  client ask for it.
+- **API mode and local models** (soon): run the investigation without an AI
+  client, from the terminal or a script, by calling a model API directly (a
+  hosted one, or a local one such as Ollama or llama.cpp through an
+  OpenAI-compatible endpoint). The prompt in an AI client stays the best way
+  (the client brings its own model, tools and conversation), so this is a
+  second door onto the same toolbox, playbooks and conclusion check. It would
+  revisit "the client's model does the reasoning" (ADR 0007), so it starts with
+  an ADR, and keeps the rule that tests never call a model.
 - **Case files**: an investigation saved with its question, steps, evidence
   and conclusion, so the next one starts from what is known.
 

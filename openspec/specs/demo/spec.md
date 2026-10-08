@@ -54,6 +54,23 @@ the backend on free ports and read it through the `rest` addon.
 - **WHEN** the backend is running and the variables are set, and `rest.get` reads `/orders` with `status=awaiting_payment` in `prod`
 - **THEN** orders 4512, 4513 and 4514 come back with their times, and `staging` shows only its own order
 
+### Requirement: A fake Datadog, optional
+
+The demo backend SHALL also answer, on the same ports, the documented shapes of
+Datadog's Logs Search v2, metrics query v1 and list-monitors v1 APIs from the
+recorded logs and metrics of each environment, authenticated by the
+`DD-API-KEY` and `DD-APPLICATION-KEY` headers (`403` when wrong). It SHALL
+understand a stated subset of the log query syntax (`service:`, `status:`,
+`host:`, `env:`, `@attribute:value`, words, `-term`, `*`) and refuse the rest
+saying so, rather than answer wrongly. It is a stand-in for trying the addon
+without an account, not Datadog, and the documentation SHALL say that only a real
+instance proves a real call.
+
+#### Scenario: The incident through Datadog
+
+- **WHEN** the `datadog` addon searches the prod logs for `service:payments status:error`, queries `avg:payment_confirm_queue_depth{*}` and lists the monitors
+- **THEN** the 503 of 10:00:02, a queue depth of 1240 at 10:01 and the alerting monitors come back, and staging shows none of them
+
 ### Requirement: The scenario is a test
 
 A scenario file (`examples/my-workspace/scenarios/`) SHALL hold the question, the

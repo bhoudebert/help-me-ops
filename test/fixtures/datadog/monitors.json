@@ -1,0 +1,25 @@
+[
+  {
+    "id": 1001,
+    "name": "Payment confirm queue is backing up",
+    "type": "metric alert",
+    "query": "avg(last_5m):avg:payment_confirm_queue_depth{env:prod} > 1000",
+    "message": "queue full @pagerduty-shop",
+    "tags": ["env:prod", "team:shop"],
+    "overall_state": "Alert",
+    "overall_state_modified": "2026-10-07T10:00:00Z",
+    "created": "2026-09-01T08:00:00Z",
+    "modified": "2026-10-07T10:00:00Z",
+    "multi": false,
+    "options": { "notify_no_data": false }
+  },
+  {
+    "id": 1003,
+    "name": "Checkout error rate",
+    "type": "metric alert",
+    "query": "sum(last_10m):sum:checkout.errors{env:prod}.as_count() > 50",
+    "tags": ["env:prod"],
+    "overall_state": "OK",
+    "overall_state_modified": "2026-10-06T08:00:00Z"
+  }
+]

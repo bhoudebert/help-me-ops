@@ -1,0 +1,95 @@
+{
+  "apiVersion": 1,
+  "description": "EXPERIMENTAL: written from Datadog's documented API and tested against recorded and mock responses, not yet against a real Datadog, so it may not work as is. Reads logs, metrics and monitors, read-only. Off until an environment sets it up.",
+  "settings": {
+    "apiKey": {
+      "type": "string",
+      "env": "DD_API_KEY",
+      "secret": true,
+      "description": "A Datadog API key (Organization Settings > API Keys)"
+    },
+    "appKey": {
+      "type": "string",
+      "env": "DD_APP_KEY",
+      "secret": true,
+      "description": "A Datadog application key with read scopes (logs_read_data, timeseries_query, monitors_read)"
+    },
+    "site": {
+      "type": "string",
+      "default": "datadoghq.com",
+      "env": "DD_SITE",
+      "description": "Your Datadog site: datadoghq.com, datadoghq.eu, us3.datadoghq.com, us5.datadoghq.com, ap1.datadoghq.com ..."
+    },
+    "baseUrl": {
+      "type": "string",
+      "optional": true,
+      "env": "DD_BASE_URL",
+      "description": "Replaces https://api.<site>: for a proxy, or the demo's fake Datadog"
+    }
+  },
+  "tools": {
+    "searchLogs": {
+      "description": "Search the logs of Datadog with its query syntax (service:payments status:error @order:4512), oldest first, with their times. Read-only. Experimental: not verified against a live Datadog.",
+      "params": {
+        "query": {
+          "type": "string",
+          "description": "Datadog log query, e.g. service:payments status:error, or @order:4512 for an attribute"
+        },
+        "from": {
+          "type": "string",
+          "optional": true,
+          "description": "Start: ISO 8601 or relative like now-15m (default now-1h)"
+        },
+        "to": {
+          "type": "string",
+          "optional": true,
+          "description": "End: ISO 8601 or relative (default now)"
+        },
+        "limit": {
+          "type": "integer",
+          "default": 50,
+          "description": "Most logs to return, up to 100"
+        },
+        "newest": {
+          "type": "boolean",
+          "default": false,
+          "description": "Newest first instead of oldest first"
+        }
+      }
+    },
+    "queryMetric": {
+      "description": "Query a Datadog metric over a time range, as points with their times, e.g. avg:payment_confirm_queue_depth{env:prod}. Read-only. Experimental: not verified against a live Datadog.",
+      "params": {
+        "query": {
+          "type": "string",
+          "description": "Datadog metric query: aggregation:metric{scope}, e.g. avg:system.cpu.user{service:shop}"
+        },
+        "from": {
+          "type": "string",
+          "optional": true,
+          "description": "Start: ISO 8601 or relative like now-1h (default now-1h)"
+        },
+        "to": {
+          "type": "string",
+          "optional": true,
+          "description": "End: ISO 8601 or relative (default now)"
+        }
+      }
+    },
+    "monitors": {
+      "description": "The monitors of Datadog and their state (Alert, Warn, No Data, OK), optionally filtered by name or tag: what is alerting. Read-only. Experimental: not verified against a live Datadog.",
+      "params": {
+        "name": {
+          "type": "string",
+          "optional": true,
+          "description": "Part of the monitor name"
+        },
+        "tag": {
+          "type": "string",
+          "optional": true,
+          "description": "A monitor tag, e.g. env:prod"
+        }
+      }
+    }
+  }
+}
