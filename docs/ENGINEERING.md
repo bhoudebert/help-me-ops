@@ -22,6 +22,7 @@ MCP (src/mcp.ts) ──┘  (src/toolbox.ts)    └─▶ playbooks (<workspace>
 - `src/init.ts` scaffolds an addon (`ops init addon`) by copying a folder of
   `templates/addon/` (`file`, `api`, `sql`) with the name filled in; it never
   overwrites, and tests load the result.
+- `docs/guide/ready-made/` documents each shipped addon on one pattern (what you need, set-up, settings and tools, safety, demo, troubleshooting), with a catalog page; `test/docs.test.ts` checks that each page names every tool, setting and variable of its `addon.json`, and each addon folder has a README.
 - `src/scope.ts` resolves the app and environment a read applies to, and
   proposes them from a question.
 - `src/connectors/registry.ts` turns sources into connectors: built-in types,

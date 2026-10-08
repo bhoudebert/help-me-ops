@@ -136,7 +136,7 @@ npm run ops -- --workspace examples/my-workspace doctor     # rest: loaded
 as `${VARIABLES}`), so there is nothing to edit; until the variables are set,
 `doctor` shows `rest idle … waiting for SHOP_API_PROD_URL`. Ask: "which orders in
 prod are awaiting payment, read from the shop's API?" Details and what to try:
-[ready-made addons](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons).
+[ready-made addons](https://bhoudebert.github.io/help-me-ops/guide/ready-made/rest).
 
 ## 4. A Datadog, faked (optional, needs Docker)
 
@@ -155,7 +155,7 @@ npm run ops -- --workspace examples/my-workspace doctor     # datadog: loaded
 Ask: "in Datadog, show the payment errors in prod between 9 and 11 on 7 October
 2026, and which monitors are alerting." It is a stand-in, not Datadog (a subset
 of the query syntax); [what it is and how to check your own
-Datadog](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons#datadog-logs-metrics-and-monitors-experimental).
+Datadog](https://bhoudebert.github.io/help-me-ops/guide/ready-made/datadog).
 
 ## 5. The code, as a git repository (optional, needs git)
 
@@ -172,7 +172,7 @@ npm run ops -- --workspace examples/my-workspace doctor     # git: loaded
 Ask: "what changed in the code before the incident? Release 2.14.0 went out on 7
 October at 09:30." It finds two suspects, a cache of confirmed orders that is
 never emptied (5 October) and a lowered memory limit (6 October). Details:
-[ready-made addons](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons#git-what-changed-before-the-incident).
+[ready-made addons](https://bhoudebert.github.io/help-me-ops/guide/ready-made/git).
 
 ## 6. GitHub, mocked (optional, needs Docker)
 
@@ -188,7 +188,7 @@ npm run ops -- --workspace examples/my-workspace doctor     # github: loaded
 Ask: "which pull requests were merged in the three days before the 2.14.0
 release, and did a deploy or a build fail?" It is a stand-in, and the addon is
 experimental until verified on a real GitHub; [what it is and how to check your
-own](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons#github-pull-requests-releases-and-builds-experimental).
+own](https://bhoudebert.github.io/help-me-ops/guide/ready-made/github).
 
 ## 7. Make it yours
 

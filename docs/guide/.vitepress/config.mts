@@ -41,13 +41,24 @@ export default defineConfig({
         ],
       },
       {
+        text: "Ready-made addons",
+        items: [
+          { text: "Catalog: what each needs", link: "/ready-made/" },
+          { text: "logs", link: "/ready-made/logs" },
+          { text: "rest", link: "/ready-made/rest" },
+          { text: "git", link: "/ready-made/git" },
+          { text: "PostgreSQL", link: "/ready-made/postgres" },
+          { text: "datadog (experimental)", link: "/ready-made/datadog" },
+          { text: "github (experimental)", link: "/ready-made/github" },
+        ],
+      },
+      {
         text: "Fill in the blanks",
         items: [
           { text: "What is in a workspace", link: "/workspace" },
           { text: "Connect your sources", link: "/connectors" },
           { text: "Write a playbook", link: "/playbooks" },
           { text: "Write an addon", link: "/addons" },
-          { text: "Ready-made addons", link: "/shipped-addons" },
         ],
       },
     ],

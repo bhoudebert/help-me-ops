@@ -194,7 +194,7 @@ invalid parameter, a missing package.
 ## Ready-made addons
 
 Some addons ship with the kit, such as `rest` for a REST API of your own: no
-code to write, only settings. See [ready-made addons](/shipped-addons).
+code to write, only settings. See [ready-made addons](/ready-made/).
 
 ## Where addons are read from
 
