@@ -193,21 +193,25 @@ Checking /home/me/my-workspace/addons/billing
   ok    tool billing.getInvoice(id): read-only
   ok    setting token (variable BILLING_TOKEN), secret
   ok    settings in shop/prod: valid
-  warn  shop/staging: no block for "billing" in ops.config.json, so it stays idle there
+  note  no block for "billing" in ops.config.json for shop/staging: idle there (set it up with a block, or with its variables)
   ok    sample "an invoice": 1 record(s), 1 with a time
 
 All 8 checks passed: this addon is ready to be dropped into a workspace.
 ```
 
-`ok` is right, `warn` is worth a look, `FAIL` must be fixed and comes with how
+`ok` is right, `note` is information, `warn` is worth a look, `FAIL` must be fixed and comes with how
 (a missing `pg` says `npm install pg` in the workspace; a function in `tools.ts`
 that `addon.json` does not declare says which). The command **exits with a
 non-zero code when anything failed**, so it fits a CI job or a hook.
 
+A folder starting with `_` (or `.`) is **off** for the server, which is normal:
+it is checked anyway under its real name, with a note that says so.
+
 It checks the **settings of each environment** against your `ops.config.json`: a
 block with a wrong or missing setting is a failure; an environment without a
-block, or a `${VARIABLE}` that is not set on this machine, is only a warning,
-because the addon is then simply idle there.
+block, or a `${VARIABLE}` that is not set on this machine, is only a note
+(one line for all the environments concerned), because the addon is then simply
+idle there.
 
 ### Sample calls, with no network: `check.json`
 
