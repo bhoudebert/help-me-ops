@@ -79,8 +79,9 @@ the `api` template SHALL only GET.
 ### Requirement: Idle until set up
 
 An addon with settings that no environment sets up (no entry under `addons` in
-the configuration, none of its environment variables set, and settings that do
-not validate when empty), or whose configured settings only wait for
+the configuration, not every setting it cannot work without given by its
+environment variable, and settings that do not validate when empty; a variable
+that other tools export, such as `DD_SITE`, is not enough), or whose configured settings only wait for
 `${VARIABLE}`s this machine does not have, SHALL be reported as `idle` (naming
 the variables it waits for), serve no tool and print nothing at start. A
 variable missing in one environment while another is set up SHALL make that
@@ -92,6 +93,11 @@ settings that do not validate SHALL stay noted as unavailable.
 
 - **WHEN** a workspace sets up no shipped addon
 - **THEN** `doctor` lists them as `idle` with what to add, the tool list holds none of their tools, and the start-up notices do not mention them
+
+#### Scenario: A shared variable
+
+- **WHEN** only `GITHUB_API_URL` (exported by other tools) is set
+- **THEN** `github` stays idle and silent, and when `GITHUB_TOKEN` alone is set `doctor` says it waits for `GITHUB_REPOS`
 
 #### Scenario: Configured, credentials absent
 
