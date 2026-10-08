@@ -79,6 +79,44 @@ Try it on the demo: add the block `"privacy": { "mask": { "fields": ["user"] } }
 demo's `ops.config.json`, restart, and ask about order 4512. The user `u-881`
 reads `***`. (The demo scenario itself runs without the mask.)
 
+### Let an addon say what is personal
+
+The people who know what is personal in a domain are the ones who write its addon:
+the keys of an account record, a company id with a check digit. An addon can
+**declare** it in its `addon.json`, once, and every workspace that uses it benefits:
+
+```json
+"privacy": {
+  "personalFields": ["email", "contact.name"],
+  "detectors": {
+    "company-id": {
+      "description": "A company id: ACME- and six digits, the last a Luhn check",
+      "regex": "ACME-\\d{6}",
+      "validate": "luhn",
+      "examples": { "matches": ["ACME-123455"], "ignores": ["ACME-123456", "ACME-12"] }
+    }
+  }
+}
+```
+
+The workspace then **switches it on**:
+
+```json
+"privacy": { "mask": { "fromAddons": ["acme"], "patterns": ["acme.company-id"] } }
+```
+
+- **`personalFields` are scoped**: with `fromAddons` (`true` for every addon, or a list), they are hidden in the answers of **that addon's own tools only**, so one addon's `name` does not hide another's.
+- **Detectors are named `<addon>.<name>`** in `patterns`, and apply **everywhere**: the same company id is hidden in the logs, in a database row and in a runbook.
+- **A checksum keeps it precise.** `validate` names a check the match must pass: `luhn` (card numbers, many company and tax ids) or `iban` (ISO 7064 mod 97-10). Without it, `ACME-\d{6}` hides any six digits; with it, only real ids.
+- **A detector tests itself.** `examples.matches` must be hidden and `examples.ignores` must not; `npm run ops -- addon check <folder>` runs them and **fails** when the regex hides too little or too much, and warns when there are no examples.
+- **It can only hide.** A detector is data (a regex, a case flag, a checksum name), not code: it cannot read, log or send anything. The regex is limited to 200 characters, and a repeated group that holds a repeat (`(a+)+`), which can make a search run away, is refused.
+- **A reference that does not exist is an error when the workspace opens** (`"acme.company-id" is not a detector of a loaded addon`), never a mask that silently hides nothing. `doctor` shows what is declared (`fields declared by addons acme(email, contact.name)`).
+- A company that keeps its **shared addons** in one folder (`OPS_ADDONS`) writes its identifiers once there.
+
+On the demo, the `order` addon declares its `user` field and a `user-id` detector
+(`u-881`). Add `"privacy": { "mask": { "fromAddons": ["order"], "patterns": ["order.user-id"] } }`
+to the demo config: the order's user is `***`, and so is `user=u-881` in the logs.
+
 ::: warning A seat belt, not a guarantee
 
 - **Free text is best effort.** A pattern finds an email address; it does not find a name in a sentence ("Jane called about her order"). Fields are reliable, patterns are not.

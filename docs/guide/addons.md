@@ -174,6 +174,28 @@ point the addon at a **view without the personal columns**. `addon check` warns
 when a sample record holds something that looks like an email, an IP address, an
 IBAN, a card number or a credential. [Personal data, in full](/privacy).
 
+### Tell help-me-ops what is personal in your addon
+
+You know your domain: which keys of your records are personal, and which formats
+(a company id, a national number) identify someone. Declare them once in
+`addon.json`, and the workspace can hide them without retyping:
+
+```json
+"privacy": {
+  "personalFields": ["email", "contact.name"],
+  "detectors": {
+    "company-id": {
+      "regex": "ACME-\\d{6}",
+      "validate": "luhn",
+      "examples": { "matches": ["ACME-123455"], "ignores": ["ACME-123456"] }
+    }
+  }
+}
+```
+
+It is data, not code, so it can only hide. `addon check` runs your `examples`.
+How a workspace uses it: [personal data](/privacy#let-an-addon-say-what-is-personal).
+
 ## Read-only: your part
 
 The tool is declared read-only, but your function is your code, and the core
