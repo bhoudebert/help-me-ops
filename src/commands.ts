@@ -7,6 +7,7 @@ export const USAGE = `Usage: npm run ops -- <command>
 
   scope [question]                      The apps and environments, and which ones a question points at
   sources                               The sources of an app and environment
+  knowledge <words>                     Search your runbooks and notes (knowledge/ and playbooks/)
   playbooks [question]                  Playbooks, the matching ones first when a question is given
   search <source> <query> [--from ISO] [--to ISO] [--limit N]
                                         Search one source, read-only
@@ -47,6 +48,9 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
       return tools.scope!.run({ question: args.join(" ") || undefined });
     case "sources":
       return tools.listSources!.run({ app, env });
+    case "knowledge":
+      if (!args.length) throw new Error("Usage: knowledge <words> [--app <name>]");
+      return tools.searchKnowledge!.run({ query: args.join(" "), app });
     case "playbooks":
       return tools.listPlaybooks!.run({ question: args.join(" ") || undefined });
     case "search": {

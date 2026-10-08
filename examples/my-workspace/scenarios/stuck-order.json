@@ -1,24 +1,42 @@
 {
   "id": "stuck-order",
   "question": "Client u-881 paid but cannot find order 4512",
-  "scope": { "app": "shop", "env": "prod" },
+  "scope": {
+    "app": "shop",
+    "env": "prod"
+  },
   "playbook": "order-stuck",
   "steps": [
     {
       "why": "Which app and environment?",
       "tool": "scope",
-      "input": { "question": "Client u-881 paid but cannot find order 4512 in production" }
+      "input": {
+        "question": "Client u-881 paid but cannot find order 4512 in production"
+      }
     },
     {
       "why": "Does the team have a method for this?",
       "tool": "listPlaybooks",
-      "input": { "question": "Client u-881 paid but cannot find order 4512" }
+      "input": {
+        "question": "Client u-881 paid but cannot find order 4512"
+      }
     },
-    { "why": "The order itself", "tool": "order.getOrder", "input": { "env": "prod", "id": "4512" } },
+    {
+      "why": "The order itself",
+      "tool": "order.getOrder",
+      "input": {
+        "env": "prod",
+        "id": "4512"
+      }
+    },
     {
       "why": "Its story in the logs",
       "tool": "searchSource",
-      "input": { "env": "prod", "source": "app-logs", "query": "order=4512" }
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "order=4512"
+      }
     },
     {
       "why": "The order waited for a webhook: what happened to it?",
@@ -34,17 +52,35 @@
     {
       "why": "Who refused the webhook: us or the provider?",
       "tool": "health.checkHealth",
-      "input": { "env": "prod", "from": "2026-10-07T09:55:00Z", "to": "2026-10-07T10:06:00Z" }
+      "input": {
+        "env": "prod",
+        "from": "2026-10-07T09:55:00Z",
+        "to": "2026-10-07T10:06:00Z"
+      }
+    },
+    {
+      "why": "Has the team written this down?",
+      "tool": "searchKnowledge",
+      "input": {
+        "query": "webhook 503 queue full",
+        "app": "shop"
+      }
     },
     {
       "why": "Why was the queue full?",
       "tool": "metrics.queryMetric",
-      "input": { "env": "prod", "metric": "payment_confirm_queue_depth" }
+      "input": {
+        "env": "prod",
+        "metric": "payment_confirm_queue_depth"
+      }
     },
     {
       "why": "Why did the worker slow down?",
       "tool": "metrics.queryMetric",
-      "input": { "env": "prod", "metric": "worker_memory_mb" }
+      "input": {
+        "env": "prod",
+        "metric": "worker_memory_mb"
+      }
     },
     {
       "why": "What happened to the worker, and what changed before?",
@@ -60,12 +96,19 @@
     {
       "why": "Who else is affected?",
       "tool": "order.listOrders",
-      "input": { "env": "prod", "status": "awaiting_payment", "since": "2026-10-07T09:58:00Z" }
+      "input": {
+        "env": "prod",
+        "status": "awaiting_payment",
+        "since": "2026-10-07T09:58:00Z"
+      }
     },
     {
       "why": "Is staging, same release, fine?",
       "tool": "metrics.queryMetric",
-      "input": { "env": "staging", "metric": "worker_memory_mb" }
+      "input": {
+        "env": "staging",
+        "metric": "worker_memory_mb"
+      }
     }
   ],
   "conclusion": {
@@ -97,7 +140,11 @@
         "at": "2026-10-07T10:01:04Z",
         "quote": "container shop-worker-1 OOMKilled (exit 137), restart 1"
       },
-      { "source": "app-logs", "at": "2026-10-07T09:50:14Z", "quote": "41 jobs/min (190 jobs/min before 2.14.0)" },
+      {
+        "source": "app-logs",
+        "at": "2026-10-07T09:50:14Z",
+        "quote": "41 jobs/min (190 jobs/min before 2.14.0)"
+      },
       {
         "source": "metrics",
         "at": "2026-10-07T10:00:00Z",

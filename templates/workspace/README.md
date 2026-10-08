@@ -7,6 +7,7 @@ keep it in your own repository and review it like code.
 ```
 ops.config.json   the apps and environments, their sources of evidence, and the settings of each addon
 playbooks/        how your team investigates each kind of problem (Markdown)
+knowledge/        runbooks, past incidents, notes: searched by words (Markdown)
 addons/           one folder per system the assistant can read (a database, an API, Datadog ...)
 ```
 
@@ -20,7 +21,7 @@ addons/           one folder per system the assistant can read (a database, an A
    ```
 
 3. **Add what only a system can say**: switch on a ready-made addon (`rest`, `git`, `datadog`, `github`) or start your own with `npm run ops -- init addon <name> --template file|api|sql`.
-4. **Write a playbook** for the problem you investigate most often: copy `playbooks/first-incident.md`.
+4. **Write a playbook** for the problem you investigate most often: copy `playbooks/first-incident.md`. Put runbooks and past incidents in `knowledge/`.
 5. **Check**: `npm run ops -- doctor`, then ask your assistant: "what is wrong with {{app}} in production?"
 
 The guide: <https://bhoudebert.github.io/help-me-ops/guide/getting-started>

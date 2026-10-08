@@ -59,7 +59,13 @@ export async function initWorkspace(found: string, args: string[]): Promise<stri
     playbooks: "playbooks",
   };
   files["ops.config.json"] = `${JSON.stringify(configuration, null, 2)}\n`;
-  for (const path of ["README.md", "playbooks/README.md", "playbooks/first-incident.md", "addons/README.md"]) {
+  for (const path of [
+    "README.md",
+    "playbooks/README.md",
+    "playbooks/first-incident.md",
+    "knowledge/README.md",
+    "addons/README.md",
+  ]) {
     files[path] = (await readFile(join(WORKSPACE_TEMPLATE, path), "utf8")).replaceAll("{{app}}", app);
   }
   const clash = Object.keys(files).filter((path) => existsSync(join(folder, path)));
