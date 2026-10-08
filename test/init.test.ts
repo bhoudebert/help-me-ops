@@ -102,7 +102,7 @@ test("init: refuses to overwrite, bad names, unknown templates and missing argum
 test("init workspace: a folder that loads, with a starter playbook, a README and what to do next", async () => {
   const folder = join(mkdtempSync(join(tmpdir(), "ops-init-ws-")), "my-ops");
   const message = await runInit("/ignored", ["workspace", folder, "--app", "shop"]);
-  assert.match(message, new RegExp(`OPS_WORKSPACE=${folder}`));
+  assert.ok(message.includes(`OPS_WORKSPACE=${folder}`));
   assert.match(message, /doctor/);
 
   const { config } = await loadConfig(folder);
