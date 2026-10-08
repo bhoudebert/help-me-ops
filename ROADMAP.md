@@ -12,9 +12,10 @@
   read by the `rest` addon; a fake Datadog on it (documented shapes) is read by the `datadog` addon.
 - **Demo on a real PostgreSQL** (done): `docker/compose.yml`, a `readonly` user,
   the `_shopdb` addon; see the guide.
-- **More addons people ask for**: PostgreSQL and MySQL (read-only user, from
-  the `sql` scaffold), Loki or Elasticsearch logs, Prometheus metrics. Each an
-  addon following `examples/my-workspace/addons/`.
+- **More addons people ask for**: MySQL (read-only user, from the `sql` scaffold);
+  Prometheus, Loki and Elasticsearch are done (experimental, with mocks). Next
+  candidates: Grafana, Sentry, PagerDuty. Each an addon following
+  `examples/my-workspace/addons/`.
 - **Personal data** (guide and the `privacy.mask` safeguard done; the rest soon), in this order:
   1. _Declare it_: each source and addon says whether it can return personal
      data, and `doctor` shows it.
