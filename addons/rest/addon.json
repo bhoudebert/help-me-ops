@@ -1,0 +1,42 @@
+{
+  "apiVersion": 1,
+  "description": "Read-only GETs of a REST API of your own (a status page, an internal service), restricted to the path prefixes you list. Off until an environment sets it up.",
+  "settings": {
+    "baseUrl": {
+      "type": "string",
+      "env": "REST_BASE_URL",
+      "description": "Base URL of the API, e.g. https://api.internal.example.com/v1"
+    },
+    "allow": {
+      "type": "string",
+      "env": "REST_ALLOW",
+      "description": "Comma-separated path prefixes the assistant may read, e.g. /orders,/health. Nothing else is reachable."
+    },
+    "token": {
+      "type": "string",
+      "optional": true,
+      "env": "REST_TOKEN",
+      "secret": true,
+      "description": "A read-only token, if the API needs one"
+    },
+    "tokenHeader": {
+      "type": "string",
+      "default": "authorization",
+      "env": "REST_TOKEN_HEADER",
+      "description": "Header carrying the token: 'authorization' sends 'Bearer <token>', any other name sends the token as is (e.g. x-api-key)"
+    }
+  },
+  "tools": {
+    "get": {
+      "description": "GET one path of the team's REST API and return what it answers (one record per item of a list). Read-only: only paths under the configured prefixes can be read.",
+      "params": {
+        "path": { "type": "string", "description": "Path under the base URL, starting with /, e.g. /orders/4512" },
+        "query": {
+          "type": "string",
+          "optional": true,
+          "description": "Query string without the ?, e.g. status=stuck&limit=20"
+        }
+      }
+    }
+  }
+}
