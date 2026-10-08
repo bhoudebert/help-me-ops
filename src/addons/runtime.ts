@@ -159,9 +159,15 @@ export function addonTools(
             evidence = await run(parsed, context);
           } catch (error) {
             // A secret setting never reaches the person or the model, even inside an error.
+            // The value, and each word of it that is long enough to be a credential: of a header
+            // "Bearer abcdef..." a server may echo only the token.
             const secrets = (definition.secrets ?? [])
-              .map((key) => String(context.settings[key] ?? ""))
-              .filter(Boolean);
+              .flatMap((key) => {
+                const value = String(context.settings[key] ?? "");
+                return [value, ...value.split(/\s+/).filter((part) => part.length >= 8)];
+              })
+              .filter(Boolean)
+              .sort((a, b) => b.length - a.length);
             const message = error instanceof Error ? error.message : String(error);
             throw new Error(
               secrets.reduce((text, secret) => text.replaceAll(secret, "***"), message),
