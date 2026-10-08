@@ -1,6 +1,7 @@
 // Terminal entry point: npm run ops -- <command>. Thin: the logic is in commands.ts.
 import { checkAddon } from "./addons/check.ts";
 import { runDemo } from "./demo.ts";
+import { runSetup } from "./setup.ts";
 import { resolveAddonDirs } from "./addons/loader.ts";
 import { runCommand, startupNotices, USAGE } from "./commands.ts";
 import { resolve } from "node:path";
@@ -14,7 +15,16 @@ const optionAt = new Set(argv.flatMap((a, i) => (a === "--workspace" || a === "-
 const [command, ...args] = argv.filter((_, i) => !optionAt.has(i));
 try {
   if (!command || command === "help" || command === "--help") console.log(USAGE);
-  else if (command === "demo") {
+  else if (command === "setup") {
+    const explicit = argv.includes("--workspace") || process.env.OPS_WORKSPACE;
+    const result = await runSetup(args, {
+      clone: resolve(import.meta.dirname, ".."),
+      workspace: explicit ? resolveWorkspace(argv) : resolve(import.meta.dirname, "../examples/my-workspace"),
+      defaulted: !explicit,
+    });
+    console.log(result.text);
+    if (!result.ok) process.exitCode = 1;
+  } else if (command === "demo") {
     const flag = (name: string) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : undefined);
     // The shipped demo, unless a workspace is named on the command line: OPS_WORKSPACE usually points at your own.
     const workspace = argv.includes("--workspace")
