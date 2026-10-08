@@ -8,12 +8,21 @@ import { appParam, envParam, type ToolDefinition } from "../tools/index.ts";
 
 type Settings = Record<string, unknown>;
 
+/** A setting refers to an environment variable this machine does not have: not a mistake, a credential that is absent. */
+export class UnsetVariable extends Error {
+  variable: string;
+  constructor(variable: string) {
+    super(`environment variable ${variable} is not set`);
+    this.variable = variable;
+  }
+}
+
 /** `${NAME}` in a configured string is the environment variable NAME: credentials stay out of the file. */
 function fromEnvironment(value: unknown, env: NodeJS.ProcessEnv): unknown {
   if (typeof value !== "string") return value;
   return value.replace(/\$\{(\w+)\}/g, (_, name: string) => {
     const found = env[name];
-    if (found === undefined) throw new Error(`environment variable ${name} is not set`);
+    if (found === undefined) throw new UnsetVariable(name);
     return found;
   });
 }
@@ -55,7 +64,8 @@ export function connectorTypes(addons: LoadedAddon[]): Map<string, ConnectorType
  * The tools of the addons, namespaced (`order.getOrder`), each reading one app
  * and environment like the core tools. Settings are checked for every
  * environment now; an environment where they are invalid is noted and refused
- * at call time, and the rest works. An addon no environment sets up serves no
+ * at call time, and the rest works. An addon no environment sets up, or whose
+ * settings only wait for environment variables this machine lacks, serves no
  * tools and is reported through `idle`, so shipped addons cost nothing until used.
  */
 export function addonTools(
@@ -65,7 +75,7 @@ export function addonTools(
   notes: (addon: string, note: string) => void,
   env: NodeJS.ProcessEnv = process.env,
   fetchImpl: typeof fetch = globalThis.fetch,
-  idle: (addon: string) => void = () => undefined,
+  idle: (addon: string, reason: string) => void = () => undefined,
 ): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
   for (const addon of addons) {
@@ -73,6 +83,7 @@ export function addonTools(
     if (!definition?.tools?.length) continue;
     const settings = new Map<string, Settings | string>();
     let setUp = false;
+    const waiting = new Set<string>();
     for (const app of apps) {
       for (const environment of app.envs) {
         const key = `${app.name}/${environment.name}`;
@@ -80,18 +91,27 @@ export function addonTools(
           settings.set(key, `not set up: add "addons": { "${addon.name}": { … } } to ${key} in ops.config.json`);
           continue;
         }
-        setUp = true;
         try {
           settings.set(key, resolveSettings(addon, environment.addons[addon.name], env));
+          setUp = true;
         } catch (error) {
           const reason = error instanceof Error ? error.message : String(error);
           settings.set(key, reason);
-          notes(addon.name, `unavailable in ${key}: ${reason}`);
+          if (error instanceof UnsetVariable) waiting.add(error.variable);
+          else {
+            setUp = true;
+            notes(addon.name, `unavailable in ${key}: ${reason}`);
+          }
         }
       }
     }
     if (!setUp) {
-      idle(addon.name);
+      idle(
+        addon.name,
+        waiting.size
+          ? `waiting for ${[...waiting].join(", ")}: set ${waiting.size > 1 ? "them" : "it"} (in .env, for example) to turn it on`
+          : `no environment sets it up: add "addons": { "${addon.name}": { … } } in ops.config.json`,
+      );
       continue;
     }
     for (const tool of definition.tools) {
