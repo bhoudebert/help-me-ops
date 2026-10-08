@@ -1,0 +1,18 @@
+{
+  "apiVersion": 1,
+  "description": "TODO say which database __NAME__ reads, in one sentence.",
+  "settings": {
+    "url": {
+      "type": "string",
+      "env": "__ENV___DATABASE_URL",
+      "secret": true,
+      "description": "Connection URL of a READ-ONLY database user"
+    }
+  },
+  "tools": {
+    "getRecord": {
+      "description": "TODO say what this returns: one row of a table by its id. Read-only (a SELECT).",
+      "params": { "id": { "type": "string", "description": "The id of the row" } }
+    }
+  }
+}
