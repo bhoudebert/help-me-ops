@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/bhoudebert/help-me-ops/compare/v1.0.0...v1.1.0) (2026-10-08)
+
+
+### Features
+
+* **addons:** check an addon with ops addon check ([#29](https://github.com/bhoudebert/help-me-ops/issues/29)) ([703de05](https://github.com/bhoudebert/help-me-ops/commit/703de050fc0d648da204d7c088dc5e7c834a6602))
+* **conclusion:** refuse a conclusion that quotes what no tool returned ([#31](https://github.com/bhoudebert/help-me-ops/issues/31)) ([ac64b0c](https://github.com/bhoudebert/help-me-ops/commit/ac64b0c1ed46ce155582822b22528a9e33d0c3e7))
+* **knowledge:** search the team's runbooks and notes with searchKnowledge ([#30](https://github.com/bhoudebert/help-me-ops/issues/30)) ([b2edd9e](https://github.com/bhoudebert/help-me-ops/commit/b2edd9edd673aa110ed3588a5f4b4360a0ea731b))
+* **privacy:** hide the fields and patterns the workspace lists in what the tools return ([#34](https://github.com/bhoudebert/help-me-ops/issues/34)) ([93ba441](https://github.com/bhoudebert/help-me-ops/commit/93ba4419c771f11039722edf28e597e07f3326ac))
+* **privacy:** let an addon declare its personal fields and detectors ([#35](https://github.com/bhoudebert/help-me-ops/issues/35)) ([5bb5ec3](https://github.com/bhoudebert/help-me-ops/commit/5bb5ec38e742937e97c91f2dbb7d494821db88df))
+* **workspace:** create a workspace with ops init workspace ([#27](https://github.com/bhoudebert/help-me-ops/issues/27)) ([8b5bbbf](https://github.com/bhoudebert/help-me-ops/commit/8b5bbbf1a338d951b9141695f862a541d1b2b3fc))
+
 ## 1.0.0 (2026-10-08)
 
 
