@@ -1,5 +1,8 @@
-# A real PostgreSQL for the demo: the same shop, prod and staging, as a database.
-#   docker compose -f docker/compose.yml up -d
+# Real services for the demo, in Docker: the same shop, prod and staging.
+#   db       a PostgreSQL (the shopdb addon)
+#   backend  the shop's REST API over HTTP, ports 8088 (prod) and 8089 (staging)
+#   docker compose -f docker/compose.yml up -d            # both
+#   docker compose -f docker/compose.yml up -d backend    # only the backend
 # Port 5433 so it does not collide with a Postgres of your own. Delete with:
 #   docker compose -f docker/compose.yml down -v
 services:
@@ -12,3 +15,15 @@ services:
     volumes:
       # Run once, when the volume is empty: databases, tables, the read-only user.
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+  backend:
+    image: node:24-alpine
+    command: node /workspace/docker/backend/server.mjs
+    environment:
+      WORKSPACE: /workspace
+      BACKEND_HOST: 0.0.0.0
+    ports:
+      - "127.0.0.1:8088:8088"
+      - "127.0.0.1:8089:8089"
+    volumes:
+      # The recorded data of the workspace, read only.
+      - ..:/workspace:ro

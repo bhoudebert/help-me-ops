@@ -24,6 +24,11 @@
             },
             "shopdb": {
               "url": "${SHOPDB_PROD_URL}"
+            },
+            "rest": {
+              "baseUrl": "${SHOP_API_PROD_URL}",
+              "allow": "/orders,/health",
+              "token": "${SHOP_API_TOKEN}"
             }
           }
         },
@@ -48,6 +53,11 @@
             },
             "shopdb": {
               "url": "${SHOPDB_STAGING_URL}"
+            },
+            "rest": {
+              "baseUrl": "${SHOP_API_STAGING_URL}",
+              "allow": "/orders,/health",
+              "token": "${SHOP_API_TOKEN}"
             }
           }
         }
