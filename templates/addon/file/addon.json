@@ -1,0 +1,19 @@
+{
+  "apiVersion": 1,
+  "description": "TODO say what __NAME__ reads, in one sentence.",
+  "settings": {
+    "path": {
+      "type": "string",
+      "env": "__ENV___PATH",
+      "description": "The text file to search, relative to the workspace"
+    }
+  },
+  "tools": {
+    "search": {
+      "description": "TODO say what this finds: the lines of the file that contain a term. Read-only.",
+      "params": {
+        "term": { "type": "string", "description": "A word or identifier to look for, e.g. an order number" }
+      }
+    }
+  }
+}

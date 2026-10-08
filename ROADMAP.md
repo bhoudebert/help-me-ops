@@ -7,8 +7,8 @@
   unknowns, every quote from a result), a scripted terminal demo (`ops demo`)
   and setup helpers (`ops init`, `ops doctor`, `ops addon check`).
 - **Writing an addon without MCP knowledge** (ADR 0009): a manifest and plain
-  functions, an `ops init addon` scaffold, and shipped addons for Datadog,
-  GitHub and a team's own REST API.
+  functions (done), an `ops init addon` scaffold (done), and shipped addons for
+  Datadog, GitHub and a team's own REST API.
 - **More addons people ask for**: PostgreSQL and MySQL (read-only user, from
   the `sql` scaffold), Loki or Elasticsearch logs, Prometheus metrics. Each an
   addon following `examples/my-workspace/addons/`.

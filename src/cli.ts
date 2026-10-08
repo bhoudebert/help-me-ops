@@ -2,6 +2,7 @@
 import { resolveAddonDirs } from "./addons/loader.ts";
 import { runCommand, startupNotices, USAGE } from "./commands.ts";
 import { resolveWorkspace } from "./config.ts";
+import { initAddon } from "./init.ts";
 import { openToolbox } from "./toolbox.ts";
 
 const argv = process.argv.slice(2);
@@ -10,6 +11,7 @@ const optionAt = new Set(argv.flatMap((a, i) => (a === "--workspace" || a === "-
 const [command, ...args] = argv.filter((_, i) => !optionAt.has(i));
 try {
   if (!command || command === "help" || command === "--help") console.log(USAGE);
+  else if (command === "init") console.log(await initAddon(resolveWorkspace(argv), args));
   else {
     const toolbox = await openToolbox(resolveWorkspace(argv), resolveAddonDirs(argv));
     if (command !== "doctor") for (const notice of startupNotices(toolbox)) console.error(notice);

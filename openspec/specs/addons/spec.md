@@ -57,6 +57,25 @@ is read from (typed from its text), and MAY be `secret`. Names SHALL be letters,
 digits and underscores. Invalid parameters SHALL be refused naming the
 parameter; the value of a secret setting SHALL never appear in an error.
 
+### Requirement: Scaffold an addon
+
+`ops init addon <name> --template file|api|sql` SHALL write a working addon
+folder (`addon.json` and `tools.ts`) into `<workspace>/addons/`, with comments
+saying what to change, and SHALL refuse to overwrite an existing folder, writing
+nothing. The name SHALL be lowercase letters, digits and hyphens. The `sql`
+template SHALL run inside a read-only transaction with a parameterised `SELECT`;
+the `api` template SHALL only GET.
+
+#### Scenario: Scaffold, then check
+
+- **WHEN** `init addon billing --template api` is run and the settings are put in the configuration
+- **THEN** `doctor` lists `billing` as loaded and its tool is served as `billing.getItem`
+
+#### Scenario: Existing folder
+
+- **WHEN** the folder `addons/billing` already exists
+- **THEN** the command fails saying so and the folder is unchanged
+
 ### Requirement: Plain data becomes evidence
 
 What a tool function returns, records, one record, a string or nothing, SHALL

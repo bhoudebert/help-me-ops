@@ -76,7 +76,7 @@ example) and point to it with `--workspace` or `OPS_WORKSPACE`. Replace the
 fixtures one source at a time: logs need no code; a database, metrics, an API or
 a health check are an addon, a folder you drop in `addons/` with two small
 files, an `addon.json` and a `tools.ts` of plain functions, no AI or MCP
-knowledge needed (the demo's `order`, `metrics` and `health` are templates). Write a
+knowledge needed. Start from `npm run ops -- init addon <name> --template file|api|sql`, or the demo's `order`, `metrics` and `health`. Write a
 [playbook](https://bhoudebert.github.io/help-me-ops/guide/playbooks) for the
 problem you investigate most often. Credentials stay in the environment, and a
 broken addon is skipped with a reason, never fatal.

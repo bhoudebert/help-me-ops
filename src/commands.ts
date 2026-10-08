@@ -12,6 +12,8 @@ export const USAGE = `Usage: npm run ops -- <command>
                                         Search one source, read-only
   investigate "<question>"              The playbook to follow and where to look
   doctor                                The addons loaded or skipped, and why
+  init addon <name> --template file|api|sql
+                                        Write a working addon into the workspace to edit
 
 Options for any command: --workspace <dir> (or OPS_WORKSPACE; default: the current folder),
 --addons <dir[:dir]> (or OPS_ADDONS) for more addon folders,

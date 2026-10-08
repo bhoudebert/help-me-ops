@@ -5,13 +5,33 @@ Datadog, GitHub, your own REST API. It is a folder with two small files, and you
 need no knowledge of AI, MCP or this project's internals.
 
 ```
-ops/addons/order/
+my-workspace/addons/order/
   addon.json    what it is: settings, and the tools with their parameters
   tools.ts      the code: one plain function per tool
 ```
 
 Drop the folder in, restart, and the assistant can use `order.getOrder`. Delete
 it and it is gone. Rename it `_order` to turn it off.
+
+## Start from a template
+
+You do not begin from a blank page. This writes a working addon into your
+workspace, with `TODO` comments saying what to change:
+
+```bash
+npm run ops -- --workspace my-workspace init addon billing --template api
+```
+
+| Template | For                                              | You change                                  |
+| -------- | ------------------------------------------------ | ------------------------------------------- |
+| `file`   | a text file: logs, an export                     | the file path (a setting), the tool names   |
+| `api`    | a REST API, with a token                         | the URL path and the fields you want quoted |
+| `sql`    | a PostgreSQL database (`SELECT` only, read-only) | the table, the columns; `npm install pg`    |
+
+It never overwrites: if the folder exists, nothing is written. Then give the
+addon its settings under the environment that uses it in `ops.config.json`
+(see [Settings and credentials](#settings-and-credentials)) and run `doctor`:
+the addon must show as `loaded`, with a note if a setting is still missing.
 
 ## The idea in one example
 
