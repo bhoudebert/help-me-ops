@@ -20,6 +20,35 @@ The demo [**workspace**](/workspace) in `examples/my-workspace` is one app, `sho
 around an order that got stuck: [the story](/demo). A workspace is a folder:
 `ops.config.json` (apps, environments, sources) and `playbooks/`.
 
+## Where do I run what
+
+help-me-ops is not published: you use it from your **clone** (the folder above,
+once `npm install` is done). Every command runs there, and the only thing that
+may live somewhere else is your [workspace](/workspace). You say which one in
+the clone's `.env` file, once:
+
+```bash
+cp .env.example .env     # git-ignored; read by npm run ops and npm run mcp
+# then in .env:
+OPS_WORKSPACE=/home/me/my-app/ops
+```
+
+Without `.env`, add `--workspace <folder>` to each command. Which workspace is
+loaded is always printed first (`doctor`) and told to the assistant.
+
+| You want to          | Run, from the clone                                                    |
+| -------------------- | ---------------------------------------------------------------------- |
+| See what it connects | `npm run ops -- sources`                                               |
+| Start an addon       | `npm run ops -- init addon billing --template api`                     |
+| Check your addons    | `npm run ops -- doctor`                                                |
+| Serve an AI client   | `npm run mcp` (the client's config starts it, see [clients](/clients)) |
+
+An addon that needs a package (a database driver such as `pg`) finds it from its
+own folder upward, so install it **in your workspace**, not in the clone:
+`cd <your workspace> && npm install pg`. Addons without packages need nothing.
+`OPS_ADDONS` is optional: it adds shared addon folders, for a team that keeps
+one set of addons for several workspaces.
+
 ## Try it
 
 The fastest way is [the demo](/demo): open the folder in your AI client and ask

@@ -153,7 +153,8 @@ the other environments keep working.
 ## Dependencies: a database driver, an SDK
 
 An addon owns its packages. Install them next to it, in the addon folder or in
-the workspace. `my-workspace` below stands for **your workspace folder** (the
+the workspace (never in the help-me-ops clone: the addon looks for them from its
+own folder upward). `my-workspace` below stands for **your workspace folder** (the
 one holding `ops.config.json`), not for this repository:
 
 ```bash
