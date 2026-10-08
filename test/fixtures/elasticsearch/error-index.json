@@ -1,0 +1,13 @@
+{
+  "error": {
+    "root_cause": [
+      {
+        "type": "index_not_found_exception",
+        "reason": "no such index [logs-shop-nope]"
+      }
+    ],
+    "type": "index_not_found_exception",
+    "reason": "no such index [logs-shop-nope]"
+  },
+  "status": 404
+}

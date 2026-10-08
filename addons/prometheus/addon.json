@@ -1,0 +1,61 @@
+{
+  "apiVersion": 1,
+  "description": "EXPERIMENTAL: written from Prometheus' documented HTTP API and tested against recorded and mock responses, not yet against a real Prometheus, so it may not work as is. Reads metrics (range and instant PromQL queries) and the alerts that are firing, read-only. Works with Prometheus and with the long-term stores that speak its API (Mimir, Thanos, VictoriaMetrics). Off until an environment sets it up.",
+  "settings": {
+    "baseUrl": {
+      "type": "string",
+      "env": "PROMETHEUS_URL",
+      "description": "The Prometheus (or Mimir, Thanos, VictoriaMetrics) URL, e.g. http://prometheus.internal:9090; a path prefix is kept"
+    },
+    "authorization": {
+      "type": "string",
+      "optional": true,
+      "secret": true,
+      "env": "PROMETHEUS_AUTHORIZATION",
+      "description": "The whole Authorization header, if it needs one: 'Bearer <token>' or 'Basic <base64>'"
+    },
+    "orgId": {
+      "type": "string",
+      "optional": true,
+      "env": "PROMETHEUS_ORG_ID",
+      "description": "The tenant, sent as X-Scope-OrgID, for Mimir or Cortex"
+    }
+  },
+  "tools": {
+    "queryRange": {
+      "description": "A PromQL query over a time range, as points with their times (thinned to about 50 per series), e.g. payment_confirm_queue_depth{env=\"prod\"} or rate(http_requests_total[5m]). Read-only. Experimental: not verified against a live Prometheus.",
+      "params": {
+        "query": { "type": "string", "description": "A PromQL expression" },
+        "from": {
+          "type": "string",
+          "optional": true,
+          "description": "Start: ISO 8601 or relative like now-1h (default now-1h)"
+        },
+        "to": { "type": "string", "optional": true, "description": "End: ISO 8601 or relative (default now)" },
+        "step": {
+          "type": "string",
+          "optional": true,
+          "description": "Resolution: 30s, 1m, 5m ... (default: about 120 points)"
+        }
+      }
+    },
+    "query": {
+      "description": "A PromQL query at one instant: the current value of a metric, or of an expression like sum(rate(errors_total[5m])). Read-only. Experimental: not verified against a live Prometheus.",
+      "params": {
+        "query": { "type": "string", "description": "A PromQL expression" },
+        "at": { "type": "string", "optional": true, "description": "The instant: ISO 8601 or relative (default now)" }
+      }
+    },
+    "alerts": {
+      "description": "The alerts Prometheus is evaluating, with their state (firing or pending), labels and when they became active: what is alerting. Read-only. Experimental: not verified against a live Prometheus.",
+      "params": {
+        "state": {
+          "type": "string",
+          "enum": ["firing", "pending"],
+          "optional": true,
+          "description": "Only alerts in this state"
+        }
+      }
+    }
+  }
+}

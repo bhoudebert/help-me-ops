@@ -324,7 +324,7 @@
         <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg></span><span>Logs<small>files, services</small></span><span class="tag ok">ready</span></div>
         <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-db"/></svg></span><span>Databases<small>PostgreSQL, any driver</small></span><span class="tag ok">template</span></div>
         <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-globe"/></svg></span><span>Your REST APIs<small>allow-listed GETs</small></span><span class="tag ok">ready</span></div>
-        <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-chart"/></svg></span><span>Datadog<small>logs, metrics, monitors</small></span><span class="tag warn">experimental</span></div>
+        <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-chart"/></svg></span><span>Datadog and friends<small>Prometheus, Loki, Elasticsearch</small></span><span class="tag warn">experimental</span></div>
         <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-git"/></svg></span><span>Git<small>what changed before</small></span><span class="tag ok">ready</span></div>
         <div class="node yours"><span class="ic" style="background:var(--brand);color:#fff"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></span><span>Anything else<small>two files, no AI knowledge</small></span></div>
       </div>
@@ -488,6 +488,24 @@
         <div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-github"/></svg></span>GitHub<span class="tag warn">experimental</span></div>
         <small>Pull requests, releases, issues and builds. A mock in the demo.</small>
         <span class="needs"><b>You need</b>a fine-grained read-only token, the list of repositories</span>
+        <span class="go">Set it up</span>
+      </a>
+      <a class="node addon" href="guide/ready-made/prometheus">
+        <div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-chart"/></svg></span>Prometheus<span class="tag warn">experimental</span></div>
+        <small>Metrics and firing alerts with PromQL. Also Mimir, Thanos, VictoriaMetrics. A mock in the demo.</small>
+        <span class="needs"><b>You need</b>its URL, an authorization header, a tenant if needed</span>
+        <span class="go">Set it up</span>
+      </a>
+      <a class="node addon" href="guide/ready-made/loki">
+        <div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg></span>Loki<span class="tag warn">experimental</span></div>
+        <small>Logs with LogQL, and the labels to build a query. A mock in the demo.</small>
+        <span class="needs"><b>You need</b>its URL, an authorization header, the tenant if multi-tenant</span>
+        <span class="go">Set it up</span>
+      </a>
+      <a class="node addon" href="guide/ready-made/elasticsearch">
+        <div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-db"/></svg></span>Elasticsearch<span class="tag warn">experimental</span></div>
+        <small>Logs and documents of the indices you list, also OpenSearch. A mock in the demo.</small>
+        <span class="needs"><b>You need</b>its URL, the indices, a key limited to read on them</span>
         <span class="go">Set it up</span>
       </a>
       <a class="node addon yours" href="guide/addons">

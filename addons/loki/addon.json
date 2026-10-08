@@ -1,0 +1,55 @@
+{
+  "apiVersion": 1,
+  "description": "EXPERIMENTAL: written from Loki's documented HTTP API and tested against recorded and mock responses, not yet against a real Loki, so it may not work as is. Searches logs with LogQL and lists the labels to build a query from, read-only (Grafana Loki, Grafana Cloud Logs). Off until an environment sets it up.",
+  "settings": {
+    "baseUrl": {
+      "type": "string",
+      "env": "LOKI_URL",
+      "description": "The Loki URL, e.g. http://loki.internal:3100 (Grafana Cloud: the URL of your Logs instance); a path prefix is kept"
+    },
+    "authorization": {
+      "type": "string",
+      "optional": true,
+      "secret": true,
+      "env": "LOKI_AUTHORIZATION",
+      "description": "The whole Authorization header, if it needs one: 'Bearer <token>' or 'Basic <base64 of user:token>'"
+    },
+    "orgId": {
+      "type": "string",
+      "optional": true,
+      "env": "LOKI_ORG_ID",
+      "description": "The tenant, sent as X-Scope-OrgID, when Loki is multi-tenant"
+    }
+  },
+  "tools": {
+    "searchLogs": {
+      "description": "Search logs with a LogQL query such as {service=\"payments\"} |= \"503\" or {app=\"shop\"} | json | level=\"error\", over a time range, oldest first, with their labels and times. Use labels first when you do not know the label names. Read-only. Experimental: not verified against a live Loki.",
+      "params": {
+        "query": {
+          "type": "string",
+          "description": "A LogQL query: a stream selector in braces, optionally with filters"
+        },
+        "from": {
+          "type": "string",
+          "optional": true,
+          "description": "Start: ISO 8601 or relative like now-15m (default now-1h)"
+        },
+        "to": { "type": "string", "optional": true, "description": "End: ISO 8601 or relative (default now)" },
+        "limit": { "type": "integer", "default": 50, "description": "Most lines to return, up to 100" },
+        "newest": { "type": "boolean", "default": false, "description": "Newest first instead of oldest first" }
+      }
+    },
+    "labels": {
+      "description": "The label names Loki knows, or the values of one label (service, app, level ...), to build a LogQL selector from. Read-only. Experimental: not verified against a live Loki.",
+      "params": {
+        "name": {
+          "type": "string",
+          "optional": true,
+          "description": "A label name: its values are returned. Without it, the label names."
+        },
+        "from": { "type": "string", "optional": true, "description": "Start: ISO 8601 or relative (default now-1h)" },
+        "to": { "type": "string", "optional": true, "description": "End: ISO 8601 or relative (default now)" }
+      }
+    }
+  }
+}

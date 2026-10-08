@@ -190,7 +190,30 @@ release, and did a deploy or a build fail?" It is a stand-in, and the addon is
 experimental until verified on a real GitHub; [what it is and how to check your
 own](https://bhoudebert.github.io/help-me-ops/guide/ready-made/github).
 
-## 7. Make it yours
+## 7. Prometheus, Loki and Elasticsearch, mocked (optional, needs Docker)
+
+The same backend mocks the three observability APIs people already run, in their
+documented shapes, from the demo's metrics and logs: Prometheus (under `/prometheus`),
+Loki and Elasticsearch (the index `shop-logs-<env>`). With the backend running, add
+three lines to `.env`:
+
+```bash
+cat >> .env <<'EOF'
+PROMETHEUS_AUTHORIZATION="Bearer demo-prom-token"
+LOKI_AUTHORIZATION="Bearer demo-loki-token"
+ELASTICSEARCH_AUTHORIZATION="ApiKey demo-es-key"
+EOF
+npm run ops -- --workspace examples/my-workspace doctor     # prometheus, loki, elasticsearch: loaded
+```
+
+Ask: "in Prometheus, what was the payment queue depth between 9 and 11 on 7 October
+2026 and which alerts are firing; in Loki, the payment errors; in Elasticsearch, the
+logs of order 4512?" They are stand-ins, and the addons are experimental until verified on a
+real service: [Prometheus](https://bhoudebert.github.io/help-me-ops/guide/ready-made/prometheus),
+[Loki](https://bhoudebert.github.io/help-me-ops/guide/ready-made/loki),
+[Elasticsearch](https://bhoudebert.github.io/help-me-ops/guide/ready-made/elasticsearch).
+
+## 8. Make it yours
 
 Copy this folder into your own repository, rename the app and environments in
 `ops.config.json`, and replace what the addons read with your read-only systems.

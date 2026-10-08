@@ -172,6 +172,31 @@ SHALL be reported as an error.
 - **WHEN** a sample returns a record whose text holds the value of a secret setting
 - **THEN** the sample fails saying a secret setting appears in the evidence
 
+### Requirement: Shipped observability addons
+
+The repository SHALL ship `prometheus` (`query_range`, `query` and `alerts` of the
+Prometheus HTTP API), `loki` (`query_range`, `labels` and `label/<name>/values` of the
+Loki HTTP API) and `elasticsearch` (`POST /<indices>/_search` of Elasticsearch and
+OpenSearch), each described as experimental to people and to the assistant until
+verified against a real service. Each SHALL take its URL, optionally the whole
+`Authorization` header as a secret setting (and a tenant as `X-Scope-OrgID` for the
+first two), issue no request but its fixed ones (the search of `elasticsearch` is the
+only non-GET), refuse a query that is empty or too long and a time that is neither
+ISO 8601 nor relative before any request, not follow redirects, cap what it returns and
+time out, say what the service said for a bad query, refused credentials or a limit, and
+never show the credentials in an error even when a server echoes part of them.
+`prometheus` SHALL refuse a range that would return more than 11,000 points per series
+and thin long series; `loki` SHALL accept a label name only as letters, digits and
+underscores; `elasticsearch` SHALL search only the indices of its `indices` setting
+(refusing `_all`, `*`, a pattern outside the list and a list that names them), SHALL not
+let a query string start with a wildcard, and SHALL be set up from variables only when
+both its URL and its indices are given.
+
+#### Scenario: An index outside the list
+
+- **WHEN** `elasticsearch.search` is asked for `other-logs` and `indices` is `logs-shop-*`
+- **THEN** it is refused, naming the list, and no request is made
+
 ### Requirement: Addon check tests the privacy declaration
 
 `ops addon check` SHALL report the personal fields and detectors an addon

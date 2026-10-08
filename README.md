@@ -85,14 +85,17 @@ npm run ops -- doctor
 
 ## Ready-made addons
 
-| Addon                                           | Reads                           | You need                               | Status            |
-| ----------------------------------------------- | ------------------------------- | -------------------------------------- | ----------------- |
-| [logs](docs/guide/ready-made/logs.md)           | text log files                  | the file                               | ready             |
-| [rest](docs/guide/ready-made/rest.md)           | your own HTTP API, `GET` only   | URL, allowed paths, a read-only token  | ready             |
-| [git](docs/guide/ready-made/git.md)             | a repository on disk            | `git` and an up-to-date clone          | ready             |
-| [PostgreSQL](docs/guide/ready-made/postgres.md) | a database, `SELECT` only       | the `pg` driver, a read-only user      | template and demo |
-| [datadog](docs/guide/ready-made/datadog.md)     | logs, metrics, monitors         | API key, application key (read scopes) | experimental      |
-| [github](docs/guide/ready-made/github.md)       | pull requests, releases, builds | a fine-grained read-only token         | experimental      |
+| Addon                                                   | Reads                                      | You need                               | Status            |
+| ------------------------------------------------------- | ------------------------------------------ | -------------------------------------- | ----------------- |
+| [logs](docs/guide/ready-made/logs.md)                   | text log files                             | the file                               | ready             |
+| [rest](docs/guide/ready-made/rest.md)                   | your own HTTP API, `GET` only              | URL, allowed paths, a read-only token  | ready             |
+| [git](docs/guide/ready-made/git.md)                     | a repository on disk                       | `git` and an up-to-date clone          | ready             |
+| [PostgreSQL](docs/guide/ready-made/postgres.md)         | a database, `SELECT` only                  | the `pg` driver, a read-only user      | template and demo |
+| [datadog](docs/guide/ready-made/datadog.md)             | logs, metrics, monitors                    | API key, application key (read scopes) | experimental      |
+| [github](docs/guide/ready-made/github.md)               | pull requests, releases, builds            | a fine-grained read-only token         | experimental      |
+| [prometheus](docs/guide/ready-made/prometheus.md)       | metrics and firing alerts (PromQL)         | URL, authorization, tenant if needed   | experimental      |
+| [loki](docs/guide/ready-made/loki.md)                   | logs with LogQL                            | URL, authorization, tenant if needed   | experimental      |
+| [elasticsearch](docs/guide/ready-made/elasticsearch.md) | logs and documents of the indices you list | URL, indices, a read-only key          | experimental      |
 
 Write your own with `init addon` and verify it with `npm run ops -- addon check <folder>`.
 
@@ -161,7 +164,7 @@ trademarks belong to their owners and appear only to say what it works with; no
 logo is used. It talks to those products through their published interfaces,
 with your own accounts and keys, and ships none of their software. The demo's
 Datadog is an independent mock of a few documented endpoints, not Datadog, and
-the `datadog` and `github` addons are experimental: written from the public API and not yet
+the `datadog`, `github`, `prometheus`, `loki` and `elasticsearch` addons are experimental: written from the public API and not yet
 verified on a real account, so it may not work as is.
 Provided as is, without warranty: read-only is a layered design, not a
 guarantee, and an AI assistant's conclusions must be checked.

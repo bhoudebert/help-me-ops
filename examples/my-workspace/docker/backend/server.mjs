@@ -7,14 +7,17 @@
 //   node docker/backend/server.mjs                         # or without Docker
 //
 // Two things on each port: the shop's own REST API (/orders, /health), and a
-// mock of Datadog (/api/..., see datadog.mjs) and of GitHub (/repos/..., github.mjs). It only reads: anything but GET is
+// mocks of Datadog (/api/..., datadog.mjs), GitHub (/repos/..., github.mjs), Prometheus (/prometheus/..., prometheus.mjs), Loki (/loki/..., loki.mjs) and Elasticsearch (/<index>/_search, elasticsearch.mjs). It only reads: anything but GET is
 // answered 405, but for Datadog's log search, a POST that changes nothing.
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { datadogApi } from "./datadog.mjs";
+import { elasticsearchApi } from "./elasticsearch.mjs";
 import { githubApi } from "./github.mjs";
+import { lokiApi } from "./loki.mjs";
+import { prometheusApi } from "./prometheus.mjs";
 
 export const DEMO_TOKEN = "demo-token";
 
@@ -28,7 +31,11 @@ export function shopApi(workspace, env) {
       response.end(JSON.stringify(body));
     };
     if (await datadogApi(workspace, env, request, response, new URL(request.url ?? "/", "http://backend"))) return;
-    if (githubApi(workspace, request, response, new URL(request.url ?? "/", "http://backend"))) return;
+    const addressed = new URL(request.url ?? "/", "http://backend");
+    if (githubApi(workspace, request, response, addressed)) return;
+    if (prometheusApi(workspace, env, request, response, addressed)) return;
+    if (lokiApi(workspace, env, request, response, addressed)) return;
+    if (await elasticsearchApi(workspace, env, request, response, addressed)) return;
     if (request.method !== "GET") return send(405, { error: "read-only: only GET" });
     if (request.headers.authorization !== `Bearer ${DEMO_TOKEN}`)
       return send(401, { error: "a Bearer token is needed" });

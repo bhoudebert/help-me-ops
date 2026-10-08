@@ -38,7 +38,7 @@ function when(value) {
 const LINE = /^(\S+Z)\s+(INFO|WARN|ERROR|DEBUG)\s+(\S+)\s+(.*)$/;
 
 /** The logs of the environment as Datadog log events: status, service, message, and key=value pairs as attributes. */
-function logEvents(workspace, env) {
+export function logEvents(workspace, env) {
   const lines = readFileSync(join(workspace, "logs", `${env}.log`), "utf8").split("\n");
   return lines.flatMap((line, index) => {
     const m = LINE.exec(line);

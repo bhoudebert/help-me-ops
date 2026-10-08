@@ -120,6 +120,22 @@ the mask, and SHALL pause between steps only in a terminal (`--pace` sets it).
 - **WHEN** `npm run ops -- demo` is run in the clone, with nothing configured
 - **THEN** the twelve steps are printed, the conclusion is accepted with its seven quotes, and the exit code is 0
 
+### Requirement: Mocks of Prometheus, Loki and Elasticsearch, optional
+
+The demo backend SHALL also answer, on the same ports, the documented shapes of the
+Prometheus range query, instant query and alerts (under `/prometheus`), the Loki range
+query and labels, and the Elasticsearch search of an index `shop-logs-<env>`, from the
+recorded metrics and logs of each environment, behind a demo credential (and tenant for
+Loki), refusing anything but their reads. Each SHALL understand a stated subset of its
+query language (a metric name with `env` and `job`; a Loki stream selector with `|=` and
+`!=`; Elasticsearch words, `field:value`, phrases, `AND` and `NOT`) and refuse the rest
+in the service's own error shape. The documentation SHALL say they are stand-ins.
+
+#### Scenario: The queue in Prometheus
+
+- **WHEN** the prometheus addon queries `payment_confirm_queue_depth` for prod between 9 and 11, and lists the alerts
+- **THEN** the series reaches 1240 at 10:01 and two alerts are firing, and staging has no alert
+
 ### Requirement: The scenario is a test
 
 A scenario file (`examples/my-workspace/scenarios/`) SHALL hold the question, the

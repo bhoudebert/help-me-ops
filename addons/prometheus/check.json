@@ -1,0 +1,79 @@
+[
+  {
+    "name": "a metric over a range",
+    "tool": "queryRange",
+    "input": {
+      "query": "payment_confirm_queue_depth",
+      "from": "2026-10-07T09:00:00Z",
+      "to": "2026-10-07T11:00:00Z",
+      "step": "1m"
+    },
+    "settings": {
+      "baseUrl": "http://prometheus.test:9090"
+    },
+    "responses": {
+      "GET http://prometheus.test:9090/api/v1/query_range?query=payment_confirm_queue_depth&start=1791363600&end=1791370800&step=60": {
+        "body": {
+          "status": "success",
+          "data": {
+            "resultType": "matrix",
+            "result": [
+              {
+                "metric": {
+                  "__name__": "payment_confirm_queue_depth",
+                  "env": "prod"
+                },
+                "values": [
+                  [1791366000, "12"],
+                  [1791366600, "620"],
+                  [1791367260, "1240"]
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "expect": {
+      "minRecords": 3,
+      "summaryIncludes": "1240",
+      "withTime": true
+    }
+  },
+  {
+    "name": "the alerts",
+    "tool": "alerts",
+    "input": {},
+    "settings": {
+      "baseUrl": "http://prometheus.test:9090"
+    },
+    "responses": {
+      "GET http://prometheus.test:9090/api/v1/alerts": {
+        "body": {
+          "status": "success",
+          "data": {
+            "alerts": [
+              {
+                "labels": {
+                  "alertname": "PaymentQueueBackingUp",
+                  "severity": "page"
+                },
+                "annotations": {
+                  "summary": "queue above 1000 jobs"
+                },
+                "state": "firing",
+                "activeAt": "2026-10-07T10:00:00Z",
+                "value": "1.012e+03"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "expect": {
+      "minRecords": 1,
+      "summaryIncludes": "PaymentQueueBackingUp",
+      "withTime": true
+    }
+  }
+]

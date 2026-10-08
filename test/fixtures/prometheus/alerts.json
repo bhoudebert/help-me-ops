@@ -1,0 +1,30 @@
+{
+  "status": "success",
+  "data": {
+    "alerts": [
+      {
+        "labels": {
+          "alertname": "PaymentQueueBackingUp",
+          "severity": "page",
+          "env": "prod"
+        },
+        "annotations": {
+          "summary": "payment-confirm queue above 1000 jobs"
+        },
+        "state": "firing",
+        "activeAt": "2026-10-07T10:00:00Z",
+        "value": "1.012e+03"
+      },
+      {
+        "labels": {
+          "alertname": "DiskFillingUp",
+          "severity": "warning"
+        },
+        "annotations": {},
+        "state": "pending",
+        "activeAt": "2026-10-07T10:05:00Z",
+        "value": "8.1e-01"
+      }
+    ]
+  }
+}

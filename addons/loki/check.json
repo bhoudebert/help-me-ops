@@ -1,0 +1,40 @@
+[
+  {
+    "name": "search the logs",
+    "tool": "searchLogs",
+    "input": {
+      "query": "{service=\"payments\"} |= \"503\"",
+      "from": "2026-10-07T09:00:00Z",
+      "to": "2026-10-07T11:00:00Z"
+    },
+    "settings": {
+      "baseUrl": "http://loki.test:3100"
+    },
+    "responses": {
+      "GET http://loki.test:3100/loki/api/v1/query_range?query=%7Bservice%3D%22payments%22%7D+%7C%3D+%22503%22&start=2026-10-07T09%3A00%3A00.000Z&end=2026-10-07T11%3A00%3A00.000Z&limit=50&direction=forward": {
+        "body": {
+          "status": "success",
+          "data": {
+            "resultType": "streams",
+            "result": [
+              {
+                "stream": {
+                  "service": "payments",
+                  "level": "error"
+                },
+                "values": [
+                  ["1791367202000000000", "webhook endpoint /hooks/acme-pay returned 503 to provider (queue full)"]
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "expect": {
+      "minRecords": 1,
+      "summaryIncludes": "503",
+      "withTime": true
+    }
+  }
+]
