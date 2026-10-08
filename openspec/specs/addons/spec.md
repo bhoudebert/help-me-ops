@@ -113,6 +113,24 @@ list SHALL become one evidence per item, with the item's time field.
 - **WHEN** `rest.get` is asked for `/admin/users` and only `/orders` and `/health` are allowed
 - **THEN** it refuses and no request is made
 
+### Requirement: A shipped `datadog` addon
+
+The repository SHALL ship a `datadog` addon with three tools: `searchLogs` (the
+Logs Search v2 API), `queryMetric` (the v1 metrics query) and `monitors` (the v1
+list of monitors). It SHALL send the two Datadog keys as the `DD-API-KEY` and
+`DD-APPLICATION-KEY` headers, reach `https://api.<site>` (or a `baseUrl` override),
+refuse a site that is not a hostname and a time that is neither ISO 8601 nor
+relative (`now-15m`), cap the logs at 100 and the points at about 50 per series,
+not follow redirects, time out, and never show the keys in an error. It SHALL
+issue no request other than these three, and the only non-GET is the log
+search, a query that changes nothing. A refused key SHALL be reported as such
+with what to check.
+
+#### Scenario: Logs of an incident
+
+- **WHEN** `datadog.searchLogs` is called with `service:payments status:error` and a time range
+- **THEN** one POST of the documented search body is sent, and each returned log becomes evidence with its timestamp and a `status service: message` line
+
 ### Requirement: Plain data becomes evidence
 
 What a tool function returns, records, one record, a string or nothing, SHALL
