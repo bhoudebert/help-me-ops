@@ -157,7 +157,7 @@ before `optional` or `default` as a description; and run the sample
 calls of an optional `check.json` against recorded answers, never over the
 network, failing a sample that returns too few or too many records, an empty
 summary, a missing time when one is expected, a text not expected, a request with
-no recorded answer, or a secret setting in the evidence. With `--call` it SHALL
+no recorded answer, or a secret setting in the evidence, and SHALL warn when a sample record, or a real one with `--call`, holds what looks like personal data or a credential (an email address, an IP address, an IBAN, a card number that passes the Luhn check, a token). With `--call` it SHALL
 run one real call with the settings of an environment. It SHALL warn about a tool
 or parameter the assistant would find undescribed. A command that does not exist
 SHALL be reported as an error.
@@ -175,7 +175,8 @@ SHALL be reported as an error.
 ### Requirement: Shipped addons are documented
 
 Every shipped addon SHALL have a page in the guide (`docs/guide/ready-made/`) on
-one pattern: its status, what you need before starting, the steps to set it up
+one pattern: its status, what you need before starting, the data it can return and
+what to do about it, the steps to set it up
 (secrets in `.env`, a block per environment, `doctor`), its settings with their
 environment variables, its tools with their parameters, example questions, its
 safety, how to try it without an account, what each `doctor` message or error
