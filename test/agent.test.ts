@@ -502,3 +502,34 @@ test("the command: chat reads the questions from the terminal and leaves at /exi
     await server.close();
   }
 });
+
+test("the mock model (npm run mock:model) lets ask and eval run end to end with no model", async () => {
+  const mock = spawn("node", ["scripts/mock-model.ts", "--port", "0"], { stdio: ["ignore", "ignore", "pipe"] });
+  const url = await new Promise<string>((done, fail) => {
+    mock.stderr.on("data", (d) => {
+      const found = /on (http:\/\/127\.0\.0\.1:\d+\/v1)/.exec(String(d));
+      if (found) done(found[1]!);
+    });
+    mock.on("error", fail);
+  });
+  try {
+    const ask = await cli(["ask", "anything at all", "--workspace", workspace, "--base-url", url, "--model", "mock"]);
+    assert.equal(ask.code, 0, ask.stderr);
+    assert.match(ask.stdout, /Cause/i);
+    const evaluation = await cli([
+      "eval",
+      "--workspace",
+      workspace,
+      "--base-url",
+      url,
+      "--model",
+      "mock",
+      "--runs",
+      "2",
+    ]);
+    assert.equal(evaluation.code, 0, evaluation.stderr);
+    assert.match(evaluation.stdout, /mock · reasoning default\s+2\/2\s+2\/2\s+5\.0\/5/);
+  } finally {
+    mock.kill();
+  }
+});

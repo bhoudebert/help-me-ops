@@ -18,6 +18,8 @@ export interface Expect {
 export interface Scenario {
   id: string;
   question: string;
+  /** What a person would answer to "which app, which environment?". */
+  scope?: { app?: string; env?: string };
   expect?: Expect;
   steps: { why: string; tool: string; input: Record<string, unknown> }[];
   conclusion: Record<string, unknown>;

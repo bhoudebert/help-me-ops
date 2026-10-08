@@ -5,7 +5,7 @@ import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
-import { formatReport, runEval, scoreAnswer } from "../src/agent/eval.ts";
+import { formatReport, questionFor, runEval, scoreAnswer } from "../src/agent/eval.ts";
 import type { Scenario } from "../src/demo.ts";
 import { scenarios } from "../src/demo.ts";
 import { openToolbox } from "../src/toolbox.ts";
@@ -33,6 +33,18 @@ test("the demo scenario says what a good answer names, with the required facts f
     ["the webhook was refused (503)", "the payment queue was full"],
   );
   assert.ok(demo.expect!.facts.length >= 4);
+});
+
+test("the question carries the scope a person would have answered", () => {
+  assert.equal(
+    questionFor({
+      question: "Client u-881 paid but cannot find order 4512",
+      scope: { app: "shop", env: "prod" },
+    } as Scenario),
+    "Client u-881 paid but cannot find order 4512. It is the shop app, in the prod environment.",
+  );
+  assert.equal(questionFor({ question: "q" } as Scenario), "q");
+  assert.equal(questionFor({ question: "q", scope: { env: "prod" } } as Scenario), "q. It is the prod environment.");
 });
 
 test("score: keywords, case ignored, any of the words; the required facts make the cause", () => {

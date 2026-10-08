@@ -50,6 +50,17 @@ const median = (numbers: number[]) => {
   return sorted.length % 2 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
 };
 
+/**
+ * The question as the person would ask it: the method says to ask which
+ * environment when it is not clear, and an eval has nobody to answer, so the
+ * scenario's `scope` is said up front.
+ */
+export function questionFor(scenario: Scenario): string {
+  const { app, env } = scenario.scope ?? {};
+  const where = [app && `the ${app} app`, env && `the ${env} environment`].filter(Boolean).join(", in ");
+  return where ? `${scenario.question}. It is ${where}.` : scenario.question;
+}
+
 /** Which expected facts a text names, and whether the required ones are all there. */
 export function scoreAnswer(scenario: Scenario, text: string): { facts: string[]; cause: boolean } {
   const lower = text.toLowerCase();
@@ -90,7 +101,7 @@ export async function runEval(
         const began = Date.now();
         try {
           // A new session each run: a new ledger, a new conversation.
-          const turn = await new Session(toolbox, model, fetchImpl).turn(scenario.question);
+          const turn = await new Session(toolbox, model, fetchImpl).turn(questionFor(scenario));
           runs.push({
             status: turn.status,
             steps: turn.steps,
