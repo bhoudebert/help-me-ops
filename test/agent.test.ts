@@ -177,7 +177,7 @@ test("ask: no model configured, an unreachable server, a slow one, a refusal and
   try {
     const tight = (extra = {}) => runAsk(toolbox, "q", io, flagsFor(server.url, extra), noEnv);
     await assert.rejects(tight(), /answered 401.*Check the key/);
-    await assert.rejects(tight(), /answered 404.*pulled\/loaded/);
+    await assert.rejects(tight(), /answered 404: .*\. Is "fake" pulled\/loaded, and the address right\?/);
     await assert.rejects(tight(), /did not answer like an OpenAI-compatible chat endpoint/);
     toolbox.model = {
       baseUrl: server.url,

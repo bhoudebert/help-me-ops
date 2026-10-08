@@ -103,7 +103,7 @@ export async function ask(
     );
   }
   if (!response.ok) {
-    const text = (await response.text().catch(() => "")).slice(0, 300);
+    const text = (await response.text().catch(() => "")).trim().slice(0, 300);
     const hint =
       response.status === 401 || response.status === 403
         ? " Check the key (OPS_MODEL_KEY)."
