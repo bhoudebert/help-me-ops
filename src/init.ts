@@ -50,7 +50,9 @@ export async function initAddon(workspace: string, args: string[]): Promise<stri
     "",
     "Next:",
     "  1. Open both files and follow the TODO comments (what it reads, the tool names).",
-    ...(template === "sql" ? [`  2. cd ${workspace} && npm install pg`] : []),
+    ...(template === "sql"
+      ? [`  2. cd ${workspace} && npm install pg   # the driver lives in the workspace, not in help-me-ops`]
+      : []),
     `  ${template === "sql" ? 3 : 2}. Give it its settings under the environment that uses it, in ops.config.json:`,
     `       "addons": { "${name}": { ... } }   (the addon.json lists the settings; credentials as "\${VARIABLE}")`,
     `  ${template === "sql" ? 4 : 3}. npm run ops -- --workspace ${workspace} doctor   # the addon must show as loaded`,
