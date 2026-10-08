@@ -1,0 +1,28 @@
+{
+  "apiVersion": 1,
+  "description": "The shop's PostgreSQL database, read through a SELECT-only user. Off by default: rename this folder to shopdb to turn it on (see the guide, 'Same investigation, with a real database').",
+  "settings": {
+    "url": {
+      "type": "string",
+      "env": "SHOPDB_URL",
+      "secret": true,
+      "description": "Connection URL of the read-only database user"
+    }
+  },
+  "tools": {
+    "paymentsFor": {
+      "description": "The payments and the webhook events of one order: did the provider take the money, and did the shop handle the confirmation? Read-only.",
+      "params": { "order": { "type": "string", "description": "The order number, e.g. 4512" } }
+    },
+    "paidButUnconfirmed": {
+      "description": "Orders whose payment was captured by the provider but that are still awaiting_payment: customers who paid and have no order, with the money involved. Read-only.",
+      "params": {
+        "since": {
+          "type": "string",
+          "optional": true,
+          "description": "Only payments captured at or after this time, ISO 8601"
+        }
+      }
+    }
+  }
+}

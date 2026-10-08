@@ -14,6 +14,7 @@ demo; copy it and change the sources and the expectations for your system.
    - `health.checkHealth` on `hooks` and on `provider`: is it us or the provider?
    - `metrics.queryMetric` on `payment_confirm_queue_depth`, `worker_memory_mb` and `worker_cpu_percent` around the time it stopped.
    - Search `app-logs` for `worker` and `deploy` in that window.
-4. **Others affected.** `order.listOrders` with `awaiting_payment` since the time it stopped: one order, or all of them?
+   - If the `shopdb` addon is on: `shopdb.paymentsFor` says whether the provider **took the money** and whether the shop refused the confirmation.
+4. **Others affected.** `order.listOrders` with `awaiting_payment` since the time it stopped: one order, or all of them? With `shopdb`, `shopdb.paidButUnconfirmed` lists the customers who paid and have no order, with the money involved.
 5. **The other environment.** Same release in staging? If staging is healthy, say what differs (load, replicas), not that it is fine.
 6. **Conclude** with the cause, how sure you are, the evidence, and what is unknown. The fix is for a person: restart or scale the worker, then replay the webhook for each stuck order (runbook: _TODO: your link_).

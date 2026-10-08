@@ -12,5 +12,6 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src", "scripts", "test", "examples", "addons"]
+  "include": ["src", "scripts", "test", "examples", "addons"],
+  "exclude": ["node_modules", "examples/*/node_modules", "examples/my-workspace/addons/*shopdb"]
 }

@@ -1,0 +1,9 @@
+{
+  "name": "my-workspace",
+  "private": true,
+  "description": "Packages the addons of this workspace need (the database addon: npm install here, not in help-me-ops)",
+  "type": "module",
+  "dependencies": {
+    "pg": "^8.13.0"
+  }
+}
