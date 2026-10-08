@@ -37,6 +37,7 @@ export default defineConfig({
           { text: "Try the demo", link: "/demo" },
           { text: "…with a real database", link: "/database" },
           { text: "Investigate a problem", link: "/investigate" },
+          { text: "Personal data", link: "/privacy" },
           { text: "Independence and no warranty", link: "/legal" },
         ],
       },

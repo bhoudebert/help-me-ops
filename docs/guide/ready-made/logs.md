@@ -64,6 +64,14 @@ Each matching line becomes evidence with its time. A line with no time is kept o
 
 The file is opened for reading only; there is no write path in the connector. Files can hold personal data, which then goes to your AI provider: choose the files you list.
 
+## Data it can return
+
+Everything your log lines contain: emails, user and customer ids, IP addresses, names or card numbers in free text. A log file is the most likely place for personal data to hide.
+
+**What to do:** scrub the file at the source (your log pipeline) or point the source at a log without user data. Search narrowly (an order number, a time window): the assistant sees what matches, not the whole file.
+
+What leaves your machine, and what to do about it: [personal data](/privacy).
+
 ## Try it without an account
 
 The demo workspace has `logs/prod.log` and `logs/staging.log`: open the demo and ask about order 4512.

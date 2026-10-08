@@ -4,6 +4,10 @@ An **addon** teaches help-me-ops to read one more place. Some ship with it, so
 you **configure them instead of writing them**. This page is the map: what each
 one reads, what you need to have before you start, and where to find the steps.
 
+::: danger Personal data
+What a tool returns is sent to the AI provider of your client, and **help-me-ops does not filter it yet**. Do not connect a source whose data you may not send there: [personal data, and what to do](/privacy).
+:::
+
 ## At a glance
 
 | Addon          | Reads                                                 | You need                                                              | Status                       |                              |
@@ -90,6 +94,7 @@ lists them in one place.
 ## The same rules for all
 
 - **Read-only.** Every tool declares it, a test checks it, and each addon fences itself in (allow-lists, fixed requests, capped answers). Give each one an account that can only read: that is your part ([why](/addons#read-only-your-part)).
+- **Personal data is yours to keep out.** Each page says what its addon can return; what a tool returns goes to your AI provider ([personal data](/privacy)).
 - **Secrets stay out of files and messages.** They live in `.env` and are never printed, errors included.
 - **A broken addon never takes the rest down.** It is skipped or refused with one line saying why.
 - **Independent.** help-me-ops is not affiliated with the products it reads: [independence and trademarks](/legal).

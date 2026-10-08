@@ -71,6 +71,12 @@ app and one environment they need no `--app` or `--env`; with several, the
 itself runs in an AI client, which brings its own model:
 [Claude Code, Codex and Copilot](/clients).
 
+## Before you connect a real system
+
+::: danger Personal data
+What the tools return is sent to the AI provider of your client, and help-me-ops does not filter it yet. Read [personal data](/privacy) before you point it at logs, a database or an API with real customers in them. The demo holds only invented data.
+:::
+
 ## Make it yours
 
 1. Create a workspace in your own repository, with `npm run ops -- init workspace ../my-app/ops --app my-app` (a configuration, a starter playbook and a README: it never overwrites), and point to it with `OPS_WORKSPACE` in `.env`. Or copy `examples/my-workspace` to start from the demo.

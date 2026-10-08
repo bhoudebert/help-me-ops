@@ -79,6 +79,14 @@ The addon cannot be talked into anything but reading what you allowed:
 
 Your part: give it a token that can only read ([read-only](/addons#read-only-your-part)).
 
+## Data it can return
+
+Whatever the API answers on the paths you allow, including every field of a record (names, emails, addresses).
+
+**What to do:** allow only the paths that return no personal data, or put a view in front of the API that leaves those fields out.
+
+What leaves your machine, and what to do about it: [personal data](/privacy).
+
 ## Try it without an account
 
 The demo workspace ships a small backend: the shop's own REST API serving the recorded data over HTTP (prod on port 8088, staging on 8089, behind a token), as a service of its Docker compose file. It needs Docker.

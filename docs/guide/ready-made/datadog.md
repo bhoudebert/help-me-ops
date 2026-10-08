@@ -80,6 +80,14 @@ Times can be ISO 8601 or relative (`now-15m`).
 
 Your part: use an application key with read scopes only, so Datadog itself refuses anything more.
 
+## Data it can return
+
+Log messages (which often carry user ids, emails or request bodies), metrics (rarely personal) and monitors (names and messages, sometimes with people to notify).
+
+**What to do:** scrub logs before they reach Datadog (its own sensitive data scanner or your pipeline), and narrow the queries; use `queryMetric` and `monitors` when a log is not needed.
+
+What leaves your machine, and what to do about it: [personal data](/privacy).
+
 ## Try it without an account
 
 The demo backend also mocks these three Datadog APIs, in Datadog's documented request and response shapes, answering from the demo's logs and metrics. It needs Docker.
