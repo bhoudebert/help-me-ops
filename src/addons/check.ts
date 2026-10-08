@@ -8,7 +8,7 @@ import { readFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { z } from "zod";
 import { loadConfig } from "../config.ts";
-import { hintsIn } from "../privacy.ts";
+import { hintsIn, selfTest } from "../privacy.ts";
 import type { Evidence } from "../connectors/types.ts";
 import { loadDefinition, type LoadedAddon } from "./loader.ts";
 import { loadManifestAddon } from "./manifest.ts";
@@ -176,6 +176,29 @@ export async function checkAddon(
     ok(`setting ${key}${variable ? ` (variable ${variable})` : ""}${secret}`);
   }
 
+  if (definition.privacy) {
+    const { personalFields, detectors } = definition.privacy;
+    ok(
+      `privacy: ${personalFields.length} personal field(s) (${personalFields.join(", ") || "none"}), ${Object.keys(detectors).length} detector(s)`,
+    );
+    for (const [detector, spec] of Object.entries(detectors)) {
+      const problems = selfTest(detector, spec);
+      for (const problem of problems)
+        fail(
+          `detector ${name}.${detector}: ${problem}`,
+          "fix the regex or the examples in addon.json (privacy.detectors)",
+        );
+      if (!problems.length && spec.examples) {
+        ok(
+          `detector ${name}.${detector}: ${spec.examples.matches.length} to hide and ${spec.examples.ignores.length} to leave alone, as declared`,
+        );
+      } else if (!problems.length) {
+        warn(
+          `detector ${name}.${detector}: no examples; add "examples": { "matches": [...], "ignores": [...] } so a change is caught`,
+        );
+      }
+    }
+  }
   const loaded: LoadedAddon = { name, dir, origin: "workspace", definition, playbooks: null, knowledge: null };
 
   // The settings, against the workspace this addon is going into.

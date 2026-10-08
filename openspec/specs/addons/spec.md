@@ -172,6 +172,13 @@ SHALL be reported as an error.
 - **WHEN** a sample returns a record whose text holds the value of a secret setting
 - **THEN** the sample fails saying a secret setting appears in the evidence
 
+### Requirement: Addon check tests the privacy declaration
+
+`ops addon check` SHALL report the personal fields and detectors an addon
+declares, run the `examples` of each detector and fail one that hides what it
+should leave alone or leaves what it should hide, and warn about a detector with
+no examples.
+
 ### Requirement: Shipped addons are documented
 
 Every shipped addon SHALL have a page in the guide (`docs/guide/ready-made/`) on

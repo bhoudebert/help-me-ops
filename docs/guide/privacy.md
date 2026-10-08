@@ -61,16 +61,28 @@ the assistant (and its provider) sees them. List what to hide in `ops.config.jso
 }
 ```
 
-| Setting       | What                                                                                                                                                                                                                                                                                                                                             |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `fields`      | keys whose **values** are hidden, at any depth, in the data of the evidence. Case is ignored; `*` is a wildcard (`*address*`); a dotted path (`customer.name`) names a nested key.                                                                                                                                                               |
-| `patterns`    | what is hidden **wherever it appears in a text** (a log line, a summary, a runbook): `email`, `ip` (IPv4), `iban`, `card` (only numbers that pass the Luhn check), `phone` (international, starting with `+`), `token` (bearer tokens, cloud and GitHub keys, JWTs), or **your own regex**: `{ "name": "customer-id", "regex": "CUST-\\d{6}" }`. |
-| `replacement` | what replaces a hidden value, default `***` (it does not keep the length).                                                                                                                                                                                                                                                                       |
+| Setting       | What                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fields`      | keys whose **values** are hidden, at any depth, in the data of the evidence. **Case, underscores, hyphens and spaces are ignored**, so `firstName` also hides `first_name`, `first-name`, `FIRST_NAME` and `first name`; `*` is a wildcard (`*address*`, and `*firstname*` for a key that only contains it, like `given_first_name`); a dotted path (`customer.name`) names a nested key. |
+| `patterns`    | what is hidden **wherever it appears in a text** (a log line, a summary, a runbook): `email`, `ip` (IPv4), `iban`, `card` (only numbers that pass the Luhn check), `phone` (international, starting with `+`), `token` (bearer tokens, cloud and GitHub keys, JWTs), or **your own regex**: `{ "name": "customer-id", "regex": "CUST-\\d{6}" }`.                                          |
+| `replacement` | what replaces a hidden value, default `***` (it does not keep the length).                                                                                                                                                                                                                                                                                                                |
+
+Which keys a field matches:
+
+| You list          | Hides these keys                                                                 | Does not hide                                                                                             |
+| ----------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `"firstName"`     | `firstName`, `first_name`, `first-name`, `FIRST_NAME`, `FirstName`, `first name` | `given_first_name`, `lastName`                                                                            |
+| `"*firstname*"`   | all of the above, and `given_first_name`, `customer_first_name`                  | `lastName`                                                                                                |
+| `"customer.name"` | the key `name` inside a key `customer` (any spelling of each)                    | a `name` anywhere else                                                                                    |
+| `"*address*"`     | `address`, `billingAddress`, `email_address`                                     | `addr`                                                                                                    |
+| `"name"`          | `name` and `NAME` only                                                           | `firstName`, `filename`, `hostname` (add a wildcard if you want them, knowing it also catches `filename`) |
+
+It does not matter which addon returned the record: a field you list applies to **every** tool, one an addon declared nothing for included.
 
 What it does with them:
 
 - A value hidden under a key is **also hidden wherever the same record repeats it**: if `email` is a field, `jane@example.com` is stars in the summary too, not only in the `email` field.
-- It runs at the one place every answer passes, so it covers **every addon** (yours included), the knowledge search and every client, with nothing to do in the addon.
+- It runs at the one place every answer passes, so it covers **every addon** (yours included), the knowledge search and every client, with nothing to do in the addon. **A field you list applies even if the addon never declared it**: the workspace's own `fields` and `patterns` reach every answer; what an addon declares only adds to them.
 - The answer says how many values were hidden (`"masked": 3`), `doctor` shows the rule (`Privacy: masking fields email; patterns card as ***`), and the assistant is told that a value shown as `***` was hidden on purpose and is not to be guessed.
 - The [checked conclusion](/investigate#a-conclusion-that-is-checked) is built on what the assistant saw: a quote must be the masked line, so **the report never holds what was hidden**.
 - If masking itself fails, the tool **fails** rather than answer unmasked, and a mistake in the configuration (an unknown pattern, a bad regex) is refused when the workspace loads.
@@ -78,6 +90,44 @@ What it does with them:
 Try it on the demo: add the block `"privacy": { "mask": { "fields": ["user"] } }` to the
 demo's `ops.config.json`, restart, and ask about order 4512. The user `u-881`
 reads `***`. (The demo scenario itself runs without the mask.)
+
+### Let an addon say what is personal
+
+The people who know what is personal in a domain are the ones who write its addon:
+the keys of an account record, a company id with a check digit. An addon can
+**declare** it in its `addon.json`, once, and every workspace that uses it benefits:
+
+```json
+"privacy": {
+  "personalFields": ["email", "contact.name"],
+  "detectors": {
+    "company-id": {
+      "description": "A company id: ACME- and six digits, the last a Luhn check",
+      "regex": "ACME-\\d{6}",
+      "validate": "luhn",
+      "examples": { "matches": ["ACME-123455"], "ignores": ["ACME-123456", "ACME-12"] }
+    }
+  }
+}
+```
+
+The workspace then **switches it on**:
+
+```json
+"privacy": { "mask": { "fromAddons": ["acme"], "patterns": ["acme.company-id"] } }
+```
+
+- **`personalFields` are scoped**: with `fromAddons` (`true` for every addon, or a list), they are hidden in the answers of **that addon's own tools only**, so one addon's `name` does not hide another's.
+- **Detectors are named `<addon>.<name>`** in `patterns`, and apply **everywhere**: the same company id is hidden in the logs, in a database row and in a runbook.
+- **A checksum keeps it precise.** `validate` names a check the match must pass: `luhn` (card numbers, many company and tax ids) or `iban` (ISO 7064 mod 97-10). Without it, `ACME-\d{6}` hides any six digits; with it, only real ids.
+- **A detector tests itself.** `examples.matches` must be hidden and `examples.ignores` must not; `npm run ops -- addon check <folder>` runs them and **fails** when the regex hides too little or too much, and warns when there are no examples.
+- **It can only hide.** A detector is data (a regex, a case flag, a checksum name), not code: it cannot read, log or send anything. The regex is limited to 200 characters, and a repeated group that holds a repeat (`(a+)+`), which can make a search run away, is refused.
+- **A reference that does not exist is an error when the workspace opens** (`"acme.company-id" is not a detector of a loaded addon`), never a mask that silently hides nothing. `doctor` shows what is declared (`fields declared by addons acme(email, contact.name)`).
+- A company that keeps its **shared addons** in one folder (`OPS_ADDONS`) writes its identifiers once there.
+
+On the demo, the `order` addon declares its `user` field and a `user-id` detector
+(`u-881`). Add `"privacy": { "mask": { "fromAddons": ["order"], "patterns": ["order.user-id"] } }`
+to the demo config: the order's user is `***`, and so is `user=u-881` in the logs.
 
 ::: warning A seat belt, not a guarantee
 
