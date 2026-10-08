@@ -44,8 +44,8 @@
   revisit "the client's model does the reasoning" (ADR 0007), so it starts with
   an ADR, and keeps the rule that tests never call a model.
   Decided: [ADR 0014](docs/adr/0014-api-mode-and-local-models.md) and
-  [the proposal](openspec/changes/api-mode/proposal.md) (`ops ask`, `ops eval`),
-  (`ops chat`, `ops ask`, `ops eval`; not built yet).
+  [the proposal](openspec/changes/api-mode/proposal.md): `ops chat`,
+  `ops ask` and `ops eval`, not built yet.
 - **Case files**: an investigation saved with its question, steps, evidence
   and conclusion, so the next one starts from what is known.
 
