@@ -103,6 +103,23 @@ anything but GET. The documentation SHALL say it is a stand-in, not GitHub.
 - **WHEN** the github addon lists the pull requests merged since 5 October
 - **THEN** pull requests 421, 418 and 412 come back, newest first
 
+### Requirement: Watch the investigation in the terminal
+
+`ops demo` SHALL replay a scenario of a workspace (the shipped demo workspace when
+no `--workspace` is given, whatever `OPS_WORKSPACE` says) through the real tools,
+printing each step with its reason, the call and what the tool answered (the first
+pieces of evidence with their time, a log line without its time repeated), then
+pass the scenario's conclusion through the same check as an assistant's and print
+its report. It SHALL need no model and no client, SHALL exit with a non-zero code
+and print the problems when the check refuses the conclusion, SHALL say what to do
+when the workspace has no scenario or the one asked for does not exist, SHALL honour
+the mask, and SHALL pause between steps only in a terminal (`--pace` sets it).
+
+#### Scenario: A first look
+
+- **WHEN** `npm run ops -- demo` is run in the clone, with nothing configured
+- **THEN** the twelve steps are printed, the conclusion is accepted with its seven quotes, and the exit code is 0
+
 ### Requirement: The scenario is a test
 
 A scenario file (`examples/my-workspace/scenarios/`) SHALL hold the question, the

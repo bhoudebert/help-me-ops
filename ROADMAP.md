@@ -3,8 +3,8 @@
 ## Next
 
 - **The rest of the plug-in kit** (`openspec/changes/plug-in-kit/`):
-  a scripted terminal demo (`ops demo`) and the last setup helpers (richer `ops doctor`
-  checks, MCP setup tools).
+  setup helpers (`ops setup` for each client, richer `ops doctor` checks). The
+  scripted terminal demo (`ops demo`) is done.
 - **Writing an addon without MCP knowledge** (ADR 0009): a manifest and plain
   functions (done), an `ops init addon` scaffold (done), shipped addons: `rest` for
   a team's own API (done), Datadog (done, with a mock), a local `git` addon (done), GitHub (done, with a mock).
@@ -29,7 +29,7 @@
      the workspace) and detectors for formats only it knows (a company id, a
      national number), named in `privacy.mask.patterns` like the built-in ones.
      Declared as JSON (a regex and an optional checksum such as `luhn` or
-     `mod97`), not as code, so a detector can only hide.
+     `iban`), not as code, so a detector can only hide.
   4. _A strict mode_ that serves only sources declared free of personal data.
   5. _Local models_ (next item), the strongest answer when data cannot leave.
 - **API mode and local models** (soon): run the investigation without an AI
