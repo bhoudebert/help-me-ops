@@ -65,7 +65,9 @@ It replays the demo shop's investigation step by step through the real tools (th
 order, the logs, the health checks, the metrics, the runbook) and ends with the
 **checked conclusion**: every quote must have been returned by a tool above.
 
-With an AI client, ask: **"client u-881 paid but cannot find order 4512, what happened?"**
+With an AI client, `npm run ops -- setup` prints the configuration for Claude Code, Codex
+and Copilot with your paths, after checking that the server starts and answers.
+Then ask: **"client u-881 paid but cannot find order 4512, what happened?"**
 
 The repository ships a small shop to investigate (`examples/my-workspace`): logs,
 orders, metrics and health checks in `prod` and `staging`, with a fault in
