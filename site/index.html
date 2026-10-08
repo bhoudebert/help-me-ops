@@ -58,6 +58,8 @@
   .lede { font-size: 1.2rem; color: var(--muted); max-width: 560px; margin: 0 0 26px; }
   .cta { display: flex; gap: 12px; flex-wrap: wrap; }
   .install { margin-top: 26px; min-width: 0; width: 100%; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line-strong); border-radius: 12px; padding: 6px 6px 6px 16px; max-width: 560px; box-shadow: var(--shadow); }
+  .install.demo { margin-top: 10px; background: var(--tint); border-color: var(--brand-soft); }
+  .install .after { color: var(--brand-ink); font-size: .82rem; font-weight: 600; padding-right: 10px; white-space: nowrap; }
   .install code { flex: 1; background: none; border: 0; padding: 8px 0; font-size: .86rem; white-space: nowrap; overflow-x: auto; }
   .install button { border: 1px solid var(--line); background: var(--soft); border-radius: 8px; padding: 8px 12px; font: 600 .82rem Inter, sans-serif; color: var(--ink); cursor: pointer; min-height: 40px; }
   .facts { display: flex; gap: 8px 22px; flex-wrap: wrap; margin: 28px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: .92rem; }
@@ -259,6 +261,10 @@
       <div class="install" role="group" aria-label="Install">
         <code id="cmd">git clone https://github.com/bhoudebert/help-me-ops && cd help-me-ops && npm install</code>
         <button type="button" id="copy" aria-label="Copy the install command">Copy</button>
+      </div>
+      <div class="install demo" role="group" aria-label="Watch the demo">
+        <code>npm run ops -- demo</code>
+        <span class="after">30 seconds, no model, no AI client</span>
       </div>
       <ul class="facts">
         <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Claude Code, Codex, Copilot</li>
