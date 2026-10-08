@@ -23,8 +23,15 @@
      return, ADR 0010), so the assistant still follows one customer across
      sources, translated back in the tool inputs it gives. Case files, when they
      exist, must save the masked evidence.
-  3. _A strict mode_ that serves only sources declared free of personal data.
-  4. _Local models_ (next item), the strongest answer when data cannot leave.
+  3. _Detectors and personal fields from addons_: an addon (or a shared folder of
+     addons a company keeps for all its workspaces) declares what is personal in
+     its own domain: the keys its records hold (`personalFields`, switched on by
+     the workspace) and detectors for formats only it knows (a company id, a
+     national number), named in `privacy.mask.patterns` like the built-in ones.
+     Declared as JSON (a regex and an optional checksum such as `luhn` or
+     `mod97`), not as code, so a detector can only hide.
+  4. _A strict mode_ that serves only sources declared free of personal data.
+  5. _Local models_ (next item), the strongest answer when data cannot leave.
 - **API mode and local models** (soon): run the investigation without an AI
   client, from the terminal or a script, by calling a model API directly (a
   hosted one, or a local one such as Ollama or llama.cpp through an
