@@ -153,7 +153,7 @@ one question for scripts, against a model **you** point at: Ollama, llama.cpp,
 LM Studio, a company server, any OpenAI-compatible endpoint. The same tools, mask
 and checked conclusion; nothing is called until you configure a model, and
 `privacy.modelHosts` can restrict where it may be. A small model investigates
-worse than a large one: [the guide](docs/guide/local-models.md) says what to expect.
+worse than a large one: `ops eval` counts how often a model reaches an accepted, expected conclusion on your scenarios, and [the guide](docs/guide/local-models.md) says what to expect.
 
 ## Personal data
 

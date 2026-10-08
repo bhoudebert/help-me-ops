@@ -7,6 +7,7 @@ import { runCommand, startupNotices, USAGE } from "./commands.ts";
 import { resolve } from "node:path";
 import { resolveWorkspace } from "./config.ts";
 import { runAsk, runChat } from "./agent/commands.ts";
+import { formatReport, runEval } from "./agent/eval.ts";
 import { runInit } from "./init.ts";
 import { createInterface } from "node:readline/promises";
 import { openToolbox } from "./toolbox.ts";
@@ -41,6 +42,36 @@ try {
       (line) => console.log(line),
     );
     if (!result.ok) process.exitCode = 1;
+  } else if (command === "eval") {
+    // the last one wins, so `npm run eval:local -- --runs 5` overrides the script
+    const flag = (name: string) => (argv.includes(name) ? argv[argv.lastIndexOf(name) + 1] : undefined);
+    const workspace = resolveWorkspace(argv);
+    const toolbox = await openToolbox(workspace, resolveAddonDirs(argv));
+    const list = (value: string | undefined, fallback: string[]) =>
+      value
+        ? value
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean)
+        : fallback;
+    const model = flag("--model") ?? process.env.OPS_MODEL ?? toolbox.model?.model;
+    if (!model)
+      throw new Error('ops eval needs a model: --model <name>[,<name>] (or OPS_MODEL, or "model" in ops.config.json).');
+    const report = await runEval(
+      toolbox,
+      workspace,
+      {
+        scenario: flag("--scenario"),
+        runs: Number(flag("--runs") ?? 3),
+        models: list(flag("--model"), [model]),
+        reasoning: list(flag("--reasoning"), [toolbox.model?.reasoningEffort ?? "default"]),
+        baseUrl: flag("--base-url"),
+      },
+      process.env,
+      globalThis.fetch,
+      (line) => console.error(line),
+    );
+    console.log(argv.includes("--json") ? JSON.stringify(report, null, 2) : formatReport(report));
   } else if (command === "ask" || command === "chat") {
     const flag = (name: string) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : undefined);
     const flags = {

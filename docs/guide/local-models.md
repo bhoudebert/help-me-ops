@@ -119,6 +119,76 @@ It depends on the model, and a small one will investigate worse than a large hos
 
 **Does the model support tools?** Not every model does; Ollama lists those that do under a "tools" filter on [its model page](https://ollama.com/search?c=tools). A model that does not will answer in words and never call a tool.
 
-One anecdote, not a benchmark: on an RTX 5080 with `qwen3:8b` on Ollama, the stuck-order question took about 22 s with thinking on and about 6 s with `--reasoning none`, one run each, and the two did not name the same cause. Whether the answers stay good is not measured.
+## Measure it: `ops eval`
 
-This page states no benchmark, because none was measured yet. `ops eval`, which runs the demo's scenarios against your model and counts how often it reaches an accepted conclusion, is planned for this purpose.
+Instead of judging from one run, count. `ops eval` asks the scenario's question of your model several times, each in a fresh conversation, and reports what happened:
+
+```bash
+npm run ops -- eval --runs 5 --model qwen3:8b --reasoning none,default
+npm run ops -- eval --model qwen3:8b,llama3.1:8b --runs 5      # compare models
+npm run eval:local                                              # the same on a local Ollama, 3 runs
+```
+
+`--model` and `--reasoning` take a comma-separated list, and every combination is run. The columns:
+
+| Column                    | Meaning                                                                                                             |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `accepted`                | runs where the conclusion check accepted a conclusion (the model called `checkConclusion` and every quote was real) |
+| `cause`                   | runs whose answer names every **required** fact of the scenario's `expect`                                          |
+| `facts`                   | how many of the expected facts an answer names, on average                                                          |
+| `steps`, `tokens`, `time` | the median over the runs                                                                                            |
+
+Below the table it lists what a setting **never** named, and why runs did not conclude.
+
+A scenario says what a good answer contains in an `expect` block of its JSON file (the demo's `stuck-order.json` has one):
+
+```json
+"expect": { "facts": [
+  { "name": "the webhook was refused (503)", "any": ["503"], "required": true },
+  { "name": "the worker was OOMKilled", "any": ["OOMKilled", "OOM"] }
+] }
+```
+
+A fact counts when **any** of its words appears in the answer, case ignored. It is a **keyword check, not a judge of reasoning**: an answer can name the right words for the wrong reason, or the right cause in other words. Use it to compare settings, not as a verdict. A scenario without `expect` only counts the conclusion check.
+
+Writing your own scenario: copy `examples/my-workspace/scenarios/stuck-order.json` (a question, the steps of a good investigation for `ops demo`, a conclusion, an `expect`).
+
+Bring your own model server: help-me-ops only needs its URL. Nothing here costs money and nothing is part of the test suite: the tests use a scripted fake server.
+
+**No model at hand?** `npm run mock:model` starts a stand-in that speaks the same API and replays the demo's investigation, so you can try `chat`, `ask` and `eval` with no model, no GPU and no key:
+
+```bash
+npm run mock:model &                      # http://127.0.0.1:8099/v1
+npm run ops -- ask "order 4512 is stuck" --base-url http://127.0.0.1:8099/v1 --model mock
+```
+
+It is not intelligent (any question gets the scenario's investigation); it shows the loop, the check and the report working.
+
+### What one setup measured
+
+The only numbers this project has, from the maintainer's machine on 2026-10-08: an RTX 5080 with 16 GB, Ollama 0.32.14 (CUDA), the demo's `stuck-order` scenario (the question, then "It is the shop app, in the prod environment", since nobody is there to answer when the model asks), 5 runs per setting, temperature 0:
+
+```
+setting                          accepted  cause  facts  steps  tokens  time
+qwen3:8b · reasoning none        5/5       0/5    1.0/5  13     54,064  8 s
+qwen3:8b · reasoning default     5/5       0/5    0.0/5  5      17,838  18 s
+qwen3:14b · reasoning none       5/5       5/5    2.0/5  11     51,595  16 s
+qwen3:14b · reasoning default    5/5       0/5    0.0/5  6      21,239  40 s
+llama3.1:8b · reasoning none     0/5       0/5    0.0/5  1      3,410   1 s
+llama3.1:8b · reasoning default  0/5       0/5    0.0/5  1      3,410   1 s
+gpt-oss:20b · reasoning low      5/5       0/5    1.0/5  16     74,962  58 s
+gpt-oss:20b · reasoning default  1/5       1/5    0.4/5  0      0       56 s
+deepseek-r1:7b · either          0/5       0/5    0.0/5  0      1,248   5 s
+deepseek-r1:14b · either         0/5       0/5    0.0/5  0      1,377   20 s
+```
+
+What to read in it, and what not to:
+
+- **The conclusion check passed far more often than the cause was found.** Four of the six settings were accepted 5 times out of 5, and in three of them no run named the refused webhook or the full queue: they quoted the order row and concluded it was awaiting payment. The check proves a quote is real, not that the cause is right. This is why `cause` and `facts` exist.
+- **The best setting here is the larger model with thinking off**: `qwen3:14b` found the direct cause (the 503 refusal and the full queue) in 5 of 5 runs in 16 s. It never found the deeper one (the worker killed for lack of memory after release 2.14.0, and the two other orders).
+- **Thinking was slower and no better**: with it on, both Qwen models were accepted but named none of the expected facts, in two to five times the time. A guess is that the thinking makes them settle on the first plausible reading of the order row; this was not tested.
+- **`llama3.1:8b` called one tool and then answered in words**, never reaching a conclusion. It supports tools in Ollama; it did not follow this method.
+- **`gpt-oss:20b`** was accepted 5 of 5 with reasoning `low` but did not name the refused webhook; with its default reasoning, four of five runs ended in an error because the server could not parse the JSON of a tool call the model wrote (the loop asks the model to try again three times, then gives up). It is a 13 GB model on a 16 GB card shared with a desktop, so part of it ran on the CPU (`ollama ps` showed 19% CPU), which is why it was slow.
+- **`deepseek-r1:7b` and `:14b` never called a tool**, though Ollama lists the 7b with the `tools` capability: they answer in words. Whatever the cause (these are distilled, text-only reasoning models), they are of no use for this loop in the Ollama builds tested.
+- **Kimi** was not tested: Ollama offers it only as a cloud model (the prompts go to Moonshot's servers), and the open weights are far too large for a normal machine.
+- Five runs per setting of six models on one scenario with temperature 0: a snapshot of one setup, not a ranking. Run `ops eval` on yours.

@@ -1,7 +1,9 @@
 // A scripted server that speaks the OpenAI-compatible chat wire format, so the
 // loop of API mode is tested without any model (rule 5: tests never call one,
 // and need no key). Each request takes the next step of the script.
+import assert from "node:assert/strict";
 import { createServer, type Server } from "node:http";
+import { contractProblems } from "./chat-contract.ts";
 
 export interface Call {
   name: string;
@@ -16,6 +18,8 @@ export interface Step {
   body?: unknown;
   /** Never answer. */
   hang?: boolean;
+  /** Answer with exactly this text and status: a response recorded from a real server. */
+  raw?: { status: number; body: string };
 }
 export interface Request {
   model: string;
@@ -26,6 +30,8 @@ export interface Request {
 
 export async function fakeChat(script: (Step | ((request: Request) => Step))[]) {
   const requests: Request[] = [];
+  /** Requests that break the OpenAI chat contract: the server answers them 400, and `close` fails. */
+  const violations: string[] = [];
   let at = 0;
   const server: Server = createServer((req, res) => {
     let text = "";
@@ -33,6 +39,14 @@ export async function fakeChat(script: (Step | ((request: Request) => Step))[]) 
     req.on("end", () => {
       const request = { ...JSON.parse(text), authorization: req.headers.authorization } as Request;
       requests.push(request);
+      const problems = contractProblems(JSON.parse(text));
+      if (problems.length) {
+        violations.push(...problems);
+        res
+          .writeHead(400, { "content-type": "application/json" })
+          .end(JSON.stringify({ error: { message: problems.join("; ") } }));
+        return;
+      }
       const entry = script[at++];
       const step = typeof entry === "function" ? entry(request) : entry;
       if (!step) {
@@ -40,6 +54,10 @@ export async function fakeChat(script: (Step | ((request: Request) => Step))[]) 
         return;
       }
       if (step.hang) return;
+      if (step.raw) {
+        res.writeHead(step.raw.status, { "content-type": "application/json" }).end(step.raw.body);
+        return;
+      }
       if (step.status) {
         res.writeHead(step.status, { "content-type": "application/json" }).end(JSON.stringify(step.body ?? {}));
         return;
@@ -72,6 +90,10 @@ export async function fakeChat(script: (Step | ((request: Request) => Step))[]) 
   return {
     url: `http://127.0.0.1:${port}/v1`,
     requests,
-    close: () => new Promise<void>((done) => (server.closeAllConnections(), server.close(() => done()))),
+    violations,
+    close: async () => {
+      await new Promise<void>((done) => (server.closeAllConnections(), server.close(() => done())));
+      assert.deepEqual(violations, [], "the loop sent a request that breaks the OpenAI chat contract");
+    },
   };
 }

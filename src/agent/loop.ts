@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { instructionsFor } from "../guide.ts";
 import { createToolDefinitions, type ToolDefinition, type Toolbox } from "../tools/index.ts";
-import { ask, type Message, type ToolCall, type ToolSpec } from "./client.ts";
+import { ask, UnreadableToolCall, type Message, type ToolCall, type ToolSpec } from "./client.ts";
 import type { Model } from "./endpoint.ts";
 
 export interface Hooks {
@@ -87,12 +87,26 @@ export class Session {
     let steps = 0;
     let used = 0;
     let empty = 0;
+    let unreadable = 0;
     try {
       for (;;) {
         this.trim(hooks);
         hooks.waiting?.(`asking ${this.model.model}… (a local model can take minutes)`);
         const began = Date.now();
-        const reply = await ask(this.model, this.messages, this.specs, this.fetchImpl);
+        let reply: Awaited<ReturnType<typeof ask>>;
+        try {
+          reply = await ask(this.model, this.messages, this.specs, this.fetchImpl);
+        } catch (error) {
+          // A model that writes broken JSON for a tool call is told, and may try again.
+          if (!(error instanceof UnreadableToolCall) || ++unreadable > 3) throw error;
+          hooks.notice?.("The model wrote a tool call the server could not read; asking again.");
+          this.messages.push({
+            role: "user",
+            content:
+              "Your last tool call could not be read: its arguments were not valid JSON. Send it again with valid JSON, short strings and no line breaks inside them.",
+          });
+          continue;
+        }
         hooks.waiting?.(`${this.model.model} answered in ${Math.round((Date.now() - began) / 1000)} s`);
         used += reply.tokens;
         this.tokens += reply.tokens;

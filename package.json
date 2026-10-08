@@ -10,6 +10,8 @@
   "scripts": {
     "ops": "node --env-file-if-exists=.env src/cli.ts",
     "mcp": "node --env-file-if-exists=.env src/mcp.ts",
+    "mock:model": "node scripts/mock-model.ts",
+    "eval:local": "node --env-file-if-exists=.env src/cli.ts eval --base-url ${OLLAMA_URL:-http://localhost:11434/v1} --model ${OPS_EVAL_MODELS:-qwen3:8b} --reasoning none,default --runs 3",
     "typecheck": "tsc --noEmit",
     "test": "node --test 'test/**/*.test.ts'",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-exclude='test/**' --test-coverage-exclude='scripts/**' --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=65 'test/**/*.test.ts'",

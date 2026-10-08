@@ -116,6 +116,30 @@ test("ask: a bad call is answered with the error, not run, and the model may cor
   }
 });
 
+test("ask: a tool call the server cannot parse (a 500) is the model's mistake: it is told and may try again, three times at most", async () => {
+  const broken = {
+    status: 500,
+    body: { error: { message: 'error parsing tool call: raw=\'{"app":"shop","cause":"unterminated' } },
+  };
+  const server = await fakeChat([broken, calls({ name: "listPlaybooks", arguments: {} }), { content: "done" }]);
+  const hopeless = await fakeChat([broken, broken, broken, broken]);
+  try {
+    const { io, steps } = quiet();
+    const result = await runAsk(await openToolbox(workspace), "q", io, flagsFor(server.url), noEnv);
+    assert.equal(result.text, "done");
+    assert.ok(steps.some((s) => /wrote a tool call the server could not read/.test(s)));
+    assert.match(server.requests[1]!.messages.at(-1)!.content!, /not valid JSON/);
+    await assert.rejects(
+      runAsk(await openToolbox(workspace), "q", io, flagsFor(hopeless.url), noEnv),
+      /could not parse the arguments of the tool call/,
+    );
+    assert.equal(hopeless.requests.length, 4, "the first try and three more");
+  } finally {
+    await server.close();
+    await hopeless.close();
+  }
+});
+
 test("ask: a model that says nothing is asked again, twice at most", async () => {
   const server = await fakeChat([{}, calls({ name: "listPlaybooks", arguments: {} }), {}, {}, {}]);
   try {
@@ -500,5 +524,36 @@ test("the command: chat reads the questions from the terminal and leaves at /exi
     assert.match(chat.stderr, /help-me-ops chat: fake at /);
   } finally {
     await server.close();
+  }
+});
+
+test("the mock model (npm run mock:model) lets ask and eval run end to end with no model", async () => {
+  const mock = spawn("node", ["scripts/mock-model.ts", "--port", "0"], { stdio: ["ignore", "ignore", "pipe"] });
+  const url = await new Promise<string>((done, fail) => {
+    mock.stderr.on("data", (d) => {
+      const found = /on (http:\/\/127\.0\.0\.1:\d+\/v1)/.exec(String(d));
+      if (found) done(found[1]!);
+    });
+    mock.on("error", fail);
+  });
+  try {
+    const ask = await cli(["ask", "anything at all", "--workspace", workspace, "--base-url", url, "--model", "mock"]);
+    assert.equal(ask.code, 0, ask.stderr);
+    assert.match(ask.stdout, /Cause/i);
+    const evaluation = await cli([
+      "eval",
+      "--workspace",
+      workspace,
+      "--base-url",
+      url,
+      "--model",
+      "mock",
+      "--runs",
+      "2",
+    ]);
+    assert.equal(evaluation.code, 0, evaluation.stderr);
+    assert.match(evaluation.stdout, /mock · reasoning default\s+2\/2\s+2\/2\s+5\.0\/5/);
+  } finally {
+    mock.kill();
   }
 });

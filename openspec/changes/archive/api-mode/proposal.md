@@ -1,6 +1,6 @@
 # API mode and local models
 
-Status: accepted by the maintainer on the points below; not built yet. Decision record: [ADR 0014](../../../docs/adr/0014-api-mode-and-local-models.md).
+Status: built (chat, ask, eval); archived. The requirements are in `openspec/specs/api-mode`. Decision record: [ADR 0014](../../../../docs/adr/0014-api-mode-and-local-models.md).
 
 ## Why
 
@@ -288,3 +288,7 @@ model's text, native Anthropic or Google wire formats (adapters later), embeddin
 5. **Limits** (steps, token budget, context trimming) start with provisional
    defaults (20 steps; a budget from the model's context size) and are tuned with
    `ops eval` once there are numbers.
+
+## Dropped after review
+
+The compose file for Ollama (`compose.llm.yml`) and the manual smoke workflow (layer 3 above) were built and then removed: too much to maintain for a project that only needs a URL. People bring their own model server.
