@@ -2,6 +2,10 @@
 // addon.json, with the same name. It receives the tool's parameters and a
 // context (app, env, settings, workspace, fetch).
 //
+// PERSONAL DATA: what this function returns is sent to the AI provider of the client.
+// Return only what an investigation needs (the lines of the file); leave out names, emails,
+// addresses and the like. Guide: https://bhoudebert.github.io/help-me-ops/guide/privacy
+//
 // Return records (an array of objects), a string, or nothing. A record with `at`
 // (a time) and `summary` (one readable line) makes the best evidence; without
 // them the core derives a line from the record.

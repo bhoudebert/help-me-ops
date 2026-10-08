@@ -6,6 +6,10 @@
 //   cd <your workspace> && npm install pg
 // (another database: use its driver in the same way.)
 //
+// PERSONAL DATA: what this function returns is sent to the AI provider of the client.
+// Return only what an investigation needs (the columns you select); leave out names, emails,
+// addresses and the like. Guide: https://bhoudebert.github.io/help-me-ops/guide/privacy
+//
 // READ-ONLY, twice: connect with a database user that can only SELECT, and the
 // code runs inside a read-only transaction. Give the question as a parameter
 // ($1), never build SQL from text the assistant wrote.
