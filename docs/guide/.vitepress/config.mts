@@ -58,6 +58,7 @@ export default defineConfig({
           { text: "What is in a workspace", link: "/workspace" },
           { text: "Connect your sources", link: "/connectors" },
           { text: "Write a playbook", link: "/playbooks" },
+          { text: "Write down what you know", link: "/knowledge" },
           { text: "Write an addon", link: "/addons" },
         ],
       },
