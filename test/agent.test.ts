@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { runAsk, runChat } from "../src/agent/commands.ts";
-import { assertModelAllowed, describeEndpoint, resolveModel } from "../src/agent/endpoint.ts";
+import { assertModelAllowed, describeEndpoint, displayUrl, resolveModel } from "../src/agent/endpoint.ts";
 import { runCommand } from "../src/commands.ts";
 import { openToolbox } from "../src/toolbox.ts";
 import { fakeChat, type Call, type Step } from "./fake-chat.ts";
@@ -177,6 +177,7 @@ test("ask: a rate limit or a busy server is waited for and tried again, the rest
       timeoutMs: 5000,
       retries: 0,
       retryDelayMs: 1,
+      headers: {},
     };
     await assert.rejects(runAsk(toolbox, "q", io, {}, noEnv), /answered 429.*Rate limited/);
     assert.equal(once.requests.length, 1);
@@ -235,6 +236,7 @@ test("ask: the token budget stops the run", async () => {
       timeoutMs: 5000,
       retries: 2,
       retryDelayMs: 1,
+      headers: {},
       budgetTokens: 5000,
     };
     const { io } = quiet();
@@ -291,6 +293,7 @@ test("ask: no model configured, an unreachable server, a slow one, a refusal and
       timeoutMs: 1000,
       retries: 2,
       retryDelayMs: 1,
+      headers: {},
     };
     await assert.rejects(runAsk(toolbox, "q", io, {}, noEnv), /did not answer within 1 s/);
   } finally {
@@ -313,6 +316,7 @@ test("the reasoning effort is sent only when configured", async () => {
       timeoutMs: 5000,
       retries: 2,
       retryDelayMs: 1,
+      headers: {},
       reasoningEffort: "none",
     };
     await runAsk(toolbox, "q", io, {}, noEnv);
@@ -510,6 +514,7 @@ test("chat: when the conversation outgrows the context, the oldest tool results 
       timeoutMs: 5000,
       retries: 2,
       retryDelayMs: 1,
+      headers: {},
     };
     const { io, steps } = quiet();
     await runAsk(toolbox, "q", io, {}, noEnv);
@@ -612,4 +617,66 @@ test("the mock model (npm run mock:model) lets ask and eval run end to end with 
   } finally {
     mock.kill();
   }
+});
+
+test("providers: the key is a Bearer token, ${VAR} is read from the environment, other headers replace it, a query string is kept and never shown", async () => {
+  const server = await fakeChat([{ content: "a" }, { content: "b" }, { content: "c" }]);
+  try {
+    const toolbox = await openToolbox(workspace);
+    const { io, steps } = quiet();
+    const withModel = (model: object) => {
+      toolbox.model = {
+        baseUrl: server.url,
+        model: "dep",
+        maxSteps: 20,
+        temperature: 0,
+        contextTokens: 16000,
+        timeoutMs: 5000,
+        retries: 0,
+        retryDelayMs: 1,
+        headers: {},
+        ...model,
+      } as never;
+      return runAsk(toolbox, "q", io, {}, { SECRET_KEY: "s3cret", TENANT: "t-9" });
+    };
+    // the usual: a key as a Bearer token, from a variable
+    await withModel({ apiKey: "${SECRET_KEY}" });
+    assert.equal(server.requests[0]!.authorization, "Bearer s3cret");
+    // a provider with its own header (Azure's api-key, a gateway's tenant): no Bearer, the headers as given
+    await withModel({
+      apiKey: "ignored-if-authorization-is-replaced",
+      headers: { Authorization: "Token ${SECRET_KEY}", "X-Tenant": "${TENANT}" },
+    });
+    assert.equal(server.requests[1]!.authorization, "Token s3cret");
+    assert.equal(server.requests[1]!.headers!["x-tenant"], "t-9");
+    // a query string stays on the chat endpoint (Azure's api-version), and the person is never shown it
+    await withModel({ baseUrl: `${server.url}?api-version=2024-10-21&key=hidden`, headers: { "api-key": "k" } });
+    assert.equal(server.requests[2]!.url, "/v1/chat/completions?api-version=2024-10-21&key=hidden");
+    assert.equal(server.requests[2]!.authorization, undefined);
+    assert.equal(server.requests[2]!.headers!["api-key"], "k");
+    assert.ok(!steps.join("\n").includes("hidden"));
+    assert.equal(
+      displayUrl("https://u:p@x.example.net/openai/deployments/d?api-version=1&key=hidden"),
+      "https://x.example.net/openai/deployments/d?…",
+    );
+  } finally {
+    await server.close();
+  }
+});
+
+test("providers: a variable that is not set is named, and a bad header name is refused", () => {
+  const file = { baseUrl: "http://h/v1", model: "m" };
+  assert.throws(
+    () => resolveModel({ ...file, headers: { "api-key": "${NOPE}" } } as never, {}, {}),
+    /the header api-key uses \$\{NOPE\}, and the environment variable NOPE is not set/,
+  );
+  assert.throws(() => resolveModel({ ...file, apiKey: "${NOPE}" } as never, {}, {}), /the apiKey uses/);
+  assert.throws(
+    () => resolveModel({ ...file, headers: { "bad name": "x" } } as never, {}, {}),
+    /not a valid header name/,
+  );
+  assert.equal(
+    resolveModel({ ...file, apiKey: "${K}" } as never, {}, { K: "v", OPS_MODEL_KEY: "wins" }).apiKey,
+    "wins",
+  );
 });

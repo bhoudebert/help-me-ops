@@ -5,7 +5,7 @@
 // machine, and the only basis to rely on one.
 import { scenarios, type Scenario } from "../demo.ts";
 import type { Toolbox } from "../tools/index.ts";
-import { assertModelAllowed, resolveModel, type Model } from "./endpoint.ts";
+import { assertModelAllowed, displayUrl, resolveModel, type Model } from "./endpoint.ts";
 import { Session } from "./loop.ts";
 
 export interface EvalOptions {
@@ -94,7 +94,7 @@ export async function runEval(
       const model: Model = resolveModel(toolbox.model, { baseUrl: options.baseUrl, model: name }, env);
       model.reasoningEffort = reasoning === "default" ? undefined : (reasoning as Model["reasoningEffort"]);
       assertModelAllowed(model.baseUrl, toolbox.privacy?.modelHosts);
-      baseUrl = model.baseUrl;
+      baseUrl = displayUrl(model.baseUrl);
       const runs: RunResult[] = [];
       for (let i = 1; i <= options.runs; i++) {
         progress(`${name} · reasoning ${reasoning} · run ${i}/${options.runs}`);

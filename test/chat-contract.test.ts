@@ -29,6 +29,7 @@ async function answerWith(raw: { status: number; body: string }) {
       timeoutMs: 5000,
       retries: 2,
       retryDelayMs: 1,
+      headers: {},
     };
     return await ask(model, user, [weather]);
   } finally {

@@ -134,6 +134,7 @@ test("eval: a limit or a refusal is counted, what was never named is listed, and
       timeoutMs: 5000,
       retries: 2,
       retryDelayMs: 1,
+      headers: {},
     };
     const report = await runEval(toolbox, workspace, { runs: 1, models: ["fake"], reasoning: ["default"] }, {});
     assert.equal(report.settings[0]!.runs[0]!.status, "limit");

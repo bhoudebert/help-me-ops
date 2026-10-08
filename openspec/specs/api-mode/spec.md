@@ -122,3 +122,17 @@ status.
 
 - **WHEN** the server answers 429 with `Retry-After: 2` and then answers normally
 - **THEN** the request is made again after 2 seconds and the run goes on
+
+### Requirement: Authentication and addresses of other providers
+
+The model SHALL be authenticated with `Authorization: Bearer <apiKey>`, or with the
+headers of `model.headers`, where a header named `authorization` replaces the
+Bearer one. The `apiKey`, the header values and the address SHALL accept `${VAR}`
+read from the environment, and an unset variable SHALL be named as an error. A query
+string in the address SHALL be kept on the chat endpoint and SHALL NOT be shown in
+`doctor`, the chat banner, the eval report or an error.
+
+#### Scenario: Azure-style configuration
+
+- **WHEN** the address has `?api-version=…` and `headers` has `api-key`
+- **THEN** the request goes to `…/chat/completions?api-version=…` with the `api-key` header and no `Authorization`

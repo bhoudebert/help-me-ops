@@ -28,6 +28,9 @@ export interface Request {
   messages: { role: string; content: string | null; tool_calls?: unknown[] }[];
   tools: { function: { name: string; parameters: unknown } }[];
   authorization?: string;
+  /** The request line and every header, for tests of what is sent. */
+  url?: string;
+  headers?: Record<string, string | string[] | undefined>;
 }
 
 export async function fakeChat(script: (Step | ((request: Request) => Step))[]) {
@@ -39,7 +42,12 @@ export async function fakeChat(script: (Step | ((request: Request) => Step))[]) 
     let text = "";
     req.on("data", (chunk) => (text += chunk));
     req.on("end", () => {
-      const request = { ...JSON.parse(text), authorization: req.headers.authorization } as Request;
+      const request = {
+        ...JSON.parse(text),
+        authorization: req.headers.authorization,
+        url: req.url,
+        headers: req.headers,
+      } as Request;
       requests.push(request);
       const problems = contractProblems(JSON.parse(text));
       if (problems.length) {
