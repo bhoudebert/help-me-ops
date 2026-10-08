@@ -83,7 +83,7 @@ src/
   scope.ts              app and environment of a read
   addons/               addon loader, manifest compiler, settings, tools
 templates/addon/        what `ops init addon` writes: file, api, sql
-addons/                 built-in addons (logs: the file-logs connector type; rest: GETs of a team API; datadog: logs, metrics, monitors), idle until an environment sets them up
+addons/                 built-in addons (logs: the file-logs connector type; rest: GETs of a team API; datadog: logs, metrics, monitors; git: a repository on disk), idle until an environment sets them up
   init.ts               ops init addon: write a template addon
   toolbox.ts            workspace → apps, connectors, playbooks
   connectors/           the contract, file-logs, the registry

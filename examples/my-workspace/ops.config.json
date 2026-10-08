@@ -34,6 +34,9 @@
               "baseUrl": "${SHOP_API_PROD_URL}",
               "apiKey": "${DD_API_KEY}",
               "appKey": "${DD_APP_KEY}"
+            },
+            "git": {
+              "repo": "${SHOP_REPO}"
             }
           }
         },
@@ -68,6 +71,9 @@
               "baseUrl": "${SHOP_API_STAGING_URL}",
               "apiKey": "${DD_API_KEY}",
               "appKey": "${DD_APP_KEY}"
+            },
+            "git": {
+              "repo": "${SHOP_REPO}"
             }
           }
         }

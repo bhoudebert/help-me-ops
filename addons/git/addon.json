@@ -1,0 +1,81 @@
+{
+  "apiVersion": 1,
+  "description": "What changed in a git repository on disk: commits, tags, diffs, files and code search, through a fixed set of read-only git commands. Off until an environment sets it up.",
+  "settings": {
+    "repo": {
+      "type": "string",
+      "env": "GIT_REPO",
+      "description": "The repository folder, absolute or relative to the workspace (a clone you keep up to date)"
+    },
+    "ref": {
+      "type": "string",
+      "default": "HEAD",
+      "env": "GIT_REF",
+      "description": "The branch, tag or commit deployed in this environment; history is read from it (e.g. main, release/2.14, v2.14.0)"
+    }
+  },
+  "tools": {
+    "log": {
+      "description": "Commits of the repository before an incident: who changed what and when, newest first, with the files they touched. Use it to see what changed before a problem started. Read-only.",
+      "params": {
+        "since": {
+          "type": "string",
+          "optional": true,
+          "description": "Only commits after this time, ISO 8601 (e.g. 2026-10-07T09:00:00Z)"
+        },
+        "until": { "type": "string", "optional": true, "description": "Only commits before this time, ISO 8601" },
+        "path": {
+          "type": "string",
+          "optional": true,
+          "description": "Only commits touching this file or folder, e.g. src/worker"
+        },
+        "author": { "type": "string", "optional": true, "description": "Part of the author name or email" },
+        "message": { "type": "string", "optional": true, "description": "Text to find in the commit message" },
+        "limit": { "type": "integer", "default": 30, "description": "Most commits to return, up to 100" }
+      }
+    },
+    "show": {
+      "description": "One commit in full: author, time, message and the files it changed with their size. Read-only.",
+      "params": { "commit": { "type": "string", "description": "A commit hash, tag or branch name" } }
+    },
+    "diff": {
+      "description": "The changes of one file or folder between two commits, tags or branches, as a patch (cut when long). Read-only.",
+      "params": {
+        "from": { "type": "string", "description": "The older commit, tag or branch, e.g. v2.13.2" },
+        "to": { "type": "string", "description": "The newer one, e.g. v2.14.0" },
+        "path": { "type": "string", "description": "The file or folder to compare, e.g. src/worker/confirm.js" }
+      }
+    },
+    "grep": {
+      "description": "Search the code of the repository at the deployed ref for a text (not a regex): where a message, an error or a setting is defined. Read-only.",
+      "params": {
+        "text": { "type": "string", "description": "The text to find, e.g. queue full" },
+        "path": { "type": "string", "optional": true, "description": "Only under this folder, e.g. src" }
+      }
+    },
+    "fileAt": {
+      "description": "Read one file of the repository as it is at a commit, tag or branch, cut when long. Read-only.",
+      "params": {
+        "path": { "type": "string", "description": "The file, e.g. src/worker/confirm.js" },
+        "ref": {
+          "type": "string",
+          "optional": true,
+          "description": "Commit, tag or branch (default: the environment's ref)"
+        },
+        "startLine": { "type": "integer", "default": 1, "description": "First line to return" },
+        "lines": { "type": "integer", "default": 120, "description": "How many lines, up to 400" }
+      }
+    },
+    "tags": {
+      "description": "The tags of the repository with their dates: which release shipped when, to match a release to the commits before it. Read-only.",
+      "params": {
+        "pattern": {
+          "type": "string",
+          "optional": true,
+          "description": "Tag name pattern, e.g. v2.* (letters, digits, . - _ *)"
+        },
+        "limit": { "type": "integer", "default": 20, "description": "Most tags to return, up to 100" }
+      }
+    }
+  }
+}

@@ -25,6 +25,7 @@ test("config: the demo workspace loads; a missing or invalid file says what to d
     "shopdb",
     "rest",
     "datadog",
+    "git",
   ]);
   await assert.rejects(loadConfig("/nowhere"), /No ops.config.json in \/nowhere\. Copy examples\/my-workspace/);
   const dir = mkdtempSync(join(tmpdir(), "ops-"));

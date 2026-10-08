@@ -157,7 +157,24 @@ Ask: "in Datadog, show the payment errors in prod between 9 and 11 on 7 October
 of the query syntax); [what it is and how to check your own
 Datadog](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons#datadog-logs-metrics-and-monitors-experimental).
 
-## 5. Make it yours
+## 5. The code, as a git repository (optional, needs git)
+
+The `git` addon reads a repository on disk: what changed before the incident. A
+repository cannot be stored inside this one, so a script builds the shop's, with
+fixed authors and dates (tags `v2.13.0`, `v2.13.2`, `v2.14.0`):
+
+```bash
+node examples/my-workspace/git-demo/build.mjs     # makes examples/my-workspace/.demo-repo
+echo 'SHOP_REPO=.demo-repo' >> .env               # relative to this workspace
+npm run ops -- --workspace examples/my-workspace doctor     # git: loaded
+```
+
+Ask: "what changed in the code before the incident? Release 2.14.0 went out on 7
+October at 09:30." It finds two suspects, a cache of confirmed orders that is
+never emptied (5 October) and a lowered memory limit (6 October). Details:
+[ready-made addons](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons#git-what-changed-before-the-incident).
+
+## 6. Make it yours
 
 Copy this folder into your own repository, rename the app and environments in
 `ops.config.json`, and replace what the addons read with your read-only systems.
