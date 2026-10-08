@@ -1,17 +1,10 @@
 # Addons: delta
 
-The loader, discovery, settings, connector types, isolation, and the manifest
-with plain functions are folded into `openspec/specs/addons`. What remains
+The loader, discovery, settings, connector types, isolation, the manifest
+with plain functions and the scaffold are folded into `openspec/specs/addons`. What remains
 (ADR 0009):
 
 ## ADDED Requirements
-
-### Requirement: Scaffold an addon
-
-`ops init addon <name> --template file|api|sql` SHALL write a working addon
-folder into `<workspace>/addons/` with comments saying what to change, and SHALL
-refuse to overwrite an existing folder. The `sql` template SHALL read through a
-read-only transaction with `SELECT` only; the `api` template SHALL only GET.
 
 ### Requirement: Shipped addons for common services
 
