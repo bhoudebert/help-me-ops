@@ -144,13 +144,16 @@ the documentation SHALL say it may not work as is.
 ### Requirement: Check an addon
 
 `ops addon check <folder>` SHALL load the addon the way the server does and
-report each check on its own line, `ok`, `warn` or `FAIL`, with a fix for the
+report each check on its own line, `ok`, `note`, `warn` or `FAIL`, with a fix for the
 failures it knows (a missing package, an undeclared or missing function, a wrong
 `apiVersion`, both forms in one folder, no manifest), and SHALL exit non-zero if
 any check failed. It SHALL list the tools with their parameters and the
 settings with their variables; check the settings of each environment of the
 workspace (a block with invalid settings is a failure, an absent block or a
-variable not set only a warning, since the addon is then idle); and run the sample
+variable not set only a note, one line for all the environments concerned, since
+the addon is then idle); treat a folder starting with `_` or `.` as what it is, an
+addon that is off, checking it under its real name; count a description given
+before `optional` or `default` as a description; and run the sample
 calls of an optional `check.json` against recorded answers, never over the
 network, failing a sample that returns too few or too many records, an empty
 summary, a missing time when one is expected, a text not expected, a request with
