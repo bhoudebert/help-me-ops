@@ -5,6 +5,10 @@
 // READ-ONLY: only GET. Use a token that can only read, so even a mistake here
 // cannot change anything.
 //
+// PERSONAL DATA: what this function returns is sent to the AI provider of the client.
+// Return only what an investigation needs (the fields of the API answer); leave out names, emails,
+// addresses and the like. Guide: https://bhoudebert.github.io/help-me-ops/guide/privacy
+//
 // Return records (an array of objects), a string, or nothing. A record with `at`
 // (a time) and `summary` (one readable line) makes the best evidence.
 //

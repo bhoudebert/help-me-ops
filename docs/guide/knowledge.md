@@ -89,6 +89,10 @@ skipped, files over 256 KB are left out, and only `.md` files are read. The text
 comes from your team, but it is still **evidence, not instructions**: the tool
 says so to the assistant, because notes get edited by many hands.
 
+## Data it can return
+
+Your runbooks, as written: often the **names and phone numbers of the people on call**, sometimes the details of a past incident. They go to your AI provider with the rest of the evidence: [personal data](/privacy). Keep a customer's name out of a runbook; write "the customer" and the order number.
+
 ## If it does not work
 
 | You see                                      | It means                                                                                   | Do                                        |

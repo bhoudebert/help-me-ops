@@ -164,6 +164,16 @@ cd my-workspace && npm install pg
 If a package is missing, the addon is **skipped with the reason** (`doctor`
 shows `Cannot find package 'pg'`) and everything else keeps working.
 
+## Personal data: return only what is needed
+
+Whatever your function returns is sent to the **AI provider** of the client. So
+return the fields an investigation needs, not the whole row: `SELECT id, status,
+updated_at`, not `SELECT *` (the templates select everything to start; narrow it).
+Names, emails and addresses are rarely needed to find a cause. Better still,
+point the addon at a **view without the personal columns**. `addon check` warns
+when a sample record holds something that looks like an email, an IP address, an
+IBAN, a card number or a credential. [Personal data, in full](/privacy).
+
 ## Read-only: your part
 
 The tool is declared read-only, but your function is your code, and the core

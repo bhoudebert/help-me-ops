@@ -85,6 +85,14 @@ Pull requests and issues are **written by other people**: their text comes back 
 
 **Why a token and not the `gh` command line tool?** `gh auth login` is a broad session of _you_, with write access; a fine-grained token is limited to the listed repositories and to read permissions, so even a bug here could not write, and revoking it touches nothing else. There is also nothing to install, and plain HTTP is testable.
 
+## Data it can return
+
+Pull request and issue **text written by people**, their logins and display names, and commit author names. Public repositories are public; private ones may mention customers.
+
+**What to do:** list only the repositories you are willing to send to your AI provider, and keep customer details out of pull requests and issues.
+
+What leaves your machine, and what to do about it: [personal data](/privacy).
+
 ## Try it without an account
 
 The demo backend mocks six GitHub endpoints for one repository, `shop-co/shop`, telling the same story as the demo repository: the pull request that added the cache (412), the one that lowered the memory limit (418), the 2.14.0 release, its deployments, a failed build and an issue about worker memory. It needs Docker.

@@ -58,6 +58,14 @@ Two walls, not one:
 
 Your part: create the read-only user, and write only parameterised `SELECT`s.
 
+## Data it can return
+
+The rows your queries select, so every column you select.
+
+**What to do:** select only the columns an investigation needs, and give the read-only user `SELECT` on a **view or replica without the personal columns**. This is the strongest measure there is.
+
+What leaves your machine, and what to do about it: [personal data](/privacy).
+
 ## Try it without an account
 
 The demo workspace has a real PostgreSQL in Docker with a `readonly` user and the shop's data: [same investigation, with a real database](/database). It finds that three customers paid 165.20 EUR and have no order, and shows an `UPDATE` refused.

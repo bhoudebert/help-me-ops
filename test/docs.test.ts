@@ -41,6 +41,7 @@ test("docs: each page names every tool, parameter, setting and variable of its m
     "## What it can do",
     "## Ask it",
     "## Safety",
+    "## Data it can return",
     "## Try it without an account",
     "## If it does not work",
     "## Limits",

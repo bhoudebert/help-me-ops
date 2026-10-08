@@ -75,6 +75,14 @@ It runs git, so it is built not to be talked into anything but reading:
 - files that usually hold secrets (`.env`, `*.pem`, `*.key`, SSH keys) are **refused or left out** of every answer. A seat belt: secrets do not belong in a repository;
 - answers are capped and calls time out. The repository is left unchanged.
 
+## Data it can return
+
+Code and **commit messages**, and the **names and email addresses of the authors** of every commit. Files that usually hold secrets are left out, best effort; personal data committed by mistake (a test fixture with real customers) is not recognised.
+
+**What to do:** treat the repository like what you are willing to send to your AI provider; keep real data out of it.
+
+What leaves your machine, and what to do about it: [personal data](/privacy).
+
 ## Try it without an account
 
 A script builds a real demo repository (a repository cannot be stored inside this one), with the changes that led to the incident. It needs only `git` and Node.

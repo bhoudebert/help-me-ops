@@ -129,6 +129,6 @@ export async function initAddon(workspace: string, args: string[]): Promise<stri
     `       "addons": { "${name}": { ... } }   (the addon.json lists the settings; credentials as "\${VARIABLE}")`,
     `  ${template === "sql" ? 4 : 3}. npm run ops -- --workspace ${workspace} doctor   # the addon must show as loaded`,
     `  ${template === "sql" ? 5 : 4}. npm run ops -- addon check ${target}   # ok / warn / FAIL, with the fix; edit check.json for the samples`,
-    "Read-only: use an account that can only read.",
+    "Read-only: use an account that can only read. And what the tools return reaches the AI provider: return only what an investigation needs (guide: personal data).",
   ].join("\n");
 }

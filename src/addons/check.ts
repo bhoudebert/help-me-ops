@@ -66,6 +66,36 @@ function described(schema: z.ZodType): boolean {
   return false;
 }
 
+const luhn = (digits: string) => {
+  let sum = 0;
+  for (let i = 0; i < digits.length; i++) {
+    let n = Number(digits[digits.length - 1 - i]);
+    if (i % 2 === 1 && (n *= 2) > 9) n -= 9;
+    sum += n;
+  }
+  return sum % 10 === 0;
+};
+
+/** What in a record looks like personal data or a credential: a hint to check, never a verdict. */
+export function personalHints(text: string): string[] {
+  const hints: string[] = [];
+  if (/[\w.+-]+@[\w-]+\.[\w.-]+/.test(text)) hints.push("an email address");
+  if (/(?<![\d.])(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}(?!\d|\.\d)/.test(text))
+    hints.push("an IP address");
+  if (/\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){3,7}(?: ?[A-Z0-9]{1,3})?\b/.test(text)) hints.push("an IBAN");
+  for (const match of text.matchAll(/(?<![\d.])\d(?:[ -]?\d){12,18}(?![\d.])/g)) {
+    const digits = match[0].replace(/\D/g, "");
+    if (luhn(digits)) {
+      hints.push("a card number");
+      break;
+    }
+  }
+  if (/\b(?:Bearer\s+[\w.-]{20,}|AKIA[0-9A-Z]{16}|gh[pousr]_\w{20,}|github_pat_\w{20,}|sk-[\w-]{20,})/.test(text)) {
+    hints.push("what looks like a credential");
+  }
+  return hints;
+}
+
 const first = (error: unknown) => (error instanceof Error ? error.message : String(error)).split("\n")[0] ?? "";
 
 /** What to do about an error the loader reports, when there is a known fix. */
@@ -268,6 +298,12 @@ export async function checkAddon(
           ok(
             `sample "${label}": ${evidence.length} record(s), ${evidence.filter((e) => e.at !== null).length} with a time`,
           );
+        const hints = personalHints(text);
+        if (hints.length) {
+          warn(
+            `sample "${label}": a record holds ${hints.join(", ")}. If that is real data, it goes to the AI provider: use test data in check.json, and return only what an investigation needs`,
+          );
+        }
       } catch (error) {
         fail(`sample "${label}": ${first(error)}`);
       }
@@ -298,6 +334,12 @@ export async function checkAddon(
         })) as Evidence[];
         ok(`--call ${toolName} in ${appName}/${envName}, for real: ${evidence.length} record(s)`);
         for (const e of evidence.slice(0, 3)) lines.push(`        ${e.at ?? "-"}  ${e.summary}`);
+        const hints = personalHints(JSON.stringify(evidence));
+        if (hints.length) {
+          warn(
+            `--call: the real records hold ${hints.join(", ")}. This is what the assistant would send to its AI provider: return fewer fields, or point the addon at a view without them`,
+          );
+        }
       } catch (error) {
         fail(`--call ${toolName}: ${first(error)}`);
       }

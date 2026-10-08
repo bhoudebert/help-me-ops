@@ -2,11 +2,11 @@
 // on broken ones, and through the real command (the exit code).
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
-import { checkAddon } from "../src/addons/check.ts";
+import { checkAddon, personalHints } from "../src/addons/check.ts";
 import { initAddon, initWorkspace } from "../src/init.ts";
 
 const temp = () => mkdtempSync(join(tmpdir(), "ops-check-"));
@@ -319,4 +319,70 @@ test("check: the command exits non-zero on a failure, zero on success", () => {
   });
   assert.equal(usage.status, 1);
   assert.match(usage.stderr, /Usage: npm run ops -- addon check <folder>/);
+});
+
+test("check: a sample that holds what looks like personal data or a credential is flagged, test data is not", async () => {
+  assert.deepEqual(
+    personalHints("order 4512 of u-881 awaiting_payment since 2026-10-07T10:00:00Z, release 2.14.0"),
+    [],
+  );
+  assert.deepEqual(personalHints("contact jane.doe+shop@example.com"), ["an email address"]);
+  assert.deepEqual(personalHints("client ip 203.0.113.42"), ["an IP address"]);
+  assert.deepEqual(personalHints("paid by FR76 3000 6000 0112 3456 7890 189"), ["an IBAN"]);
+  assert.deepEqual(personalHints("card 4111 1111 1111 1111 declined"), ["a card number"]);
+  assert.deepEqual(
+    personalHints("order 4111 1111 1111 1112 is not a card"),
+    [],
+    "a number that fails the Luhn check is not flagged",
+  );
+  assert.deepEqual(personalHints("Authorization: Bearer abcdefghijklmnopqrstuvwxyz0123456789"), [
+    "what looks like a credential",
+  ]);
+  assert.deepEqual(personalHints("token ghp_abcdefghijklmnopqrstuvwxyz0123"), ["what looks like a credential"]);
+  assert.deepEqual(personalHints("version 10.2.3.4.5 build 1234"), [], "a version is not an address");
+
+  const leaky = TOOLS.replace('summary: "invoice "', 'summary: "jane.doe@example.com from 203.0.113.9 invoice "');
+  const flagged = await checkAddon(
+    addon({
+      "addon.json": MANIFEST,
+      "tools.ts": leaky,
+      "check.json": [{ ...SAMPLE, expect: { summaryIncludes: "invoice" } }],
+    }),
+  );
+  assert.equal(flagged.ok, true, "a warning, not a failure");
+  assert.match(
+    flagged.text,
+    /warn\s+sample "an invoice": a record holds an email address, an IP address\. If that is real data, it goes to the AI provider/,
+  );
+  const clean = await checkAddon(addon({ "addon.json": MANIFEST, "tools.ts": TOOLS, "check.json": [SAMPLE] }));
+  assert.doesNotMatch(clean.text, /goes to the AI provider/);
+
+  const root = temp();
+  await initWorkspace(join(root, "ws"), ["workspace", join(root, "ws")]);
+  await initAddon(join(root, "ws"), ["addon", "notes", "--template", "file"]);
+  writeFileSync(join(root, "ws/app.log"), "2026-10-07T10:00:00Z user jane.doe@example.com paid order 4512\n");
+  const config = JSON.parse(readFileSync(join(root, "ws/ops.config.json"), "utf8"));
+  config.apps["my-app"].envs.prod.addons.notes = { path: "app.log" };
+  writeFileSync(join(root, "ws/ops.config.json"), JSON.stringify(config));
+  const real = await checkAddon(join(root, "ws/addons/notes"), {
+    workspace: join(root, "ws"),
+    call: { tool: "search", input: { term: "4512" }, env: "prod" },
+  });
+  assert.match(
+    real.text,
+    /warn\s+--call: the real records hold an email address\. This is what the assistant would send to its AI provider/,
+  );
+  assert.equal(real.ok, true);
+});
+
+test("init addon: the scaffolded code and the next steps say what is sent to the AI provider", async () => {
+  const root = temp();
+  for (const template of ["file", "api", "sql"]) {
+    const message = await initAddon(root, ["addon", `p-${template}`, "--template", template]);
+    assert.match(message, /reaches the AI provider/);
+    assert.match(
+      readFileSync(join(root, "addons", `p-${template}`, "tools.ts"), "utf8"),
+      /PERSONAL DATA: what this function returns is sent to the AI provider/,
+    );
+  }
 });
