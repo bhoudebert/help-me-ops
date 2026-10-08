@@ -1,6 +1,6 @@
 # 0014. An optional API mode: the toolbox driven by a model you choose, local or hosted
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-10-08
 
 ## Context
@@ -25,15 +25,15 @@ Three needs that choice does not meet:
 
 ## Decision
 
-Add an **optional second door onto the same toolbox**: a command, `ops ask`, that
-runs the investigation itself by calling a chat model over HTTP, in a loop. The
-MCP server and every client path stay exactly as they are.
+Add an **optional second door onto the same toolbox**: commands, `ops chat` and
+`ops ask`, that run the investigation themselves by calling a chat model over
+HTTP, in a loop. The MCP server and every client path stay exactly as they are.
 
 - **The core stays model-free.** The loop lives in `src/agent/`, which the MCP
   server and the other commands never import. A workspace that configures no
   model never makes a model call. This revises "the project makes no model calls"
   (ADR 0007) to: **it makes none unless the person configures a model and runs
-  `ops ask` or `ops eval`.**
+  `ops chat`, `ops ask` or `ops eval`.**
 - **One wire format first: an OpenAI-compatible chat API with tools**
   (`POST {baseUrl}/chat/completions`, `tools`, `tool_calls`). Ollama, llama.cpp's
   server, LM Studio and vLLM speak it, and so do many hosted providers and
@@ -41,7 +41,8 @@ MCP server and every client path stay exactly as they are.
   Other wire formats (Anthropic Messages) are adapters behind the same small
   interface, added when someone needs one.
 - **The model is configured, not chosen for you.** An optional `model` block in
-  `ops.config.json` (or flags and environment variables): `baseUrl`, `model`,
+  `ops.config.json` (shared by the team) and flags and environment variables
+  (per person; they win): `baseUrl`, `model`,
   `apiKey` as `${VAR}` like every credential, `maxSteps`, `temperature` (default
   0). No default model, no default endpoint.
 - **Same toolbox, same guards.** The loop calls `createToolDefinitions`, so
@@ -56,10 +57,23 @@ MCP server and every client path stay exactly as they are.
   a refusal to repeat the same call forever. When the checked conclusion is
   accepted, the run ends and prints its report; when a limit is hit it says which
   and prints what it has, and exits non-zero.
-- **One question, one answer.** `ops ask "<problem>"` is non-interactive: steps on
-  stderr as they happen, the checked report on stdout (or `--json`), exit code 0
-  only when the conclusion was accepted. A chat is what the MCP clients are for;
-  a REPL can come later if it is wanted.
+- **Chat first, like the prompt of a client.** `ops chat` is a conversation in the
+  terminal: you describe the problem, the assistant works through the tools and
+  answers, you ask the next question, and the whole session (the evidence seen,
+  the ledger) carries on. `ops ask "<problem>"` is the same loop for one question,
+  without a person: steps on stderr, the checked report on stdout (or `--json`),
+  exit code 0 only when the conclusion was accepted, for scripts and scheduled
+  jobs. The conversation lives in memory and is gone when the command ends, as
+  the evidence is in every other path; saving it is the business of case files.
+- **Any URL.** The endpoint is whatever the person writes: this machine, a server
+  in the company, a gateway, a public provider. There is no preferred provider,
+  no free tier we depend on, and none is built in.
+- **A team can forbid where the model is.** `privacy.modelHosts` lists the hosts
+  the model may be reached at; the word `local` stands for this machine and
+  private-network addresses written as IP literals (a name is not resolved, so a
+  company host is listed by name). Outside the list, `chat`, `ask` and `eval`
+  refuse to start and say why. Absent, any host is accepted and `doctor` says
+  where it is.
 - **`ops eval` measures instead of guessing.** It runs the scenarios of a
   workspace (the demo has one, with its expected cause) against the configured
   model, a number of times, and reports per run whether it reached a conclusion,
@@ -79,7 +93,7 @@ MCP server and every client path stay exactly as they are.
 - A team can run a fully local investigation, auditable and with nothing leaving
   its network, and can use the same scenarios to compare models.
 - Scripts and scheduled jobs can investigate, with the same checks as a person.
-- We take on a loop to maintain, and with it the failure modes of models we do
+- We take on a loop, and a conversation that must fit a model's context, to maintain, and with it the failure modes of models we do
   not control. The checker bounds the harm (a quote no tool returned is refused),
   not the quality.
 - A **small local model will investigate worse** than a large hosted one:
@@ -87,7 +101,7 @@ MCP server and every client path stay exactly as they are.
   guide next to the feature, with `ops eval` as the way to find out.
 - Pointing the loop at a hosted provider sends the evidence to that provider
   exactly as an MCP client does. The personal-data guide applies unchanged, and
-  `doctor` shows it.
+  `doctor` shows it, and `privacy.modelHosts` can forbid it.
 - The surface for prompt injection is the same as with an MCP client (a log line
   can contain instructions), and the blast radius is smaller than in most agents:
   every tool is read-only, and the loop has no tool but these.
@@ -108,8 +122,10 @@ adapter later.
 it would make the first version hosted-only. The OpenAI-compatible format reaches
 local servers and many hosted ones with one client.
 
-**An interactive REPL in the first version.** It doubles the surface (history,
-context trimming, display) for what MCP clients already do well.
+**A one-shot command only.** Simpler, but the maintainer wants the same
+conversation as in an AI client. The price is context management over several
+turns (old tool results are trimmed when the context fills); it is paid once, in
+the loop, and `ops ask` comes with it.
 
 **A framework for agents (LangChain and the like).** Far more than a bounded loop
 over our own tools needs, and a large dependency to audit.

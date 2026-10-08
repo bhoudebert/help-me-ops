@@ -4,7 +4,7 @@
 
 ### Requirement: Optional, and separate from the MCP server
 
-A model SHALL be called only by `ops ask` and `ops eval`, and only when the person
+A model SHALL be called only by `ops chat`, `ops ask` and `ops eval`, and only when the person
 has configured a model. The MCP server and every other command SHALL NOT import or
 call the model code, and a workspace with no `model` configured SHALL make no model
 call.
@@ -37,6 +37,32 @@ step. On a limit, the run SHALL say which, print what it has, and exit non-zero.
 
 - **WHEN** the model asks for the same call at every step
 - **THEN** the run stops at the cap with a message naming it, and exits non-zero
+
+### Requirement: A conversation
+
+`ops chat` SHALL keep the conversation and the session ledger across the person's
+turns, so a conclusion can cite what an earlier turn found, and SHALL keep them in
+memory only. When the conversation outgrows the model's context it SHALL drop the
+oldest tool results first and SAY so. `/reset` SHALL start a new session and `/exit`
+SHALL leave.
+
+#### Scenario: A follow-up
+
+- **WHEN** the person asks a second question after a conclusion
+- **THEN** the model sees the first exchange, and the conclusion check accepts a quote from either turn
+
+### Requirement: Where the model may be
+
+`privacy.modelHosts` SHALL list the hosts the model may be reached at, where `local`
+stands for this machine and private-network addresses written as IP literals, and
+any other entry is a host name compared as written without resolving it. When the
+list is present, `chat`, `ask` and `eval` SHALL refuse a model outside it before
+any call, naming the list. When absent, any host SHALL be accepted.
+
+#### Scenario: A public endpoint on a restricted workspace
+
+- **WHEN** `modelHosts` is `["local"]` and the model URL is `https://api.example.net/v1`
+- **THEN** the command refuses to start and no request is made
 
 ### Requirement: One question, one checked answer
 

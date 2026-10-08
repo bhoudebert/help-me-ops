@@ -1,7 +1,6 @@
 # API mode and local models
 
-Status: proposal, for review. Decision record: [ADR 0014](../../../docs/adr/0014-api-mode-and-local-models.md).
-Nothing here is built yet.
+Status: accepted by the maintainer on the points below; not built yet. Decision record: [ADR 0014](../../../docs/adr/0014-api-mode-and-local-models.md).
 
 ## Why
 
@@ -15,19 +14,20 @@ model does the reasoning. Three things that cannot be done that way:
 
 ## The ways to run, side by side
 
-|                                 | Who talks to the model                                         | Model                        | What we add                                           | Status                             |
-| ------------------------------- | -------------------------------------------------------------- | ---------------------------- | ----------------------------------------------------- | ---------------------------------- |
-| **A. MCP client, hosted model** | Claude Code, Codex, Copilot                                    | theirs, on your subscription | nothing: this is today                                | works                              |
-| **B. MCP client, local model**  | another MCP client that can use Ollama, LM Studio and the like | yours, local                 | nothing from us; we cannot test or support the client | possible today, unverified here    |
-| **C. `ops ask`, local model**   | help-me-ops itself, over HTTP                                  | yours, local                 | the loop, limits, tests, `doctor`, docs               | **this proposal**                  |
-| **D. `ops ask`, hosted API**    | help-me-ops itself                                             | a provider's, with your key  | same loop, different `baseUrl`                        | **this proposal** (same code as C) |
+|                                                        | Who talks to the model                                         | Model                                    | What we add                                           | Status                             |
+| ------------------------------------------------------ | -------------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------- | ---------------------------------- |
+| **A. MCP client, hosted model**                        | Claude Code, Codex, Copilot                                    | theirs, on your subscription             | nothing: this is today                                | works                              |
+| **B. MCP client, local model**                         | another MCP client that can use Ollama, LM Studio and the like | yours, local                             | nothing from us; we cannot test or support the client | possible today, unverified here    |
+| **C. `ops chat` / `ops ask`, a model on your network** | help-me-ops itself, over HTTP                                  | yours: this machine or a company server  | the loop, limits, tests, `doctor`, docs               | **this proposal**                  |
+| **D. `ops chat` / `ops ask`, any other URL**           | help-me-ops itself                                             | a gateway or a provider's, with your key | same loop, different `baseUrl`                        | **this proposal** (same code as C) |
 
-A stays the best experience for a person: a conversation, follow-up questions, the
-client's own polish. C and D are for a closed network, for scripts, and for
-measuring. D is free once C exists, since only the URL differs, and its data goes
-to that provider exactly as in A.
+A is still the richest experience (the client's own polish). C and D give the
+same conversation without a client, for a closed network, for scripts, and for
+measuring. D costs nothing once C exists, since only the URL differs, and its data
+goes to whoever runs that URL exactly as in A. There is no built-in provider and no
+free tier we depend on: the endpoint is any URL the person writes.
 
-## How `ops ask` works
+## How it works (`ops chat`, and `ops ask` for one question)
 
 ```
 ops ask "order 4512 is stuck"
@@ -57,6 +57,29 @@ conclusion check, which refuses a quote no tool returned.
 
 ### What the person types and sees
 
+`ops chat` is a conversation, like the prompt of an AI client:
+
+```
+$ ops chat --env prod
+you ▸ order 4512 is stuck
+  step 1  scope                      → shop / prod
+  step 2  getPlaybook order-stuck
+  step 3  order.getOrder 4512        → awaiting_payment since 09:12
+  step 4  searchSource app-logs      → 3 lines (payment-webhook 503)
+  step 5  checkConclusion            → accepted
+assistant ▸ Cause: …   Certainty: likely   Evidence: …   Next step: …
+you ▸ and did it happen to other orders?
+  step 6  searchSource app-logs      → 41 lines
+assistant ▸ …
+you ▸ /exit
+```
+
+The session (the evidence seen, the ledger) carries on across turns, so a later
+conclusion can cite an earlier result. `/reset` starts over, `/exit` leaves. The
+conversation is in memory and gone at the end.
+
+`ops ask` is the same loop for one question, with no person to answer:
+
 ```
 $ ops ask "order 4512 is stuck" --env prod
 step 1  scope                      → shop / prod
@@ -69,16 +92,20 @@ step 6  checkConclusion            → accepted
 Cause: …   Certainty: likely   Evidence: …   Next step: …
 ```
 
-It is one question, one answer. A conversation is what clients are for; a REPL can
-come later if it is wanted.
+It prints the checked report on stdout and exits 0 only when the check accepted the
+conclusion, so a script or a scheduled job can use it.
 
-## Is a CLI enough, or a prompt too?
+## Terminal chat, one-shot, or a client's prompt?
 
-- **`ops ask` is a CLI command, non-interactive.** That is the whole of the first
-  version, on purpose: it covers scripts and a quick question in a terminal, and
-  an interactive loop doubles the work (history, context trimming, display).
+- **`ops chat`** is the conversation in the terminal, with a model you configure.
+- **`ops ask`** is one question and one checked answer, for scripts.
 - **The prompt in an AI client** (A and B) stays as it is.
-- **A REPL (`ops chat`)** is possible later on the same loop. It is not promised.
+
+A conversation has a cost the one-shot does not: it must fit the model's context
+over many turns. When it fills, the loop drops the oldest tool results first (keeping
+the questions, the answers and the conclusions), and says so. This matters most
+for small local models, and is what `ops eval` has to exercise (a scenario can have
+follow-up questions).
 
 ## Will the performance be poor?
 
@@ -137,6 +164,9 @@ An optional block in `ops.config.json`, or flags and environment variables:
 }
 ```
 
+Flags and environment variables do the same per person and win over the file
+(`--model`, `--base-url`, `OPS_MODEL_URL`, `OPS_MODEL_KEY`).
+
 No default model and no default endpoint: nothing happens until a person writes
 this. A key is named by `${VAR}`, never stored, like every credential.
 
@@ -148,9 +178,18 @@ that do under a "tools" filter on its model page, and `ops eval` shows how well.
 
 ## Privacy and safety
 
-- **Hosted endpoint = same warning as any client.** The evidence goes to that
-  provider. `doctor` prints the endpoint and whether it is this machine, a private
-  address or an outside host.
+- **Any URL, so say where it is.** `doctor` prints the endpoint and whether it is
+  this machine, a private address or an outside host; for an outside one, the
+  evidence goes to whoever runs it, as with any client.
+- **A team can forbid it.** `privacy.modelHosts` lists the hosts the model may be
+  at: `"local"` (this machine and private-network addresses written as IP
+  literals) and company hosts by name. A model outside the list is refused at
+  start, with the list in the message. Absent, every host is accepted.
+
+  ```json
+  "privacy": { "modelHosts": ["local", "llm.company.internal"] }
+  ```
+
 - **Local endpoint = nothing leaves the network**, which is the point. The mask and
   strict mode still apply, and are a good habit even then (logs of the model server,
   shared machines).
@@ -171,7 +210,7 @@ that do under a "tools" filter on its model page, and `ops eval` shows how well.
 - `src/agent/` (new): the loop, the OpenAI-compatible client (fetch, zod), limits,
   the repeated-call guard, the report. Imported by `ops ask` and `ops eval` only.
 - The method text moves from `src/mcp.ts` to a shared module used by both doors.
-- `ops ask`, `ops eval`; a `model` block in the config; `doctor` prints the
+- `ops chat`, `ops ask`, `ops eval`; a `model` block and `privacy.modelHosts` in the config; `doctor` prints the
   endpoint.
 - A scripted fake chat server for tests, in the same style as the mocks.
 - Scenarios get an `expect` (the words the cause must contain) so `ops eval` can
@@ -179,26 +218,27 @@ that do under a "tools" filter on its model page, and `ops eval` shows how well.
 - Guide: "Run it without an AI client" and "Use a local model", with the
   performance caveats above. README, site, ROADMAP.
 
-Out of scope: shipping or fine-tuning a model, a REPL, streaming output of the
+Out of scope: shipping or fine-tuning a model, saving conversations (case files), streaming output of the
 model's text, native Anthropic or Google wire formats (adapters later), embeddings.
 
 ## Phases
 
-1. **Loop and `ops ask`** with the fake server tests, shared method text, `doctor`.
+1. **Loop, `ops chat` and `ops ask`** with the fake server tests, context trimming over turns, `privacy.modelHosts`, shared method text, `doctor`.
 2. **`ops eval`** and scenario expectations. First real numbers, measured by the
    maintainer on named models and hardware, go in the guide with the date and
    setup, or not at all.
-3. **Tuning from the numbers**: guided mode, context trimming, an Anthropic
-   Messages adapter, a REPL, only the ones the numbers or the users justify.
+3. **Tuning from the numbers**: guided mode, better context trimming, an Anthropic
+   Messages adapter, only the ones the numbers or the users justify.
 
-## Open questions for review
+## Decided at review
 
-1. Is one-shot `ops ask` the right first step, or is a REPL wanted from day one?
-2. Support hosted endpoints in the first version (it costs nothing extra), or
-   document local only and add hosted later?
-3. Where does the model belong, `ops.config.json` (shared with the team) or only
-   flags and environment (per person)? Proposal: both, flags win.
-4. Should a workspace be able to **forbid** a non-local model (`privacy.requireLocalModel`)
-   so a team's rule is enforced, not just printed? Not in this proposal; easy to add.
-5. Default `maxSteps` and token budget: proposal 12 steps and a budget set from the
-   model's context size; to be tuned by `ops eval`.
+1. **Chat first.** `ops chat` is the main experience, like the prompt of a client;
+   `ops ask` is the one-shot form for scripts.
+2. **Any URL.** The endpoint is whatever the person writes (local, company,
+   public); no provider is built in and no free tier is relied on.
+3. **Model settings** in `ops.config.json` for the team and in flags and
+   environment variables per person, flags winning.
+4. **A workspace can restrict where the model is** with `privacy.modelHosts`.
+5. **Limits** (steps, token budget, context trimming) start with provisional
+   defaults (12 steps; a budget from the model's context size) and are tuned with
+   `ops eval` once there are numbers.
