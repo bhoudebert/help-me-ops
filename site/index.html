@@ -122,6 +122,7 @@ export async function getOrder({ id }, { settings }) {
       <p><b>The tool is served to every client as <code>order.getOrder</code></b>, for each environment, always read-only. You never write the MCP part.</p>
       <p>Credentials come from the environment, never from a file. A missing driver or a mistake skips that addon with a reason; the rest keeps working. Updating this project never touches your folder.</p>
       <p>Start from a working one: <code>npm run ops -- init addon billing --template api</code> (or <code>file</code>, <code>sql</code>) writes both files with comments on what to change.</p>
+      <p>Or none to write: <a href="guide/shipped-addons">ready-made addons</a>, such as a read-only <code>rest</code> for your own API, only need settings.</p>
       <p><a href="guide/addons">Write an addon</a> · <a href="guide/workspace">What is in a workspace</a> · <a href="guide/playbooks">Write a playbook</a></p>
     </div>
   </div>
