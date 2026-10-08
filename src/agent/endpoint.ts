@@ -34,7 +34,7 @@ export interface Model extends Omit<ModelConfig, "baseUrl" | "model"> {
 /** The model from the flags, the environment and the config, in that order of strength. */
 export function resolveModel(
   config: ModelConfig | undefined,
-  flags: { baseUrl?: string; model?: string; maxSteps?: number } = {},
+  flags: { baseUrl?: string; model?: string; maxSteps?: number; reasoningEffort?: string } = {},
   env: NodeJS.ProcessEnv = process.env,
 ): Model {
   const base = ModelConfig.parse(config ?? {});
@@ -55,6 +55,9 @@ export function resolveModel(
     baseUrl: baseUrl.replace(/\/+$/, ""),
     model,
     maxSteps: flags.maxSteps ?? base.maxSteps,
+    reasoningEffort: ModelConfig.shape.reasoningEffort.parse(
+      flags.reasoningEffort ?? env.OPS_MODEL_REASONING ?? base.reasoningEffort,
+    ),
     apiKey: env.OPS_MODEL_KEY ?? base.apiKey,
   };
 }

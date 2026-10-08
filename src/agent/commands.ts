@@ -7,6 +7,8 @@ export interface AgentFlags {
   baseUrl?: string;
   model?: string;
   maxSteps?: number;
+  /** none, low, medium or high, sent as reasoning_effort. */
+  reasoningEffort?: string;
 }
 
 export interface Io {

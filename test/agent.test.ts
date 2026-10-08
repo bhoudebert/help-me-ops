@@ -257,6 +257,10 @@ test("model: flags beat the environment, which beats the file; the key comes fro
   assert.equal(resolveModel(file, { maxSteps: 2 }, {}).maxSteps, 2);
   assert.equal(resolveModel(file, {}, { OPS_MODEL_KEY: "k" }).apiKey, "k");
   assert.equal(resolveModel(file, {}, {}).temperature, 0, "deterministic by default");
+  assert.equal(resolveModel(file, {}, {}).reasoningEffort, undefined, "not sent unless asked");
+  assert.equal(resolveModel(file, { reasoningEffort: "none" }, {}).reasoningEffort, "none");
+  assert.equal(resolveModel(file, {}, { OPS_MODEL_REASONING: "low" }).reasoningEffort, "low");
+  assert.throws(() => resolveModel(file, { reasoningEffort: "lots" }, {}));
 });
 
 test("where the model is: said by doctor, and restricted by privacy.modelHosts before any request", async () => {

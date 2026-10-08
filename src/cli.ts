@@ -47,12 +47,13 @@ try {
       baseUrl: flag("--base-url"),
       model: flag("--model"),
       maxSteps: flag("--max-steps") ? Number(flag("--max-steps")) : undefined,
+      reasoningEffort: flag("--reasoning"),
     };
     const toolbox = await openToolbox(resolveWorkspace(argv), resolveAddonDirs(argv));
     for (const notice of startupNotices(toolbox)) console.error(notice);
     const io = { write: (line: string) => console.log(line), step: (line: string) => console.error(line) };
     if (command === "ask") {
-      const valued = new Set(["--base-url", "--model", "--max-steps"]);
+      const valued = new Set(["--base-url", "--model", "--max-steps", "--reasoning"]);
       const words = args.filter((a, i) => !a.startsWith("--") && !valued.has(args[i - 1] ?? ""));
       const result = await runAsk(
         toolbox,

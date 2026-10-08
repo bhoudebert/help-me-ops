@@ -11,7 +11,7 @@ export const USAGE = `Usage: npm run ops -- <command>
   demo [--scenario <id>] [--pace <ms>]  Watch an investigation of the demo shop in the terminal, no model needed
   chat                                  A conversation in the terminal with a model you configure (a local one: Ollama, llama.cpp, LM Studio)
   ask "<question>" [--json]             One question, one checked answer, for scripts; exit 0 only if the conclusion was accepted
-                                        both: --model <name> --base-url <url> --max-steps N, or "model" in ops.config.json
+                                        both: --model <name> --base-url <url> --max-steps N --reasoning none|low|medium|high, or "model" in ops.config.json
   scope [question]                      The apps and environments, and which ones a question points at
   sources                               The sources of an app and environment
   knowledge <words>                     Search your runbooks and notes (knowledge/ and playbooks/)
