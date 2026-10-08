@@ -23,7 +23,7 @@
      return, ADR 0010), so the assistant still follows one customer across
      sources, translated back in the tool inputs it gives. Case files, when they
      exist, must save the masked evidence.
-  3. _Detectors and personal fields from addons_: an addon (or a shared folder of
+  3. _Detectors and personal fields from addons_ (done, ADR 0011): an addon (or a shared folder of
      addons a company keeps for all its workspaces) declares what is personal in
      its own domain: the keys its records hold (`personalFields`, switched on by
      the workspace) and detectors for formats only it knows (a company id, a

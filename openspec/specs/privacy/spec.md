@@ -30,6 +30,30 @@ replacement SHALL NOT keep the length of what it hides.
 - **WHEN** `patterns` lists `email` and a log line holds `jane@example.com`
 - **THEN** the line reaches the assistant with `***` in its place
 
+### Requirement: Addons declare what is personal
+
+An addon MAY declare `privacy` in its manifest (or its definition): `personalFields`
+(keys of its records) and `detectors` (name, regex of at most 200 characters with
+no repeated group holding a repeat, an optional case flag, an optional checksum
+among `luhn` and `iban`, optional `examples` of what to hide and what to leave
+alone). The workspace SHALL switch the fields on with `privacy.mask.fromAddons`
+(`true`, or a list of addons), and they SHALL apply to the answers of that addon's
+own tools only. A detector SHALL be named in `privacy.mask.patterns` as
+`<addon>.<name>`, apply to every answer, and hide only the matches that pass its
+checksum. A pattern or a `fromAddons` entry that names what is not loaded SHALL be
+refused when the workspace opens. `doctor` SHALL show the fields declared. A
+detector SHALL be data and SHALL NOT be able to do anything but hide.
+
+#### Scenario: A checksum
+
+- **WHEN** a detector `ACME-\d{6}` with `luhn` is named in `patterns` and a line holds `ACME-123455` and `ACME-123456`
+- **THEN** the first is hidden and the second, which fails the check, is left alone
+
+#### Scenario: One addon's field
+
+- **WHEN** `fromAddons` takes `order`, which declares `user`, and `order.getOrder` and `metrics.queryMetric` both return a `user` key
+- **THEN** only the answer of `order.getOrder` has it hidden
+
 ### Requirement: A hidden value is hidden everywhere the record says it
 
 A value hidden under a key SHALL also be hidden in the summary and in the other
