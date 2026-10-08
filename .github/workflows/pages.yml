@@ -16,11 +16,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  # Two jobs, as GitHub's own Pages workflow has: the deploy asks for the artifact on
+  # another runner, a few seconds after the upload. In one job it asked 300 ms after
+  # the upload, sometimes before GitHub listed the artifact ("No artifacts named
+  # github-pages were found"), and the run failed with the site not deployed.
+  # It also lets a failed deploy be re-run alone, without uploading a second artifact.
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -31,13 +33,16 @@ jobs:
       - name: Build the guide into the site, at /guide/
         run: npm run docs:build && cp -r docs/guide/.vitepress/dist site/guide
       - uses: actions/configure-pages@v6
-      # One artifact name per attempt: re-running a failed job uploads again to the same run, and
-      # deploy-pages refuses a run holding two artifacts of the same name.
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
-          name: github-pages-${{ github.run_attempt }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v5
-        with:
-          artifact_name: github-pages-${{ github.run_attempt }}
