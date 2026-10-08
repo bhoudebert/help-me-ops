@@ -76,6 +76,35 @@ the `api` template SHALL only GET.
 - **WHEN** the folder `addons/billing` already exists
 - **THEN** the command fails saying so and the folder is unchanged
 
+### Requirement: Idle until set up
+
+An addon with settings that no environment sets up (no entry under `addons` in
+the configuration, none of its environment variables set, and settings that do
+not validate when empty) SHALL be reported as `idle`, serve no tool and print
+nothing at start. In an environment that does not set it up while another does,
+its tools SHALL refuse with a message saying what to add. An addon set up with
+settings that do not validate SHALL stay noted as unavailable.
+
+#### Scenario: Shipped, not used
+
+- **WHEN** a workspace sets up no shipped addon
+- **THEN** `doctor` lists them as `idle` with what to add, the tool list holds none of their tools, and the start-up notices do not mention them
+
+### Requirement: A shipped `rest` addon
+
+The repository SHALL ship a `rest` addon whose `get` tool performs GET requests
+only, on paths under the prefixes its `allow` setting lists, on the host of its
+`baseUrl`. It SHALL refuse a path that goes up (`..`, encoded or not), names
+another host, carries a query or fragment, or lies outside the prefixes; SHALL
+NOT follow redirects; SHALL cap the answer and the time; SHALL send its token
+only in the configured header; and SHALL never show the token in an error. A JSON
+list SHALL become one evidence per item, with the item's time field.
+
+#### Scenario: Outside the allowed paths
+
+- **WHEN** `rest.get` is asked for `/admin/users` and only `/orders` and `/health` are allowed
+- **THEN** it refuses and no request is made
+
 ### Requirement: Plain data becomes evidence
 
 What a tool function returns, records, one record, a string or nothing, SHALL

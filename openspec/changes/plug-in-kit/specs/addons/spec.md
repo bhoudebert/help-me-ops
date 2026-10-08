@@ -8,10 +8,9 @@ with plain functions and the scaffold are folded into `openspec/specs/addons`. W
 
 ### Requirement: Shipped addons for common services
 
-The repository SHALL ship `datadog` (logs, metrics), `github` (code, issues,
-pull requests) and `rest` (read-only GETs of a team's own API, restricted to the
-path prefixes its settings list), each using only Node's built-ins and `fetch`
-and tested against recorded responses.
+The repository SHALL ship `datadog` (logs, metrics) and `github` (code, issues,
+pull requests), each using only Node's built-ins and `fetch` and tested against
+recorded responses. (`rest` is folded into `openspec/specs/addons`.)
 
 ### Requirement: Check an addon
 
