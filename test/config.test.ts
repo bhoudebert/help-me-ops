@@ -18,7 +18,7 @@ test("config: the demo workspace loads; a missing or invalid file says what to d
     config.apps.shop!.envs.prod!.sources.map((s) => s.id),
     ["app-logs"],
   );
-  assert.deepEqual(Object.keys(config.apps.shop!.envs.staging!.addons), ["order", "metrics", "health"]);
+  assert.deepEqual(Object.keys(config.apps.shop!.envs.staging!.addons), ["order", "metrics", "health", "shopdb"]);
   await assert.rejects(loadConfig("/nowhere"), /No ops.config.json in \/nowhere\. Copy examples\/my-workspace/);
   const dir = mkdtempSync(join(tmpdir(), "ops-"));
   const bad = (json: string) => {

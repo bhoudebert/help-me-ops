@@ -21,6 +21,9 @@
             },
             "health": {
               "path": "data/prod/health.json"
+            },
+            "shopdb": {
+              "url": "${SHOPDB_PROD_URL}"
             }
           }
         },
@@ -42,6 +45,9 @@
             },
             "health": {
               "path": "data/staging/health.json"
+            },
+            "shopdb": {
+              "url": "${SHOPDB_STAGING_URL}"
             }
           }
         }

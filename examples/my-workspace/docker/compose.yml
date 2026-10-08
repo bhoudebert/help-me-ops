@@ -1,0 +1,14 @@
+# A real PostgreSQL for the demo: the same shop, prod and staging, as a database.
+#   docker compose -f docker/compose.yml up -d
+# Port 5433 so it does not collide with a Postgres of your own. Delete with:
+#   docker compose -f docker/compose.yml down -v
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: admin-demo-only
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      # Run once, when the volume is empty: databases, tables, the read-only user.
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro

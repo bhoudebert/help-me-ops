@@ -89,7 +89,8 @@ addons/                 built-in addons (logs: the file-logs connector type)
   connectors/           the contract, file-logs, the registry
   playbooks.ts          Markdown playbooks, matching
   tools/index.ts        the tools, defined once
-examples/my-workspace/     the demo workspace: config, logs, data, addons, a playbook, a scenario
+examples/my-workspace/     the demo workspace: config, logs, data, addons, a playbook, a scenario;
+                        docker/ and the _shopdb addon: the same shop on a real PostgreSQL (optional, by hand)
 openspec/               specs per capability, proposed changes
 docs/                   ADRs, the change path, the guide, these notes
 site/                   the project page
