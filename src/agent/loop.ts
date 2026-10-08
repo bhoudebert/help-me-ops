@@ -95,7 +95,7 @@ export class Session {
         const began = Date.now();
         let reply: Awaited<ReturnType<typeof ask>>;
         try {
-          reply = await ask(this.model, this.messages, this.specs, this.fetchImpl);
+          reply = await ask(this.model, this.messages, this.specs, this.fetchImpl, (line) => hooks.waiting?.(line));
         } catch (error) {
           // A model that writes broken JSON for a tool call is told, and may try again.
           if (!(error instanceof UnreadableToolCall) || ++unreadable > 3) throw error;

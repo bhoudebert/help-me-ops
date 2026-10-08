@@ -109,3 +109,16 @@ beyond what it ran.
 
 - **WHEN** `ops eval --runs 5 --reasoning none,default` runs
 - **THEN** it runs each setting five times and prints one line per setting with the counts and medians
+
+### Requirement: A busy or rate-limited server is waited for
+
+A request answered 429, 502, 503 or 504 SHALL be tried again up to `retries` times
+(default 2), waiting `Retry-After` seconds (at most 30) when the server gives them,
+else `retryDelayMs` doubled each time, and the person SHALL be told. Any other
+status SHALL NOT be retried. When the retries are used up, the error SHALL name the
+status.
+
+#### Scenario: A rate limit
+
+- **WHEN** the server answers 429 with `Retry-After: 2` and then answers normally
+- **THEN** the request is made again after 2 seconds and the run goes on

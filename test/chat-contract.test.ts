@@ -27,6 +27,8 @@ async function answerWith(raw: { status: number; body: string }) {
       temperature: 0,
       contextTokens: 16000,
       timeoutMs: 5000,
+      retries: 2,
+      retryDelayMs: 1,
     };
     return await ask(model, user, [weather]);
   } finally {

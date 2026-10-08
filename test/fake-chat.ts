@@ -16,6 +16,8 @@ export interface Step {
   /** Answer with this HTTP status and body instead. */
   status?: number;
   body?: unknown;
+  /** Headers of that answer, e.g. retry-after. */
+  headers?: Record<string, string>;
   /** Never answer. */
   hang?: boolean;
   /** Answer with exactly this text and status: a response recorded from a real server. */
@@ -59,7 +61,9 @@ export async function fakeChat(script: (Step | ((request: Request) => Step))[]) 
         return;
       }
       if (step.status) {
-        res.writeHead(step.status, { "content-type": "application/json" }).end(JSON.stringify(step.body ?? {}));
+        res
+          .writeHead(step.status, { "content-type": "application/json", ...step.headers })
+          .end(JSON.stringify(step.body ?? {}));
         return;
       }
       res.writeHead(200, { "content-type": "application/json" }).end(
