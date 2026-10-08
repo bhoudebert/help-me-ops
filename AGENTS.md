@@ -38,7 +38,8 @@ The full path every feature follows, from idea to release, is in
    connectors are tested against fixtures, never against a real system; tests
    never call a model API or spend money.
 6. **Quality gate before pushing:** `npm run quality` (typecheck, lint, format
-   check, tests with coverage thresholds) must pass. `npm run lint:fix` and
+   check, tests with coverage thresholds) must pass; the `pre-push` hook runs
+   it, do not skip it. `npm run lint:fix` and
    `npm run format` fix most findings.
 7. **Docs with the change.** The guide when usage changes, the README when the
    overview changes, `docs/ENGINEERING.md` when the architecture changes,

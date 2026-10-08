@@ -8,11 +8,26 @@ an idea to a release.
 
 ```bash
 nvm use            # Node 24, from .nvmrc
-npm install        # also installs the git hooks (commit-msg, pre-commit)
+npm install        # also installs the git hooks (pre-commit, commit-msg, pre-push)
 cp -r examples/my-workspace ops    # git-ignored; point to it with --workspace ops
 npm run ops -- investigate "order 4512 is stuck"
 npm run quality    # typecheck, lint, format check, tests with coverage
 ```
+
+## Git hooks
+
+Installed by `npm install` (`simple-git-hooks`, configured in `package.json`):
+
+| Hook         | Runs                                    | Why                                         |
+| ------------ | --------------------------------------- | ------------------------------------------- |
+| `pre-commit` | ESLint and Prettier on the staged files | style, in a second                          |
+| `commit-msg` | `commitlint`                            | Conventional Commits                        |
+| `pre-push`   | `npm run quality`                       | the gate of CI, before CI: about 30 seconds |
+
+The `pre-push` hook is what keeps a red build off the pull request. CI still
+runs the same check on another machine, which catches what only differs there
+(variables of the environment, another OS). `git push --no-verify` skips the
+hook; do not, except for a branch you will not open a pull request from.
 
 ## Branches and pull requests
 

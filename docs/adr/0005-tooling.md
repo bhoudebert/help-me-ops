@@ -15,7 +15,8 @@ and to read.
 - TypeScript 7 (`@typescript/native`) checks types; `typescript` is aliased to
   the TypeScript 6 API package that typescript-eslint and editors import.
 - ESLint with typescript-eslint, Prettier for formatting, both pure
-  JavaScript. A pre-commit hook formats staged files.
+  JavaScript. A pre-commit hook formats staged files, and a pre-push hook runs
+  `npm run quality` (added 2026-10-08, after a failure only CI saw).
 - Tests with the Node test runner, coverage thresholds in `npm run quality`.
 
 ## Consequences
