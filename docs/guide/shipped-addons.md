@@ -91,7 +91,8 @@ Still give it a token that can only read: that is your part
 ## datadog: logs, metrics and monitors
 
 Datadog has a public HTTP API, and this addon reads three things from it,
-nothing else:
+nothing else. (help-me-ops is independent of Datadog, Inc., and is not
+affiliated with or endorsed by it: [independence and trademarks](/legal).)
 
 | Tool          | Datadog API                       | For                                                                      |
 | ------------- | --------------------------------- | ------------------------------------------------------------------------ |
@@ -127,9 +128,9 @@ a search; it changes nothing, and it is the only request that is not a GET.
 Credentials come from the environment (`${DD_API_KEY}`), and a `403` says what
 to check: the keys, their scopes, and the site.
 
-### Try it without an account: the fake Datadog
+### Try it without an account: a mock of the Datadog API
 
-The demo backend (the one of the REST demo) also speaks Datadog: the same three
+The demo backend (the one of the REST demo) also mocks Datadog: the same three
 APIs, in **Datadog's documented request and response shapes**, answering from
 the demo's logs and metrics. The demo configuration already sets the addon up
 for it, with variables:
@@ -152,7 +153,7 @@ assistant calls `datadog.searchLogs` with `service:payments status:error`, then
 `datadog.monitors`, and finds the 503 at 10:00:02 and the queue monitor in
 `Alert`. Staging shows nothing alerting.
 
-::: warning What the fake is, and is not
+::: warning What the mock is, and is not
 It is a stand-in so you can see the flow, run the tests and demo without an
 account. It follows Datadog's documented shapes and authentication (the two
 headers, `403` when they are wrong), but it understands only a subset of the

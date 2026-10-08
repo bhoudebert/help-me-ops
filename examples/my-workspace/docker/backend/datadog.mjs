@@ -1,4 +1,5 @@
-// A fake Datadog for the demo: the documented shapes of three of its HTTP APIs,
+// A mock of three Datadog HTTP APIs for the demo (not Datadog, and no Datadog
+// code or data): their documented request and response shapes,
 // answered from the recorded logs and metrics of one environment of the workspace.
 //
 //   POST /api/v2/logs/events/search   Logs Search (v2)

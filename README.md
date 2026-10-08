@@ -108,3 +108,16 @@ broken addon is skipped with a reason, never fatal.
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
+
+## Independence and trademarks
+
+help-me-ops is an independent open-source project. It is **not affiliated with,
+endorsed by or sponsored by** Anthropic, OpenAI, GitHub, Microsoft, Datadog, the
+PostgreSQL project, Docker or any other company it names. Product names and
+trademarks belong to their owners and appear only to say what it works with; no
+logo is used. It talks to those products through their published interfaces,
+with your own accounts and keys, and ships none of their software. The demo's
+Datadog is an independent mock of a few documented endpoints, not Datadog.
+Provided as is, without warranty: read-only is a layered design, not a
+guarantee, and an AI assistant's conclusions must be checked.
+[Details](docs/guide/legal.md).
