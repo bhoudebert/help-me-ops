@@ -1,6 +1,6 @@
 {
   "name": "help-me-ops",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Investigate a running system from its logs, metrics and database, with Claude, Codex or Copilot: connectors and playbooks you fill in",
   "type": "module",
   "private": true,
