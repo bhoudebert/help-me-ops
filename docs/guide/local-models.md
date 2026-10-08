@@ -104,14 +104,14 @@ With a model that is not yours, the evidence goes to whoever runs it, exactly as
 
 It depends on the model, and a small one will investigate worse than a large hosted one. What to expect from small local models, and what the loop does about it:
 
-| Problem                                                            | What happens                                                                                   |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| It writes malformed tool calls or calls a tool that does not exist | the error goes back to it; it can correct itself within the step cap                           |
-| It calls the same tool in a circle                                 | the repeat is not run; it hits the step cap and the run says so                                |
-| It thinks and then says nothing                                    | it is asked again, twice, then the run reports no answer                                       |
-| The evidence is bigger than its context                            | big results are cut, old ones dropped when the conversation grows, and you are told            |
-| It invents a cause or a quote                                      | `checkConclusion` refuses a quote no tool returned, and says what is missing                   |
-| It is slow                                                         | a CPU is far slower than a GPU; raise `timeoutMs`, narrow the question, or use a smaller model |
+| Problem                                                            | What happens                                                                                                                         |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| It writes malformed tool calls or calls a tool that does not exist | the error goes back to it; it can correct itself within the step cap                                                                 |
+| It calls the same tool in a circle                                 | the repeat is not run; it hits the step cap and the run says so                                                                      |
+| It thinks and then says nothing                                    | it is asked again, twice, then the run reports no answer                                                                             |
+| The evidence is bigger than its context                            | big results are cut, old ones dropped when the conversation grows, and you are told                                                  |
+| It invents a cause or a quote                                      | `checkConclusion` refuses a quote no tool returned, and says what is missing                                                         |
+| It is slow (a reasoning model thinks for minutes)                  | you see `asking …` and how long each answer took; set `reasoningEffort` to `none`, narrow the question, use a smaller model or a GPU |
 
 **Ollama's context.** Ollama gives a model a limited context unless you raise it, and silently cuts what does not fit. The method and the tool descriptions take about 2,400 tokens before your question, so give the model at least 8,000 (`OLLAMA_CONTEXT_LENGTH=16384 ollama serve`), and keep `contextTokens` equal to it.
 
