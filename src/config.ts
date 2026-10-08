@@ -4,6 +4,7 @@
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { z } from "zod";
+import { PrivacyConfig } from "./privacy.ts";
 
 // A source: its type (a connector type from an addon, or "module" for a file of
 // your own) and the options that type takes, checked when the connector is made.
@@ -32,6 +33,8 @@ export const OpsConfig = z.object({
   apps: z.record(name, app).refine((apps) => Object.keys(apps).length > 0, "declare at least one app"),
   /** Folder of playbooks, relative to the workspace. */
   playbooks: z.string().default("playbooks"),
+  /** What to hide in what the tools return (ADR 0010). */
+  privacy: PrivacyConfig.optional(),
 });
 export type OpsConfig = z.infer<typeof OpsConfig>;
 export type SourceConfig = z.infer<typeof source>;

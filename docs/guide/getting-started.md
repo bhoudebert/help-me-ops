@@ -74,7 +74,7 @@ itself runs in an AI client, which brings its own model:
 ## Before you connect a real system
 
 ::: danger Personal data
-What the tools return is sent to the AI provider of your client, and help-me-ops does not filter it yet. Read [personal data](/privacy) before you point it at logs, a database or an API with real customers in them. The demo holds only invented data.
+What the tools return is sent to the AI provider of your client, and help-me-ops hides only what you list ([mask](/privacy#mask-it-a-safeguard-in-ops-config-json)). Read [personal data](/privacy) before you point it at logs, a database or an API with real customers in them. The demo holds only invented data.
 :::
 
 ## Make it yours

@@ -7,7 +7,7 @@ in your own repository and point help-me-ops at it (`--workspace`, or
 
 ```
 my-workspace/
-  ops.config.json     which apps and environments, and their sources
+  ops.config.json     which apps and environments, their sources, and what to hide (privacy.mask)
   addons/             what can be read: databases, APIs, metrics … (see Write an addon)
   playbooks/          how your team investigates each kind of problem
   knowledge/          runbooks, past incidents, notes: searched by words
@@ -15,16 +15,17 @@ my-workspace/
   scenarios/          the demo's test script (not read by the assistant)
 ```
 
-| Piece                         | What it is for                                                                                                                                                                        | In real life                                             |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| **`ops.config.json`**         | The map. Apps (`shop`), their environments (`prod`, `staging`), the **sources** of each environment, and the **settings** each addon gets there.                                      | You write it once per system.                            |
-| **Sources**                   | Text-like evidence the assistant searches: log files today, more types through addons. Listed per environment under `sources`.                                                        | A log file, or the logs of a service.                    |
-| **`addons/`**                 | Adapters. Each one connects a place (a database, Datadog, GitHub, your API) and gives the assistant tools to read it (`order.getOrder`). [Write an addon](/addons).                   | One folder per system you want read.                     |
-| **`knowledge/`**              | Runbooks, past incidents, notes on how a service behaves, in Markdown. The assistant searches them by words and quotes them next to the logs. [Write down what you know](/knowledge). | What your team already has in a wiki.                    |
-| **`playbooks/`**              | A how-to for the assistant, and a runbook for a person on call: the order of investigation and what your names mean. [Write a playbook](/playbooks).                                  | A few lines each, grown after each incident.             |
-| **`logs/`, `data/`**          | The demo's fake backend: sample logs, recorded orders, metrics and health checks. The demo addons read them instead of a real system.                                                 | Not needed. Your addons call the real thing.             |
-| **`docker/`, `package.json`** | Optional, for the database demo: a PostgreSQL to start, and the driver (`pg`) the `_shopdb` addon needs. [Try it](/database).                                                         | Your packages go in your workspace's own `package.json`. |
-| **`scenarios/`**              | A test script for the demo: the question, the expected tool calls, the expected conclusion. **The assistant never reads it.** A test replays it so the demo stays correct.            | Not needed.                                              |
+| Piece                                     | What it is for                                                                                                                                                                                    | In real life                                             |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **`ops.config.json`**                     | The map. Apps (`shop`), their environments (`prod`, `staging`), the **sources** of each environment, and the **settings** each addon gets there.                                                  | You write it once per system.                            |
+| **Sources**                               | Text-like evidence the assistant searches: log files today, more types through addons. Listed per environment under `sources`.                                                                    | A log file, or the logs of a service.                    |
+| **`addons/`**                             | Adapters. Each one connects a place (a database, Datadog, GitHub, your API) and gives the assistant tools to read it (`order.getOrder`). [Write an addon](/addons).                               | One folder per system you want read.                     |
+| **`knowledge/`**                          | Runbooks, past incidents, notes on how a service behaves, in Markdown. The assistant searches them by words and quotes them next to the logs. [Write down what you know](/knowledge).             | What your team already has in a wiki.                    |
+| **`privacy.mask`** (in `ops.config.json`) | Fields and patterns hidden as `***` in everything the tools return, before the assistant sees it: a safeguard, not a guarantee. [Personal data](/privacy#mask-it-a-safeguard-in-ops-config-json). | Your list of personal fields: `email`, `phone` ...       |
+| **`playbooks/`**                          | A how-to for the assistant, and a runbook for a person on call: the order of investigation and what your names mean. [Write a playbook](/playbooks).                                              | A few lines each, grown after each incident.             |
+| **`logs/`, `data/`**                      | The demo's fake backend: sample logs, recorded orders, metrics and health checks. The demo addons read them instead of a real system.                                                             | Not needed. Your addons call the real thing.             |
+| **`docker/`, `package.json`**             | Optional, for the database demo: a PostgreSQL to start, and the driver (`pg`) the `_shopdb` addon needs. [Try it](/database).                                                                     | Your packages go in your workspace's own `package.json`. |
+| **`scenarios/`**                          | A test script for the demo: the question, the expected tool calls, the expected conclusion. **The assistant never reads it.** A test replays it so the demo stays correct.                        | Not needed.                                              |
 
 ## The words
 

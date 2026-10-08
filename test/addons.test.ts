@@ -213,7 +213,10 @@ test("addons: doctor and the start-up notices say what was skipped, left out or 
   const notices = startupNotices(toolbox).join("\n");
   assert.match(notices, /old\s+skipped/);
   assert.doesNotMatch(notices, /logs\s+loaded/);
-  assert.equal(await runCommand({ apps: [], playbooks: [] }, "doctor", []), "Workspace: unknown\nAddons:\n  none");
+  assert.equal(
+    await runCommand({ apps: [], playbooks: [] }, "doctor", []),
+    "Workspace: unknown\nPrivacy: no masking: what the tools return goes to your AI provider\nAddons:\n  none",
+  );
   // The sources that do load are untouched by the one that did not.
   const sources = JSON.parse(await runCommand(toolbox, "sources", ["--env", "prod"]));
   assert.deepEqual(

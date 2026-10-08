@@ -1,7 +1,7 @@
 # Personal data: what leaves your machine
 
 ::: danger Read this before you connect a real system
-help-me-ops sends nothing anywhere by itself. But **what its tools return is sent to the AI provider of your client** (Anthropic, OpenAI, GitHub/Microsoft, or whoever runs the model). If a log line, a database row or a pull request holds personal data, then so does what that provider receives. **help-me-ops does not filter it today.** Do not connect a source whose data you are not allowed to send to your AI provider.
+help-me-ops sends nothing anywhere by itself. But **what its tools return is sent to the AI provider of your client** (Anthropic, OpenAI, GitHub/Microsoft, or whoever runs the model). If a log line, a database row or a pull request holds personal data, then so does what that provider receives. **help-me-ops hides only what you list** ([mask](#mask-it-a-safeguard-in-ops-config-json)). Do not connect a source whose data you are not allowed to send to your AI provider.
 :::
 
 ## Where the data goes
@@ -44,15 +44,62 @@ Each ready-made addon page has a **"Data it can return"** section. In short:
 
 The **demo** holds only invented data.
 
+## Mask it: a safeguard in `ops.config.json`
+
+help-me-ops can hide values on the fly, in **everything its tools return**, before
+the assistant (and its provider) sees them. List what to hide in `ops.config.json`:
+
+```json
+{
+  "apps": { "...": "..." },
+  "privacy": {
+    "mask": {
+      "fields": ["email", "phone", "customer.name", "*address*"],
+      "patterns": ["email", "ip", "card", "iban", "phone", "token"]
+    }
+  }
+}
+```
+
+| Setting       | What                                                                                                                                                                                                                                                                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `fields`      | keys whose **values** are hidden, at any depth, in the data of the evidence. Case is ignored; `*` is a wildcard (`*address*`); a dotted path (`customer.name`) names a nested key.                                                                                                                                                               |
+| `patterns`    | what is hidden **wherever it appears in a text** (a log line, a summary, a runbook): `email`, `ip` (IPv4), `iban`, `card` (only numbers that pass the Luhn check), `phone` (international, starting with `+`), `token` (bearer tokens, cloud and GitHub keys, JWTs), or **your own regex**: `{ "name": "customer-id", "regex": "CUST-\\d{6}" }`. |
+| `replacement` | what replaces a hidden value, default `***` (it does not keep the length).                                                                                                                                                                                                                                                                       |
+
+What it does with them:
+
+- A value hidden under a key is **also hidden wherever the same record repeats it**: if `email` is a field, `jane@example.com` is stars in the summary too, not only in the `email` field.
+- It runs at the one place every answer passes, so it covers **every addon** (yours included), the knowledge search and every client, with nothing to do in the addon.
+- The answer says how many values were hidden (`"masked": 3`), `doctor` shows the rule (`Privacy: masking fields email; patterns card as ***`), and the assistant is told that a value shown as `***` was hidden on purpose and is not to be guessed.
+- The [checked conclusion](/investigate#a-conclusion-that-is-checked) is built on what the assistant saw: a quote must be the masked line, so **the report never holds what was hidden**.
+- If masking itself fails, the tool **fails** rather than answer unmasked, and a mistake in the configuration (an unknown pattern, a bad regex) is refused when the workspace loads.
+
+Try it on the demo: add the block `"privacy": { "mask": { "fields": ["user"] } }` to the
+demo's `ops.config.json`, restart, and ask about order 4512. The user `u-881`
+reads `***`. (The demo scenario itself runs without the mask.)
+
+::: warning A seat belt, not a guarantee
+
+- **Free text is best effort.** A pattern finds an email address; it does not find a name in a sentence ("Jane called about her order"). Fields are reliable, patterns are not.
+- **A hidden value cannot be used to search further.** If you hide an identifier the investigation needs (a user id), the assistant cannot follow it from one source to the next. Hide what identifies a person; leave the ids that identify an order or a request. (Stable placeholders, `user-3f2a`, that keep the link are a later option.)
+- **Detectors prefer a miss to hiding every number**: a card number is hidden only if it passes the Luhn check; IPv6 is not covered.
+- It cannot see data **in the questions**: what you type to the assistant goes to the provider as you wrote it.
+- **Playbooks are not masked**: they are written by your team.
+
+Still do the first measure: [do not expose personal data in the first place](#what-to-do-strongest-first).
+:::
+
 ## What help-me-ops does and does not do today
 
-|                                                               | Today                                                   |
-| ------------------------------------------------------------- | ------------------------------------------------------- |
-| Keeps secrets (tokens, passwords) out of messages             | yes: secret settings are never printed, errors included |
-| Leaves files that usually hold secrets out of the `git` addon | yes (`.env`, keys), best effort                         |
-| Stores evidence or conversations                              | no                                                      |
-| **Filters or masks personal data in what tools return**       | **no**                                                  |
-| Knows which sources hold personal data                        | no: a source is not marked                              |
+|                                                               | Today                                                              |
+| ------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Keeps secrets (tokens, passwords) out of messages             | yes: secret settings are never printed, errors included            |
+| Leaves files that usually hold secrets out of the `git` addon | yes (`.env`, keys), best effort                                    |
+| Stores evidence or conversations                              | no                                                                 |
+| Hides the fields and patterns you list in what tools return   | **yes, opt in** ([above](#mask-it-a-safeguard-in-ops-config-json)) |
+| Finds personal data you did not list                          | no: a name in free text stays                                      |
+| Knows which sources hold personal data                        | no: a source is not marked                                         |
 
 ## Local models
 
@@ -72,8 +119,8 @@ there: whatever the model, it cannot cite a line no tool returned.
 On the [roadmap](https://github.com/bhoudebert/help-me-ops/blob/main/ROADMAP.md), in this order:
 
 1. **Declare the data**: each source says whether it can return personal data, and `doctor` shows it.
-2. **Mask it**: fields to drop, patterns to hide (emails, phone numbers, card and bank numbers, IP addresses, tokens), and stable placeholders (`user-3f2a`) so the assistant can still follow one customer across sources. Structured data (a column, a field) can be masked reliably; **free text (a log message, a pull request) cannot**, a name in a sentence is not recognised by a pattern. So masking will be a second line of defence, never a guarantee of anonymity.
+2. **Stable placeholders** (`user-3f2a`) instead of stars, so the assistant can still follow one customer across sources, translated back when it gives them in a tool call.
 3. **A strict mode** that serves only the sources declared free of personal data.
 4. **Local models** through API mode.
 
-Until then, the first measure above is the one to rely on.
+The mask is a second line of defence, never a guarantee of anonymity: the first measure above is the one to rely on.

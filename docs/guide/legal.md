@@ -56,7 +56,7 @@ without warranty of any kind.
   evidence it quotes, not facts. Check the evidence before acting on a
   conclusion, above all before changing a production system.
 - **Evidence may contain personal or confidential data**, which then goes to the
-  AI service your client uses ([personal data](/privacy)). Choose the sources you connect, and check your
+  AI service your client uses ([personal data](/privacy), and the mask that can hide what you list). Choose the sources you connect, and check your
   organisation's rules for sending that data to an AI provider.
 - **You are responsible for what you connect** and for complying with the law
   and the agreements that apply to you.

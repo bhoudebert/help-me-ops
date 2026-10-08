@@ -53,6 +53,7 @@ export async function openToolbox(workspace = resolveWorkspace(), extraAddons: s
   ];
   return {
     workspace: baseDir,
+    privacy: config.privacy,
     apps,
     playbooks,
     knowledge,

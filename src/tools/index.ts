@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { AddonReport } from "../addons/loader.ts";
 import type { SearchInput } from "../connectors/types.ts";
 import { CERTAINTIES, checkConclusion, Ledger, type Conclusion } from "../conclusion.ts";
+import { createMasker, type PrivacyConfig } from "../privacy.ts";
 import { loadKnowledge, searchPassages, toEvidence, type KnowledgeSource } from "../knowledge.ts";
 import { matchPlaybooks, type Playbook } from "../playbooks.ts";
 import { describeScope, resolveScope, type AppSetup } from "../scope.ts";
@@ -26,6 +27,8 @@ export interface ToolDefinition {
 export interface Toolbox {
   /** The workspace folder these apps, playbooks and addons come from. */
   workspace?: string;
+  /** What to hide in what the tools return. */
+  privacy?: PrivacyConfig;
   apps: AppSetup[];
   playbooks: Playbook[];
   /** The folders of written knowledge to search: the workspace's, its playbooks, and the addons'. */
@@ -54,6 +57,7 @@ export const envParam = z
 
 export function createToolDefinitions({
   workspace,
+  privacy,
   apps,
   playbooks,
   knowledge = [],
@@ -163,6 +167,7 @@ export function createToolDefinitions({
   ];
   // What the tools return in this session, so a conclusion can be checked against it.
   const ledger = new Ledger();
+  const masker = createMasker(privacy);
   const conclusion: ToolDefinition = {
     name: "checkConclusion",
     description:
@@ -199,8 +204,11 @@ export function createToolDefinitions({
     ...tool,
     run: async (input: unknown) => {
       const answer = await tool.run(input);
-      if (tool.name !== "checkConclusion") ledger.record(tool.name, answer);
-      return answer;
+      if (tool.name === "checkConclusion") return answer;
+      // Hidden before anything leaves, and before the ledger: a quote must match what the assistant saw.
+      const hidden = masker ? masker.answer(answer).text : answer;
+      ledger.record(tool.name, hidden);
+      return hidden;
     },
   }));
 }
