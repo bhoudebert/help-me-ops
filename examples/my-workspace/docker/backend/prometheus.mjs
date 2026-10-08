@@ -18,7 +18,7 @@ const series = (workspace, env) =>
   JSON.parse(readFileSync(join(workspace, "data", env, "metrics.json"), "utf8")).series;
 
 function selector(query, env, known) {
-  const m = /^\s*([a-zA-Z_:][a-zA-Z0-9_:]*)\s*(?:\{([^}]*)\})?\s*$/.exec(query);
+  const m = /^([a-zA-Z_:][a-zA-Z0-9_:]*)\s*(?:\{([^}]*)\})?$/.exec(query.trim());
   if (!m) {
     throw Object.assign(
       new Error(`the demo's mock of Prometheus only understands a metric name with optional labels, not: ${query}`),

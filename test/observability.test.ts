@@ -709,3 +709,30 @@ test("mock elasticsearch: the order and the errors of the demo with a query stri
     assert.match(await runCommand(await openToolbox(demo), "doctor", []), /prometheus\s+loaded/);
   });
 });
+
+test("mock loki: the query is read in one pass, so a long run of spaces answers at once", async () => {
+  const { parseLogQL } = (await import(resolve(demo, "docker/backend/loki.mjs"))) as {
+    parseLogQL(query: string): { matchers: unknown[]; filters: { negate: boolean; text: string }[] };
+  };
+  const started = Date.now();
+  for (const query of [
+    `{a="b"}${" ".repeat(100_000)}x`,
+    `{a="b"} |=${" ".repeat(100_000)}x`,
+    `{${" ".repeat(100_000)}`,
+    `{a="b"}${' |= "x"'.repeat(5000)}`,
+  ]) {
+    try {
+      parseLogQL(query);
+    } catch {
+      // refused: fine, what matters is how long it takes
+    }
+  }
+  assert.ok(Date.now() - started < 1000, "no run-away backtracking");
+  assert.deepEqual(parseLogQL('  {service="payments"}   |=  "503"  !=   "retry"  ').filters, [
+    { negate: false, text: "503" },
+    { negate: true, text: "retry" },
+  ]);
+  assert.throws(() => parseLogQL('{a="b"} |= x'), /a filter text in quotes/);
+  assert.throws(() => parseLogQL('{a="b"} | json'), /a filter/);
+  assert.throws(() => parseLogQL("service"), /no stream selector/);
+});

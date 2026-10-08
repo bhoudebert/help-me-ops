@@ -27,14 +27,17 @@ function time(value, fallback) {
   return t;
 }
 
+/** A stream selector, then |= "text" and != "text" filters. Read by hand, one step at a time: no pattern to backtrack on. */
 export function parseLogQL(query) {
-  const m = /^\s*\{([^}]*)\}\s*((?:\s*(?:\|=|!=)\s*"[^"]*")*)\s*$/.exec(query);
-  if (!m) {
-    throw new Error(
-      `parse error: the demo's mock of Loki only understands a stream selector {label="value"} with |= "text" or != "text" filters, not: ${query}`,
+  const syntax = (what) =>
+    new Error(
+      `parse error: the demo's mock of Loki only understands a stream selector {label="value"} with |= "text" or != "text" filters (${what}), not: ${query}`,
     );
-  }
-  const matchers = (m[1] ?? "")
+  const text = String(query).trim();
+  const close = text.indexOf("}");
+  if (!text.startsWith("{") || close < 0) throw syntax("no stream selector");
+  const matchers = text
+    .slice(1, close)
     .split(",")
     .map((x) => x.trim())
     .filter(Boolean)
@@ -50,7 +53,17 @@ export function parseLogQL(query) {
     throw new Error(
       "queries require at least one regexp or equality matcher that does not have an empty-compatible value",
     );
-  const filters = [...m[2].matchAll(/(\|=|!=)\s*"([^"]*)"/g)].map((f) => ({ negate: f[1] === "!=", text: f[2] }));
+  const filters = [];
+  let rest = text.slice(close + 1).trimStart();
+  while (rest) {
+    const operator = rest.slice(0, 2);
+    if (operator !== "|=" && operator !== "!=") throw syntax("a filter");
+    rest = rest.slice(2).trimStart();
+    const end = rest.startsWith('"') ? rest.indexOf('"', 1) : -1;
+    if (end < 0) throw syntax("a filter text in quotes");
+    filters.push({ negate: operator === "!=", text: rest.slice(1, end) });
+    rest = rest.slice(end + 1).trimStart();
+  }
   return { matchers, filters };
 }
 
