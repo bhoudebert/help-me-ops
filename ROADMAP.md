@@ -9,6 +9,8 @@
 - **Writing an addon without MCP knowledge** (ADR 0009): a manifest and plain
   functions (done), an `ops init addon` scaffold (done), shipped addons: `rest` for
   a team's own API (done), then GitHub and Datadog.
+- **Live demo backend** (done): the shop REST API over HTTP in the compose file,
+  read by the `rest` addon; a fake Datadog on it comes with the `datadog` addon.
 - **Demo on a real PostgreSQL** (done): `docker/compose.yml`, a `readonly` user,
   the `_shopdb` addon; see the guide.
 - **More addons people ask for**: PostgreSQL and MySQL (read-only user, from
