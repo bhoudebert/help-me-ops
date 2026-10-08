@@ -19,6 +19,26 @@ scenario in which the fault exists only in `prod`.
 - **WHEN** the worker's memory and queue are queried in `prod` and in `staging`
 - **THEN** `prod` shows memory reaching the limit and a queue past the webhook's refusal threshold, and `staging` shows neither
 
+### Requirement: A real database, optional
+
+The demo workspace SHALL ship an optional PostgreSQL version of the same shop:
+a `docker/compose.yml` and `init.sql` creating `shop_prod` (with the fault) and
+`shop_staging`, seeded with orders, payments and webhook events, and a
+`readonly` user granted `SELECT` only; a `package.json` declaring the driver; and
+a database addon shipped turned off (`_shopdb`) whose tools read through that
+user, in a read-only transaction, with parameterised `SELECT`s. The suite SHALL
+test the addon against a fake driver, never a real database.
+
+#### Scenario: Paid, and no order
+
+- **WHEN** the addon is turned on and `shopdb.paidButUnconfirmed` is called in `prod`
+- **THEN** orders 4512, 4513 and 4514 are returned as captured and still `awaiting_payment`, and the same call in `staging` returns nothing
+
+#### Scenario: A write is refused
+
+- **WHEN** the `readonly` user tries an `UPDATE`
+- **THEN** the database answers `permission denied`
+
 ### Requirement: The scenario is a test
 
 A scenario file (`examples/my-workspace/scenarios/`) SHALL hold the question, the
