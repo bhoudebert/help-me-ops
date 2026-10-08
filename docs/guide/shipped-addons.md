@@ -184,8 +184,78 @@ the fake, **never against a real account**. Five minutes on yours settles it:
 4. Ask for a log you know exists ("show the logs of service X in the last hour") and compare with the Datadog UI; ask for a metric you know; ask which monitors are alerting.
 5. If something differs from the UI, open an issue with the request it made (a `403` names what to check), the query and what Datadog answered.
 
+## git: what changed before the incident
+
+The first question after "when did it start?" is "what changed?". The `git`
+addon reads a **repository on disk**, with no token and no network:
+
+| Tool     | For                                                                                |
+| -------- | ---------------------------------------------------------------------------------- |
+| `tags`   | which release shipped when (`v2.14.0` at 09:30)                                    |
+| `log`    | the commits before a time, by path, author or message, with the files they touched |
+| `show`   | one commit in full: message and files changed                                      |
+| `diff`   | the patch of a file or folder between two tags or commits                          |
+| `grep`   | where a message or a setting is defined in the code (a text, not a regex)          |
+| `fileAt` | one file as it was at a tag, with line numbers                                     |
+
+```json
+"prod": {
+  "sources": [],
+  "addons": {
+    "git": { "repo": "../shop", "ref": "v2.14.0" }
+  }
+}
+```
+
+| Setting | What                                                                                                                            |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `repo`  | The repository folder, absolute or relative to the workspace: **a clone you keep up to date**. Also `GIT_REPO`.                 |
+| `ref`   | The branch, tag or commit **deployed in this environment** (default `HEAD`), so prod is read at what prod runs. Also `GIT_REF`. |
+
+Each commit, patch, match or file excerpt becomes evidence with its time, so the
+conclusion can say "commit 6e0ff87 on 5 October changed the worker".
+
+### Why it is safe to point at your code
+
+It runs git, so it is built not to be talked into anything else than reading:
+
+- only `log`, `show`, `diff`, `grep`, `tag` and `cat-file` exist in the code, run
+  with an argument list and **never a shell**;
+- a branch, a tag or a path from the question is **one argument that cannot be
+  an option** (no leading `-`, no `..`, paths after `--`), so
+  `--output=somewhere` is refused, not obeyed;
+- a repository's own configuration cannot run a program: external diff drivers,
+  text conversion, pagers and file-system monitors are switched off (the tests
+  build a hostile repository to prove it);
+- files that usually hold secrets (`.env`, `*.pem`, `*.key`, SSH keys) are
+  **refused or left out** of every answer. A seat belt: secrets do not belong in
+  a repository;
+- answers are capped and a call times out. It never changes the repository, and
+  it does not fetch: update the clone yourself.
+
+### Try it: the demo repository
+
+The demo ships a script that builds a **real git repository** of the shop's code
+(a repository cannot be stored inside this one as files), with the changes that
+led to the incident:
+
+```bash
+# from the help-me-ops clone
+node examples/my-workspace/git-demo/build.mjs        # makes examples/my-workspace/.demo-repo
+echo 'SHOP_REPO=.demo-repo' >> .env                  # relative to the workspace
+npm run ops -- --workspace examples/my-workspace doctor     # git: loaded
+```
+
+Restart your client and ask: "what changed in the code before the incident?
+The release 2.14.0 went out on 7 October at 09:30." The assistant calls
+`git.tags`, then `git.log` since 5 October, and finds **two suspects**: a change
+that batches confirmations and keeps every one in a cache that is never emptied
+(5 October), and a change that lowers the worker's memory limit to 512Mi (6
+October). `git.diff` and `git.fileAt` show the code. Together with the memory
+curve that reaches the limit, the conclusion gets sharper, and it still says what
+it cannot tell: leak or limit.
+
 ## Coming
 
-A `git` addon (what changed in a repository on disk, through fixed read-only
-commands) comes next, then `github` (pull requests and releases through its API,
-with a read-only token and a list of repositories).
+`github` (pull requests, releases and issues through its API, with a read-only
+token and a list of repositories).
