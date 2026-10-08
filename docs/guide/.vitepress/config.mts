@@ -10,6 +10,18 @@ export default defineConfig({
   lang: "en",
   cleanUrls: true,
   lastUpdated: true,
+  // Light only, like the project site; the blue is the site's.
+  appearance: false,
+  head: [
+    ["meta", { name: "color-scheme", content: "light" }],
+    ["link", { rel: "preconnect", href: "https://fonts.googleapis.com" }],
+    ["link", { href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap", rel: "stylesheet" }],
+    [
+      "style",
+      {},
+      ":root{--vp-font-family-base:Inter,system-ui,sans-serif;--vp-font-family-mono:'JetBrains Mono',ui-monospace,monospace;--vp-c-brand-1:#1d4ed8;--vp-c-brand-2:#2563eb;--vp-c-brand-3:#2563eb;--vp-c-brand-soft:rgba(37,99,235,.12);--vp-button-brand-bg:#2563eb;--vp-button-brand-hover-bg:#1d4ed8}",
+    ],
+  ],
   themeConfig: {
     siteTitle: "help-me-ops · guide",
     nav: [
