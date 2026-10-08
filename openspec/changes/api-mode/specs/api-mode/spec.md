@@ -80,6 +80,13 @@ conclusion check accepted the conclusion.
 Tests of this capability SHALL use a scripted server that speaks the wire format,
 and SHALL NOT reach a real model or spend money.
 
+### Requirement: Developing it costs nothing
+
+The repository's tests and workflows SHALL NOT require a paid API or a key. The
+gating tests use the scripted server. Runs against a real model SHALL be opt-in
+(a script on the person's machine, or a manual workflow) and SHALL NOT fail a
+build on a model's answer.
+
 ### Requirement: Where the model is, said
 
 `doctor` SHALL print the configured model endpoint and whether it is this machine,

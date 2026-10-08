@@ -176,6 +176,52 @@ a hosted provider or gateway with its own URL and a key. Whether a given model
 supports tool calls is the model's property, not ours: Ollama lists the models
 that do under a "tools" filter on its model page, and `ops eval` shows how well.
 
+## Developing and testing without spending money
+
+Nobody pays for this project, so no part of building or checking it needs a paid
+API. Three layers, each free:
+
+| Layer                                    | What it runs                                                                                                                                        | Cost                                 | In CI?                                                     |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------- |
+| **1. Scripted fake server**              | A small server that speaks the chat wire format and replays a script: good runs, malformed tool calls, endless loops, refused conclusions, timeouts | nothing, milliseconds, deterministic | **yes, gates every PR** (rule 5: tests never call a model) |
+| **2. A real model on your machine**      | `ops eval` against Ollama (or llama.cpp, LM Studio) on `localhost`, via a script `npm run eval:local`                                               | electricity                          | no: slow, and the answer varies run to run                 |
+| **3. A tiny model in a manual workflow** | A GitHub-hosted runner (free for a public repository, CPU only) with a very small model, to check the wire format against a real server             | nothing                              | optional `workflow_dispatch`, never gating                 |
+
+- **Layer 1 proves the loop**: limits, malformed calls, trimming, the allowlist, the
+  guards. It cannot say whether a model is _good_, and does not try.
+- **Layer 2 answers "is it good enough?"**. A real model is not deterministic, so
+  its results are numbers to read (`ops eval --runs 5`), not assertions to fail a
+  build on. For people without Ollama, a `compose.llm.yml` starts one in a
+  container with the models in a cached volume (a GPU needs the NVIDIA container
+  toolkit; on CPU alone it works and is slow).
+- **Layer 3 is a smoke test only**: a 1–3 billion parameter model is too weak to
+  investigate, but enough to see that the request, the tool calls and the answer
+  go through a real server. It downloads the model on each run, so it is manual.
+- **Paid APIs are never required.** Anyone may point `baseUrl` at a hosted provider
+  (DeepSeek and Kimi both sell APIs, which are cheap, not free); nothing in the
+  repository's tests or workflows does.
+
+### Which models to try first
+
+Locally, on the maintainer's machine (an RTX 5080 with 16 GB of video memory, 60 GB
+of RAM), models up to roughly 14 billion parameters at 4-bit quantisation fit in
+the GPU and answer at a usable speed; larger ones spill to RAM and slow down a lot.
+So:
+
+- **DeepSeek and Kimi are open-weight, but their flagship models are far too large**
+  for a normal machine (hundreds of billions to about a trillion parameters). What
+  runs locally are the smaller models from the same labs, for example DeepSeek-R1
+  distilled into 7B–14B, if the Ollama library lists them. These are _reasoning_
+  models that write a long "thinking" before answering: slower, and their
+  tool-call format sometimes differs. They are worth testing, not assuming.
+- **Candidates to run through `ops eval` first**, because Ollama lists them with
+  tool support: Qwen 2.5 and Qwen 3 (7B–14B), Llama 3.1 8B, Mistral 7B, plus one
+  DeepSeek-R1 distill for comparison. Whether each handles our multi-step tool use
+  is exactly what is unknown, and what the first measurement is for.
+- **The first numbers are measured on this machine** and published with the model,
+  quantisation, hardware and date, as a table in the guide: what one setup did, not
+  a promise for yours.
+
 ## Privacy and safety
 
 - **Any URL, so say where it is.** `doctor` prints the endpoint and whether it is
