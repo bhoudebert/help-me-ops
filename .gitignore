@@ -7,3 +7,4 @@ docs/guide/.vitepress/dist
 docs/guide/.vitepress/cache
 .vitepress/
 /ops.config.json
+examples/my-workspace/.demo-repo
