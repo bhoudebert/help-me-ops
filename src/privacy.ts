@@ -198,13 +198,20 @@ export interface Masker {
   answer(text: string, tool?: string): Masked;
 }
 
+/** Case, underscores, hyphens and spaces do not tell two spellings of a key apart: firstName, first_name, FIRST-NAME. */
+const squash = (text: string) => text.toLowerCase().replace(/[\s_-]+/g, "");
+
 const keyMatcher = (pattern: string) => {
-  const parts = pattern.toLowerCase().split(".");
-  const wild = (part: string) => new RegExp(`^${part.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`);
-  const tests = parts.map(wild);
+  const wild = (part: string) =>
+    new RegExp(
+      `^${squash(part)
+        .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, ".*")}$`,
+    );
+  const tests = pattern.split(".").map(wild);
   return (path: string[]) => {
     if (path.length < tests.length) return false;
-    const tail = path.slice(-tests.length).map((p) => p.toLowerCase());
+    const tail = path.slice(-tests.length).map(squash);
     return tests.every((test, i) => test.test(tail[i]!));
   };
 };

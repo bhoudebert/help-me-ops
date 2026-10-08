@@ -388,3 +388,49 @@ test("addon check: the privacy of an addon is tested by its own examples", async
   assert.match(bad.text, /fix: fix the regex or the examples in addon.json \(privacy.detectors\)/);
   assert.match(bad.text, /warn\s+detector order\.extra: no examples/);
 });
+
+test("fields: spellings of a key are one key, and a workspace field applies to every addon, declared or not", () => {
+  const data = {
+    firstName: "Alice",
+    first_name: "Bob",
+    FirstName: "Carol",
+    firstname: "Dave",
+    "first-name": "Erin",
+    FIRST_NAME: "Frank",
+    "first name": "Ivan",
+    customer: { given_first_name: "Grace" },
+    lastName: "Heidi",
+  };
+  const hiddenKeys = (fields: string[], tool: string) => {
+    const out = evidenceOf(masker({ fields }).answer(answer(record("row", data)), tool).text).evidence[0]!.data;
+    const flat = (o: Record<string, unknown>): [string, unknown][] =>
+      Object.entries(o).flatMap(([k, v]) =>
+        v && typeof v === "object" ? flat(v as Record<string, unknown>) : [[k, v]],
+      );
+    return flat(out)
+      .filter(([, v]) => v === "***")
+      .map(([k]) => k);
+  };
+  // one spelling in the config hides every spelling in the data
+  assert.deepEqual(hiddenKeys(["firstName"], "billing.getInvoice"), [
+    "firstName",
+    "first_name",
+    "FirstName",
+    "firstname",
+    "first-name",
+    "FIRST_NAME",
+    "first name",
+  ]);
+  assert.deepEqual(hiddenKeys(["first_name"], "billing.getInvoice"), hiddenKeys(["FIRST-NAME"], "billing.getInvoice"));
+  // a key that only contains it is another key: say so with a wildcard
+  assert.ok(!hiddenKeys(["firstName"], "x.y").includes("given_first_name"));
+  assert.ok(hiddenKeys(["*firstname*"], "x.y").includes("given_first_name"));
+  assert.ok(!hiddenKeys(["*firstname*"], "x.y").includes("lastName"));
+  // dotted paths squash each part
+  assert.deepEqual(hiddenKeys(["customer.given_first_name"], "x.y"), ["given_first_name"]);
+  assert.deepEqual(hiddenKeys(["Customer.GivenFirstName"], "x.y"), ["given_first_name"]);
+  // the workspace's fields reach an addon that declared nothing, and the core tools
+  for (const tool of ["billing.getInvoice", "order.getOrder", "searchSource", "searchKnowledge"]) {
+    assert.ok(hiddenKeys(["firstName"], tool).includes("first_name"), tool);
+  }
+});
