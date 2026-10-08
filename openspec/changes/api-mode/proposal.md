@@ -159,7 +159,7 @@ An optional block in `ops.config.json`, or flags and environment variables:
   "baseUrl": "http://localhost:11434/v1",
   "model": "qwen2.5:14b",
   "apiKey": "${OPS_MODEL_KEY}",
-  "maxSteps": 12,
+  "maxSteps": 20,
   "temperature": 0
 }
 ```
@@ -286,5 +286,5 @@ model's text, native Anthropic or Google wire formats (adapters later), embeddin
    environment variables per person, flags winning.
 4. **A workspace can restrict where the model is** with `privacy.modelHosts`.
 5. **Limits** (steps, token budget, context trimming) start with provisional
-   defaults (12 steps; a budget from the model's context size) and are tuned with
+   defaults (20 steps; a budget from the model's context size) and are tuned with
    `ops eval` once there are numbers.

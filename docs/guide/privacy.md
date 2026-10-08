@@ -225,7 +225,7 @@ The strongest answer when data must not leave your network is a model that runs
 on your side. Two ways, and neither is automatic:
 
 - **An MCP client that can use a local model.** help-me-ops is an MCP server, so any MCP-capable client works; some of them can run against a local model (through Ollama, LM Studio or an OpenAI-compatible server). Which clients, and how well, changes quickly: check your client's documentation. Claude Code, Codex and Copilot are tested here with their own models.
-- **API mode**, on the [roadmap](https://github.com/bhoudebert/help-me-ops/blob/main/ROADMAP.md): running the investigation from the terminal against any model API, a local one included.
+- **`ops chat` and `ops ask`** ([your own model](/local-models)): help-me-ops runs the investigation itself against a model you point it at (Ollama, llama.cpp, LM Studio, a company server), with the mask, strict mode and the checked conclusion unchanged. `privacy.modelHosts` can restrict where that model may be, and `doctor` says where it is.
 
 Two honest caveats. A **small local model uses tools and long evidence worse**
 than a large hosted one, so expect weaker investigations. And the
@@ -234,8 +234,6 @@ there: whatever the model, it cannot cite a line no tool returned.
 
 ## What is coming
 
-On the [roadmap](https://github.com/bhoudebert/help-me-ops/blob/main/ROADMAP.md), in this order:
-
-1. **Local models** through API mode.
+On the [roadmap](https://github.com/bhoudebert/help-me-ops/blob/main/ROADMAP.md): `ops eval`, to measure how well a model investigates your scenarios, and case files that could keep the mapping of placeholders.
 
 The mask is a second line of defence, never a guarantee of anonymity: the first measure above is the one to rely on.

@@ -120,7 +120,8 @@ broken addon is skipped with a reason, never fatal.
 ## How it is built
 
 - **One toolbox, every client**: tools defined once with their MCP hints,
-  served over MCP and the CLI (ADR 0004).
+  served over MCP and the CLI (ADR 0004). Without a client, `ops chat` and
+  `ops ask` drive the same toolbox with a model you point at (ADR 0014).
 - **Read-only by design**: connectors only search, tools declare it, tests
   check it (ADR 0002).
 - **Extension by files a team owns**: Markdown playbooks, connector modules and
@@ -144,6 +145,15 @@ broken addon is skipped with a reason, never fatal.
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
+
+## No AI client? Use your own model
+
+`npm run ops -- chat` is a conversation in the terminal, and `ask "<question>"`
+one question for scripts, against a model **you** point at: Ollama, llama.cpp,
+LM Studio, a company server, any OpenAI-compatible endpoint. The same tools, mask
+and checked conclusion; nothing is called until you configure a model, and
+`privacy.modelHosts` can restrict where it may be. A small model investigates
+worse than a large one: [the guide](docs/guide/local-models.md) says what to expect.
 
 ## Personal data
 

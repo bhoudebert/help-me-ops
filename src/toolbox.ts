@@ -61,6 +61,7 @@ export async function openToolbox(workspace = resolveWorkspace(), extraAddons: s
   ]);
   return {
     workspace: baseDir,
+    model: config.model,
     data,
     privacy: config.privacy,
     masker: createMasker(
