@@ -141,6 +141,13 @@
   .tile p { margin: 0; color: var(--muted); font-size: .95rem; }
 
   /* addons */
+  .bench { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  .bench th, .bench td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  .bench th { color: var(--muted); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+  .bench td.n { font-variant-numeric: tabular-nums; }
+  .bench tr.best td { background: var(--brand-soft); color: var(--brand-ink); font-weight: 600; }
+  .caption { color: var(--muted); font-size: .88rem; margin: 10px 2px 0; }
+  .tablewrap { overflow-x: auto; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   pre { margin: 0; background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; padding: 18px; font-size: .8rem; line-height: 1.65; overflow-x: auto; position: relative; }
   pre .fn { position: absolute; top: 0; right: 0; background: var(--brand-soft); color: var(--brand-ink); font: 600 .72rem Inter, sans-serif; padding: 3px 10px; border-bottom-left-radius: 10px; border-top-right-radius: 11px; }
@@ -239,6 +246,7 @@
         <a class="hide-s" href="#how">How it works</a>
         <a class="hide-s" href="#story">The demo</a>
         <a class="hide-s" href="#addons">Addons</a>
+        <a class="hide-s" href="#models">Your model</a>
         <a class="hide-s" href="#trust">Trust</a>
         <a href="guide/">Guide</a>
         <a class="btn" href="https://github.com/bhoudebert/help-me-ops"><svg class="i" aria-hidden="true"><use href="#i-github"/></svg>GitHub</a>
@@ -517,6 +525,46 @@
     </div>
     <p style="margin-top:26px"><a class="btn primary" href="guide/ready-made/">What each one needs, side by side</a></p>
     <p class="section-note" style="margin-top:14px">Try every one without an account: <a href="guide/demo">the demo</a> has a live backend, a mock of Datadog and GitHub, a git repository and a PostgreSQL.</p>
+  </div>
+</section>
+
+<section id="models">
+  <div class="wrap">
+    <span class="kicker">Your own model</span>
+    <h2>No AI client needed. Bring a model.</h2>
+    <p class="sub">Point <code>ops chat</code> at any OpenAI-compatible URL: a model on your machine, one in your company, or a provider. The same tools, the same mask, the same checked conclusion, and nothing leaves your network if the model does not.</p>
+    <div class="two">
+<pre><span class="fn">terminal</span><span class="c"># Ollama, llama.cpp, LM Studio, vLLM, a gateway...</span>
+$ npm run ops -- chat --model qwen3:14b --reasoning none
+<span class="k">you ▸</span> Client u-881 paid but cannot find order 4512
+  step 1  scope …
+  step 2  order.getOrder …            → 1 evidence
+  step 3  searchSource app-logs …     → 3 evidence
+  …
+  step 11 checkConclusion             → <span class="s">accepted</span>
+<span class="k">assistant ▸</span> Cause: the payment webhook was refused
+  (503) because the queue was full …
+
+$ npm run ops -- eval --runs 5 --model qwen3:14b,qwen3:8b
+<span class="c"># count, don't guess: how often does a model get there?</span></pre>
+      <div>
+        <div class="tablewrap"><table class="bench">
+          <thead><tr><th>Model, on a GPU</th><th>Check accepted</th><th>Cause found</th><th>Time</th></tr></thead>
+          <tbody>
+            <tr class="best"><td>qwen3:14b, thinking off</td><td class="n">5/5</td><td class="n">5/5</td><td class="n">16 s</td></tr>
+            <tr><td>qwen3:8b, thinking off</td><td class="n">5/5</td><td class="n">0/5</td><td class="n">8 s</td></tr>
+            <tr><td>gpt-oss:20b, low</td><td class="n">5/5</td><td class="n">0/5</td><td class="n">58 s</td></tr>
+            <tr><td>llama3.1:8b</td><td class="n">0/5</td><td class="n">0/5</td><td class="n">1 s</td></tr>
+            <tr><td>deepseek-r1:14b</td><td class="n">0/5</td><td class="n">0/5</td><td class="n">20 s</td></tr>
+          </tbody></table></div>
+        <p class="caption">Five runs per row on the demo's stuck order, an RTX 5080 with Ollama, 2026-10-08. <b>The check only proves a quote is real, not that the cause is right</b>, which is why "cause found" counts the key facts too. One scenario, a snapshot and not a ranking; no model found the deeper cause. <a href="guide/local-models#what-one-setup-measured">The method and the full table</a>.</p>
+      </div>
+    </div>
+    <ul class="ticks" style="margin-top:28px">
+      <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg><div><h3>Just a URL</h3><p>OpenAI-compatible chat with tools, a Bearer key or your own headers, retries on rate limits. Tested against recorded Ollama responses; no hosted provider yet. <a href="guide/local-models#another-provider-or-a-company-gateway">Which cases</a>.</p></div></li>
+      <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg><div><h3>Nothing to pay to try</h3><p>A scripted mock model ships with the project (<code>npm run mock:model</code>), and the tests never call a model.</p></div></li>
+      <li><svg class="i" aria-hidden="true"><use href="#i-shield"/></svg><div><h3>You decide where it may be</h3><p><code>privacy.modelHosts</code> refuses a model outside your network, before any request, and <code>doctor</code> says where it is.</p></div></li>
+    </ul>
   </div>
 </section>
 

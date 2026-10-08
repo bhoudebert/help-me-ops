@@ -87,7 +87,8 @@ app and one environment they need no `--app` or `--env`; with several, the
 
 `investigate` shows the matching playbook and where to look. The investigation
 itself runs in an AI client, which brings its own model:
-[Claude Code, Codex and Copilot](/clients).
+[Claude Code, Codex and Copilot](/clients). Without a client, `ops chat` and
+`ops ask` run it against [a model of your own](/local-models), local or not.
 
 ## Before you connect a real system
 
