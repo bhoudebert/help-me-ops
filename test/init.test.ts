@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { loadAddons } from "../src/addons/loader.ts";
 import { Manifest } from "../src/addons/manifest.ts";
-import { initAddon, TEMPLATES } from "../src/init.ts";
+import { runCommand } from "../src/commands.ts";
+import { loadConfig } from "../src/config.ts";
+import { initAddon, initWorkspace, runInit, TEMPLATES } from "../src/init.ts";
 import { openToolbox } from "../src/toolbox.ts";
 import { createToolDefinitions } from "../src/tools/index.ts";
 
@@ -93,6 +95,65 @@ test("init: refuses to overwrite, bad names, unknown templates and missing argum
   await assert.rejects(initAddon(root, ["addon", "Bad_Name", "--template", "file"]), /is not a name/);
   await assert.rejects(initAddon(root, ["addon", "x", "--template", "graphql"]), /must be one of file, api, sql/);
   await assert.rejects(initAddon(root, ["addon", "x"]), /must be one of/);
-  await assert.rejects(initAddon(root, ["addon"]), /Usage: npm run ops -- init addon/);
+  await assert.rejects(initAddon(root, ["addon"]), /init addon <name> --template/);
   await assert.rejects(initAddon(root, ["workspace", "x"]), /Usage/);
+});
+
+test("init workspace: a folder that loads, with a starter playbook, a README and what to do next", async () => {
+  const folder = join(mkdtempSync(join(tmpdir(), "ops-init-ws-")), "my-ops");
+  const message = await runInit("/ignored", ["workspace", folder, "--app", "shop"]);
+  assert.match(message, new RegExp(`OPS_WORKSPACE=${folder}`));
+  assert.match(message, /doctor/);
+
+  const { config } = await loadConfig(folder);
+  assert.deepEqual(Object.keys(config.apps), ["shop"]);
+  assert.deepEqual(Object.keys(config.apps.shop!.envs), ["prod", "staging"]);
+  assert.match(config.apps.shop!.description, /^TODO/);
+
+  const toolbox = await openToolbox(folder);
+  assert.match(await runCommand(toolbox, "doctor", []), /^Workspace: .*my-ops/);
+  assert.deepEqual(
+    toolbox.playbooks.map((p) => p.id),
+    ["first-incident"],
+    "the README of playbooks/ is not a playbook",
+  );
+  assert.match(await runCommand(toolbox, "scope", ["the", "shop", "is", "down", "in", "production"]), /"env": "prod"/);
+  assert.equal(
+    (toolbox.addons ?? []).filter((a) => a.status === "skipped").length,
+    0,
+    "addons/README.md is not an addon",
+  );
+
+  for (const file of ["README.md", "playbooks/README.md", "addons/README.md", "playbooks/first-incident.md"]) {
+    assert.doesNotMatch(readFileSync(join(folder, file), "utf8"), /\{\{app\}\}/, file);
+  }
+  assert.match(readFileSync(join(folder, "README.md"), "utf8"), /# shop workspace/);
+});
+
+test("init workspace: --envs, the workspace found by --workspace, and the addon scaffold on top of it", async () => {
+  const found = join(mkdtempSync(join(tmpdir(), "ops-init-ws-")), "found");
+  await initWorkspace(found, ["workspace", "--envs", "production"]);
+  assert.deepEqual(Object.keys((await loadConfig(found)).config.apps["my-app"]!.envs), ["production"]);
+  await initAddon(found, ["addon", "billing", "--template", "api"]);
+  assert.ok(existsSync(join(found, "addons/billing/tools.ts")));
+  assert.equal((await openToolbox(found)).addons!.find((a) => a.name === "billing")!.status, "idle");
+});
+
+test("init workspace: never overwrites, and refuses names and arguments it cannot use", async () => {
+  const folder = join(mkdtempSync(join(tmpdir(), "ops-init-ws-")), "ops");
+  mkdirSync(folder, { recursive: true });
+  writeFileSync(join(folder, "README.md"), "mine");
+  await assert.rejects(initWorkspace(folder, ["workspace", folder]), /already has README.md: nothing was written/);
+  assert.equal(readFileSync(join(folder, "README.md"), "utf8"), "mine");
+  assert.equal(existsSync(join(folder, "ops.config.json")), false, "nothing else was written either");
+
+  const other = join(mkdtempSync(join(tmpdir(), "ops-init-ws-")), "x");
+  await assert.rejects(initWorkspace(other, ["workspace", other, "--app", "My App"]), /--app "My App" is not a name/);
+  await assert.rejects(
+    initWorkspace(other, ["workspace", other, "--envs", "prod,Stage"]),
+    /environment "Stage" is not a name/,
+  );
+  await assert.rejects(initWorkspace(other, ["workspace", other, "--envs", "prod,prod"]), /twice/);
+  await assert.rejects(initWorkspace(other, ["workspace", other, "extra"]), /Usage: npm run ops -- init workspace/);
+  assert.equal(existsSync(other), false);
 });
