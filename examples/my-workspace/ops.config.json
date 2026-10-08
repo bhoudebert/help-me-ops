@@ -42,6 +42,20 @@
               "token": "${GITHUB_TOKEN}",
               "repos": "shop-co/shop",
               "baseUrl": "${SHOP_API_PROD_URL}"
+            },
+            "prometheus": {
+              "baseUrl": "${SHOP_API_PROD_URL}/prometheus",
+              "authorization": "${PROMETHEUS_AUTHORIZATION}"
+            },
+            "loki": {
+              "baseUrl": "${SHOP_API_PROD_URL}",
+              "authorization": "${LOKI_AUTHORIZATION}",
+              "orgId": "shop"
+            },
+            "elasticsearch": {
+              "baseUrl": "${SHOP_API_PROD_URL}",
+              "indices": "shop-logs-*",
+              "authorization": "${ELASTICSEARCH_AUTHORIZATION}"
             }
           }
         },
@@ -84,6 +98,20 @@
               "token": "${GITHUB_TOKEN}",
               "repos": "shop-co/shop",
               "baseUrl": "${SHOP_API_STAGING_URL}"
+            },
+            "prometheus": {
+              "baseUrl": "${SHOP_API_STAGING_URL}/prometheus",
+              "authorization": "${PROMETHEUS_AUTHORIZATION}"
+            },
+            "loki": {
+              "baseUrl": "${SHOP_API_STAGING_URL}",
+              "authorization": "${LOKI_AUTHORIZATION}",
+              "orgId": "shop"
+            },
+            "elasticsearch": {
+              "baseUrl": "${SHOP_API_STAGING_URL}",
+              "indices": "shop-logs-*",
+              "authorization": "${ELASTICSEARCH_AUTHORIZATION}"
             }
           }
         }
