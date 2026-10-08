@@ -1,5 +1,6 @@
 // What the terminal commands do, as functions returning text (testable).
 import { formatReport } from "./addons/loader.ts";
+import { createMasker } from "./privacy.ts";
 import { matchPlaybooks } from "./playbooks.ts";
 import { createToolDefinitions, type Toolbox } from "./tools/index.ts";
 
@@ -71,9 +72,14 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
     }
     case "doctor": {
       const lines = [...formatReport(toolbox.addons ?? []), ...(toolbox.warnings ?? []).map((w) => `  ! ${w}`)];
-      return [`Workspace: ${toolbox.workspace ?? "unknown"}`, "Addons:", ...(lines.length ? lines : ["  none"])].join(
-        "\n",
-      );
+      const privacy =
+        createMasker(toolbox.privacy)?.describe() ?? "no masking: what the tools return goes to your AI provider";
+      return [
+        `Workspace: ${toolbox.workspace ?? "unknown"}`,
+        `Privacy: ${privacy}`,
+        "Addons:",
+        ...(lines.length ? lines : ["  none"]),
+      ].join("\n");
     }
     case "investigate": {
       const question = args.join(" ").trim();
