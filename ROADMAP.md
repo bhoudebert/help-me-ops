@@ -43,6 +43,9 @@
   second door onto the same toolbox, playbooks and conclusion check. It would
   revisit "the client's model does the reasoning" (ADR 0007), so it starts with
   an ADR, and keeps the rule that tests never call a model.
+  Proposed: [ADR 0014](docs/adr/0014-api-mode-and-local-models.md) and
+  [the proposal](openspec/changes/api-mode/proposal.md) (`ops ask`, `ops eval`),
+  for review.
 - **Case files**: an investigation saved with its question, steps, evidence
   and conclusion, so the next one starts from what is known.
 
