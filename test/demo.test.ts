@@ -14,6 +14,8 @@ const scenario = JSON.parse(readFileSync(join(workspace, "scenarios/stuck-order.
   playbook: string;
   steps: { why: string; tool: string; input: Record<string, unknown> }[];
   conclusion: {
+    app: string;
+    env?: string;
     certainty: string;
     evidence: { source: string; at: string; quote: string }[];
     unknowns: string[];
@@ -29,7 +31,7 @@ async function replay() {
     assert.ok(tool, `the scenario uses ${step.tool}, which the toolbox must have`);
     results.push({ tool: step.tool, input: step.input, text: await tool.run(tool.inputSchema.parse(step.input)) });
   }
-  return results;
+  return Object.assign(results, { tools });
 }
 
 test("demo: the question points at shop in production, with the playbook for it", async () => {
@@ -38,19 +40,46 @@ test("demo: the question points at shop in production, with the playbook for it"
   assert.equal(playbooks[0].id, scenario.playbook);
 });
 
-test("demo: every quote of the conclusion comes from a result of the investigation", async () => {
-  const results = await replay();
-  const seen = results.flatMap((r) =>
-    r.tool === "scope" || r.tool === "listPlaybooks" ? [] : JSON.parse(r.text).evidence,
-  );
-  const summaries = seen.map((e: { source: string; at: string | null; summary: string }) => e);
-  for (const { source, at, quote } of scenario.conclusion.evidence) {
-    const found = summaries.find((e) => e.summary.includes(quote) && e.source === source);
-    assert.ok(found, `no result holds "${quote}" from ${source}`);
-    assert.equal(found.at, at, quote);
-  }
+test("demo: the conclusion of the scenario is accepted by the check, and the report has the same layout for every client", async () => {
+  const session = await replay();
+  const check = session.tools.find((t) => t.name === "checkConclusion")!;
+  const verdict = JSON.parse(await check.run(check.inputSchema.parse(scenario.conclusion)));
+  assert.equal(verdict.ok, true, JSON.stringify(verdict.problems));
+  assert.deepEqual(verdict.problems, []);
+  assert.ok(verdict.checked.every((c: { status: string }) => c.status === "found"));
+  assert.equal(verdict.checked.length, scenario.conclusion.evidence.length);
+  assert.match(verdict.report, /^## Conclusion: likely \(shop \/ prod\)\n\n\*\*Cause\.\*\* The payment webhook/);
+  assert.match(verdict.report, /- 2026-10-07T09:50:14Z · app-logs · 41 jobs\/min/);
+  assert.ok(verdict.report.indexOf("09:50:14") < verdict.report.indexOf("10:01:04"), "oldest first");
+  assert.match(verdict.report, /\*\*Still unknown\*\*\n- Whether release 2\.14\.0 introduced a memory leak/);
+  assert.match(verdict.report, /\*\*Next step, for a person\.\*\* Restart or scale shop-worker/);
   assert.equal(scenario.conclusion.certainty, "likely");
-  assert.ok(scenario.conclusion.unknowns.length > 0 && scenario.conclusion.next.length > 0);
+});
+
+test("demo: a conclusion that quotes what no tool returned is refused, naming the quote", async () => {
+  const session = await replay();
+  const check = session.tools.find((t) => t.name === "checkConclusion")!;
+  const refuse = async (change: (c: typeof scenario.conclusion) => void) => {
+    const copy = structuredClone(scenario.conclusion);
+    change(copy);
+    return JSON.parse(await check.run(check.inputSchema.parse(copy)));
+  };
+  const invented = await refuse((c) =>
+    c.evidence.push({ source: "app-logs", at: "2026-10-07T10:00:03Z", quote: "the database was down for ten minutes" }),
+  );
+  assert.equal(invented.ok, false);
+  assert.match(invented.problems.join("\n"), /quote not found .*"the database was down for ten minutes"/);
+  assert.equal(invented.report, undefined);
+  assert.match(
+    (await refuse((c) => (c.evidence[1]!.source = "metrics"))).problems.join(),
+    /comes from app-logs, knowledge, not from metrics/,
+  );
+  assert.match(
+    (await refuse((c) => (c.evidence[1]!.at = "2026-10-07T10:30:00Z"))).problems.join(),
+    /is at 2026-10-07T10:00:02Z, not 2026-10-07T10:30:00Z/,
+  );
+  assert.match((await refuse((c) => (c.env = "staging"))).problems.join("\n"), /is about staging/);
+  assert.match((await refuse((c) => (c.env = undefined))).problems.join("\n"), /say which environment/);
 });
 
 test("demo: the fault is in prod only, the other orders are found, staging is healthy", async () => {

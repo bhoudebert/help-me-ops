@@ -23,6 +23,7 @@ test("tools: every tool states all four hints, and none may change the system", 
       "metrics.queryMetric",
       "order.getOrder",
       "order.listOrders",
+      "checkConclusion",
     ],
   );
   for (const tool of tools) {

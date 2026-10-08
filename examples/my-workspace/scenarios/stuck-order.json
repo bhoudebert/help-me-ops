@@ -112,6 +112,8 @@
     }
   ],
   "conclusion": {
+    "app": "shop",
+    "env": "prod",
     "cause": "The payment webhook for order 4512 was refused with a 503 because the payment-confirm queue was full; the shop-worker, slowed by growing memory since release 2.14.0, was then OOMKilled. The order stayed awaiting_payment; orders 4513 and 4514 are in the same state.",
     "certainty": "likely",
     "evidence": [
