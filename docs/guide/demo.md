@@ -89,7 +89,7 @@ The same tools work from the terminal, to see what the assistant sees:
 export OPS_WORKSPACE=examples/my-workspace
 npm run ops -- scope "orders are stuck in production"
 npm run ops -- search app-logs order=4512 --env prod
-npm run ops -- doctor
+npm run ops -- doctor     # first line: which workspace is loaded
 ```
 
 ## Things to try
