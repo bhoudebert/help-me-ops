@@ -67,6 +67,18 @@ the assistant (and its provider) sees them. List what to hide in `ops.config.jso
 | `patterns`    | what is hidden **wherever it appears in a text** (a log line, a summary, a runbook): `email`, `ip` (IPv4), `iban`, `card` (only numbers that pass the Luhn check), `phone` (international, starting with `+`), `token` (bearer tokens, cloud and GitHub keys, JWTs), or **your own regex**: `{ "name": "customer-id", "regex": "CUST-\\d{6}" }`.                                          |
 | `replacement` | what replaces a hidden value, default `***` (it does not keep the length).                                                                                                                                                                                                                                                                                                                |
 
+Which keys a field matches:
+
+| You list          | Hides these keys                                                                 | Does not hide                                                                                             |
+| ----------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `"firstName"`     | `firstName`, `first_name`, `first-name`, `FIRST_NAME`, `FirstName`, `first name` | `given_first_name`, `lastName`                                                                            |
+| `"*firstname*"`   | all of the above, and `given_first_name`, `customer_first_name`                  | `lastName`                                                                                                |
+| `"customer.name"` | the key `name` inside a key `customer` (any spelling of each)                    | a `name` anywhere else                                                                                    |
+| `"*address*"`     | `address`, `billingAddress`, `email_address`                                     | `addr`                                                                                                    |
+| `"name"`          | `name` and `NAME` only                                                           | `firstName`, `filename`, `hostname` (add a wildcard if you want them, knowing it also catches `filename`) |
+
+It does not matter which addon returned the record: a field you list applies to **every** tool, one an addon declared nothing for included.
+
 What it does with them:
 
 - A value hidden under a key is **also hidden wherever the same record repeats it**: if `email` is a field, `jane@example.com` is stars in the summary too, not only in the `email` field.
