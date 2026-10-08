@@ -41,7 +41,10 @@ cd examples/my-workspace && npm install && cd ../..
 ```
 
 **3. Give it the connection URLs.** Credentials live in the environment, never
-in a file. Add to your `.env` in the clone:
+in a file. Create `.env` in the clone if you have none (`cp .env.example .env`;
+it is git-ignored) and add these two lines. They are already in `.env.example`,
+commented, and `ops.config.json` refers to them as `${SHOPDB_PROD_URL}`, so
+nothing else needs editing:
 
 ```bash
 SHOPDB_PROD_URL=postgres://readonly:readonly@127.0.0.1:5433/shop_prod
@@ -56,7 +59,9 @@ mv examples/my-workspace/addons/_shopdb examples/my-workspace/addons/shopdb
 npm run ops -- --workspace examples/my-workspace doctor
 ```
 
-`doctor` must list `shopdb` as `loaded`. If something is missing it says what:
+A URL reads `postgres://USER:PASSWORD@HOST:PORT/DATABASE`: the `readonly` user,
+the container published on `127.0.0.1` port `5433`, one database per
+environment. `doctor` must list `shopdb` as `loaded`. If something is missing it says what:
 no driver (`Cannot find package 'pg'`), an unset variable, a wrong URL.
 
 Restart your client, and ask the same question as in the demo. The assistant now
@@ -102,6 +107,9 @@ It is two small files in `examples/my-workspace/addons/shopdb/`:
 
 No MCP, no zod, no evidence format. Start your own from it with
 `npm run ops -- init addon orders-db --template sql`.
+
+The same steps, with a table of what to do for each `doctor` message, are in
+`examples/my-workspace/README.md`.
 
 ## Clean up
 
