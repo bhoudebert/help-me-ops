@@ -1,0 +1,29 @@
+{
+  "number": 412,
+  "title": "Speed up confirmations: batches of 500 and a cache of confirmed orders",
+  "state": "closed",
+  "user": {
+    "login": "bob",
+    "type": "User"
+  },
+  "created_at": "2026-10-05T14:00:00Z",
+  "updated_at": "2026-10-05T16:30:00Z",
+  "closed_at": "2026-10-05T16:30:00Z",
+  "merged_at": "2026-10-05T16:30:00Z",
+  "draft": false,
+  "head": {
+    "ref": "bob/batch-confirm"
+  },
+  "base": {
+    "ref": "main"
+  },
+  "html_url": "https://github.example/shop-co/shop/pull/412",
+  "body": "Throughput is 4x on the load test. The cache skips duplicate webhooks.",
+  "additions": 16,
+  "deletions": 6,
+  "changed_files": 1,
+  "merged_by": {
+    "login": "alice",
+    "type": "User"
+  }
+}

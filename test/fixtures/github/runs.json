@@ -1,0 +1,75 @@
+{
+  "total_count": 5,
+  "workflow_runs": [
+    {
+      "id": 9005,
+      "name": "Deploy",
+      "display_title": "Deploy 2.14.0 to prod",
+      "status": "completed",
+      "conclusion": "success",
+      "head_branch": "main",
+      "head_sha": "ef6753c0a1b2",
+      "event": "release",
+      "created_at": "2026-10-07T09:31:00Z",
+      "run_started_at": "2026-10-07T09:31:00Z",
+      "updated_at": "2026-10-07T09:31:00Z",
+      "html_url": "https://github.example/shop-co/shop/actions/runs/9005"
+    },
+    {
+      "id": 9004,
+      "name": "Deploy",
+      "display_title": "Deploy 2.14.0 to staging",
+      "status": "completed",
+      "conclusion": "success",
+      "head_branch": "main",
+      "head_sha": "ef6753c0a1b2",
+      "event": "release",
+      "created_at": "2026-10-07T09:30:00Z",
+      "run_started_at": "2026-10-07T09:30:00Z",
+      "updated_at": "2026-10-07T09:30:00Z",
+      "html_url": "https://github.example/shop-co/shop/actions/runs/9004"
+    },
+    {
+      "id": 9003,
+      "name": "CI",
+      "display_title": "Release 2.14.0",
+      "status": "completed",
+      "conclusion": "success",
+      "head_branch": "release/2.14.0",
+      "head_sha": "ef6753c0a1b2",
+      "event": "pull_request",
+      "created_at": "2026-10-07T09:12:00Z",
+      "run_started_at": "2026-10-07T09:12:00Z",
+      "updated_at": "2026-10-07T09:12:00Z",
+      "html_url": "https://github.example/shop-co/shop/actions/runs/9003"
+    },
+    {
+      "id": 9002,
+      "name": "CI",
+      "display_title": "Lower the worker memory limit to 512Mi",
+      "status": "completed",
+      "conclusion": "failure",
+      "head_branch": "carol/worker-memory",
+      "head_sha": "ef6753c0a1b2",
+      "event": "pull_request",
+      "created_at": "2026-10-06T10:45:00Z",
+      "run_started_at": "2026-10-06T10:45:00Z",
+      "updated_at": "2026-10-06T10:45:00Z",
+      "html_url": "https://github.example/shop-co/shop/actions/runs/9002"
+    },
+    {
+      "id": 9001,
+      "name": "CI",
+      "display_title": "Speed up confirmations: batches of 500",
+      "status": "completed",
+      "conclusion": "success",
+      "head_branch": "bob/batch-confirm",
+      "head_sha": "ef6753c0a1b2",
+      "event": "pull_request",
+      "created_at": "2026-10-05T14:10:00Z",
+      "run_started_at": "2026-10-05T14:10:00Z",
+      "updated_at": "2026-10-05T14:10:00Z",
+      "html_url": "https://github.example/shop-co/shop/actions/runs/9001"
+    }
+  ]
+}
