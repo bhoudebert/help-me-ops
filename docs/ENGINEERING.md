@@ -19,6 +19,9 @@ MCP (src/mcp.ts) ──┘  (src/toolbox.ts)    └─▶ playbooks (<workspace>
   evidence from what the functions return), turns definitions into settings,
   namespaced tools and connector types (`runtime.ts`), and holds the API of the
   advanced `addon.ts` form (`types.ts`). `addons/` at the root holds the built-ins.
+- `src/init.ts` scaffolds an addon (`ops init addon`) by copying a folder of
+  `templates/addon/` (`file`, `api`, `sql`) with the name filled in; it never
+  overwrites, and tests load the result.
 - `src/scope.ts` resolves the app and environment a read applies to, and
   proposes them from a question.
 - `src/connectors/registry.ts` turns sources into connectors: built-in types,
@@ -79,7 +82,9 @@ src/
   config.ts             the workspace and its ops.config.json, validated
   scope.ts              app and environment of a read
   addons/               addon loader, manifest compiler, settings, tools
+templates/addon/        what `ops init addon` writes: file, api, sql
 addons/                 built-in addons (logs: the file-logs connector type)
+  init.ts               ops init addon: write a template addon
   toolbox.ts            workspace → apps, connectors, playbooks
   connectors/           the contract, file-logs, the registry
   playbooks.ts          Markdown playbooks, matching
