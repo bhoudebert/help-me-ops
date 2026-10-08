@@ -140,6 +140,54 @@ test("ask: a tool call the server cannot parse (a 500) is the model's mistake: i
   }
 });
 
+test("ask: a rate limit or a busy server is waited for and tried again, the rest is not", async () => {
+  const limited = { status: 429, body: { error: { message: "rate limit" } }, headers: { "retry-after": "0.001" } };
+  const server = await fakeChat([limited, { status: 503, body: {} }, { content: "finally" }]);
+  const nope = await fakeChat([{ status: 401, body: { error: "bad key" } }, { content: "never" }]);
+  const down = await fakeChat([
+    { status: 503, body: {} },
+    { status: 503, body: {} },
+    { status: 503, body: {} },
+    { content: "never" },
+  ]);
+  try {
+    const toolbox = await openToolbox(workspace);
+    const { io, steps } = quiet();
+    const result = await runAsk(toolbox, "q", io, flagsFor(server.url), noEnv);
+    assert.equal(result.text, "finally");
+    assert.equal(server.requests.length, 3);
+    assert.match(
+      steps.join("\n"),
+      /answered 429; trying again in .* s \(1\/2\)[\s\S]*answered 503; trying again in .* s \(2\/2\)/,
+    );
+    // a refusal is an answer: asked once
+    await assert.rejects(runAsk(toolbox, "q", io, flagsFor(nope.url), noEnv), /answered 401/);
+    assert.equal(nope.requests.length, 1);
+    // give up after the retries, and say what it was
+    await assert.rejects(runAsk(toolbox, "q", io, flagsFor(down.url), noEnv), /answered 503/);
+    assert.equal(down.requests.length, 3, "the first try and two retries");
+    // retries can be turned off
+    const once = await fakeChat([{ status: 429, body: {} }, { content: "never" }]);
+    toolbox.model = {
+      baseUrl: once.url,
+      model: "fake",
+      maxSteps: 20,
+      temperature: 0,
+      contextTokens: 16000,
+      timeoutMs: 5000,
+      retries: 0,
+      retryDelayMs: 1,
+    };
+    await assert.rejects(runAsk(toolbox, "q", io, {}, noEnv), /answered 429.*Rate limited/);
+    assert.equal(once.requests.length, 1);
+    await once.close();
+  } finally {
+    await server.close();
+    await nope.close();
+    await down.close();
+  }
+});
+
 test("ask: a model that says nothing is asked again, twice at most", async () => {
   const server = await fakeChat([{}, calls({ name: "listPlaybooks", arguments: {} }), {}, {}, {}]);
   try {
@@ -185,6 +233,8 @@ test("ask: the token budget stops the run", async () => {
       temperature: 0,
       contextTokens: 16000,
       timeoutMs: 5000,
+      retries: 2,
+      retryDelayMs: 1,
       budgetTokens: 5000,
     };
     const { io } = quiet();
@@ -239,6 +289,8 @@ test("ask: no model configured, an unreachable server, a slow one, a refusal and
       temperature: 0,
       contextTokens: 16000,
       timeoutMs: 1000,
+      retries: 2,
+      retryDelayMs: 1,
     };
     await assert.rejects(runAsk(toolbox, "q", io, {}, noEnv), /did not answer within 1 s/);
   } finally {
@@ -259,6 +311,8 @@ test("the reasoning effort is sent only when configured", async () => {
       temperature: 0,
       contextTokens: 16000,
       timeoutMs: 5000,
+      retries: 2,
+      retryDelayMs: 1,
       reasoningEffort: "none",
     };
     await runAsk(toolbox, "q", io, {}, noEnv);
@@ -454,6 +508,8 @@ test("chat: when the conversation outgrows the context, the oldest tool results 
       temperature: 0,
       contextTokens: 1000,
       timeoutMs: 5000,
+      retries: 2,
+      retryDelayMs: 1,
     };
     const { io, steps } = quiet();
     await runAsk(toolbox, "q", io, {}, noEnv);

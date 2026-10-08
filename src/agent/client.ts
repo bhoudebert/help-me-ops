@@ -33,6 +33,9 @@ export interface Reply {
   tokens: number;
 }
 
+/** Statuses that mean "not now": a rate limit, a gateway or a busy server. */
+const RETRYABLE = new Set([429, 502, 503, 504]);
+
 const ChatResponse = z.object({
   choices: z
     .array(
@@ -63,6 +66,7 @@ export async function ask(
   messages: Message[],
   tools: ToolSpec[],
   fetchImpl: typeof fetch = globalThis.fetch,
+  onRetry?: (line: string) => void,
 ): Promise<Reply> {
   const body = {
     model: model.model,
@@ -86,25 +90,37 @@ export async function ask(
       function: { name: t.name, description: t.description, parameters: t.parameters },
     })),
   };
+  const url = `${model.baseUrl}/chat/completions`;
+  const init = () => ({
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(model.apiKey ? { authorization: `Bearer ${model.apiKey}` } : {}),
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(model.timeoutMs),
+  });
   let response: globalThis.Response;
-  try {
-    response = await fetchImpl(`${model.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        ...(model.apiKey ? { authorization: `Bearer ${model.apiKey}` } : {}),
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(model.timeoutMs),
-    });
-  } catch (error) {
-    const timedOut = error instanceof Error && error.name === "TimeoutError";
-    throw new Error(
-      timedOut
-        ? `The model at ${model.baseUrl} did not answer within ${Math.round(model.timeoutMs / 1000)} s (timeoutMs). A large model on a CPU can be that slow.`
-        : `Cannot reach the model at ${model.baseUrl}: ${error instanceof Error ? error.message : String(error)}. Is the server running (for Ollama: ollama serve)?`,
-      { cause: error },
+  for (let attempt = 0; ; attempt++) {
+    try {
+      response = await fetchImpl(url, init());
+    } catch (error) {
+      const timedOut = error instanceof Error && error.name === "TimeoutError";
+      throw new Error(
+        timedOut
+          ? `The model at ${model.baseUrl} did not answer within ${Math.round(model.timeoutMs / 1000)} s (timeoutMs). A large model on a CPU can be that slow.`
+          : `Cannot reach the model at ${model.baseUrl}: ${error instanceof Error ? error.message : String(error)}. Is the server running (for Ollama: ollama serve)?`,
+        { cause: error },
+      );
+    }
+    // A rate limit or a server that is busy is worth waiting for; anything else is an answer.
+    if (!RETRYABLE.has(response.status) || attempt >= model.retries) break;
+    const told = Number(response.headers.get("retry-after"));
+    const wait = Number.isFinite(told) && told > 0 ? Math.min(told, 30) * 1000 : model.retryDelayMs * 2 ** attempt;
+    onRetry?.(
+      `the model server answered ${response.status}; trying again in ${Math.round(wait / 100) / 10} s (${attempt + 1}/${model.retries})`,
     );
+    await new Promise((done) => setTimeout(done, wait));
   }
   if (!response.ok) {
     const full = (await response.text().catch(() => "")).trim();
@@ -119,7 +135,9 @@ export async function ask(
         ? " Check the key (OPS_MODEL_KEY)."
         : response.status === 404
           ? ` Is "${model.model}" pulled/loaded, and the address right?`
-          : "";
+          : response.status === 429
+            ? " Rate limited: wait, lower the load, or raise `retries`."
+            : "";
     throw new Error(`The model server answered ${response.status}: ${text}.${hint}`);
   }
   const parsed = ChatResponse.safeParse(await response.json().catch(() => null));

@@ -22,6 +22,10 @@ export const ModelConfig = z.object({
   budgetTokens: z.number().int().min(1000).optional(),
   /** Per request, in milliseconds. A local model can be slow: the default is generous. */
   timeoutMs: z.number().int().min(1000).default(300000),
+  /** Tries again after a 429 (rate limit) or a 502, 503, 504 from the server, this many times, waiting longer each time (or as long as `Retry-After` says, up to 30 s). */
+  retries: z.number().int().min(0).max(5).default(2),
+  /** The first wait before a retry, in milliseconds; it doubles each time. */
+  retryDelayMs: z.number().int().min(0).default(1000),
 });
 export type ModelConfig = z.infer<typeof ModelConfig>;
 
