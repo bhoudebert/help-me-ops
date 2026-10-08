@@ -94,7 +94,9 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
 
 /** What the person should see when a command or server starts: addons that did not load, sources left out. */
 export function startupNotices(toolbox: Toolbox): string[] {
-  const addons = (toolbox.addons ?? []).filter((r) => r.status !== "loaded" || r.reason || r.notes.length);
+  const addons = (toolbox.addons ?? []).filter(
+    (r) => r.status !== "idle" && (r.status !== "loaded" || r.reason || r.notes.length),
+  );
   return [
     `help-me-ops workspace: ${toolbox.workspace ?? "unknown"}`,
     ...formatReport(addons).map((l) => `help-me-ops addon:${l}`),
