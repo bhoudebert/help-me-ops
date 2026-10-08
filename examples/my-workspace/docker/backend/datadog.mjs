@@ -14,6 +14,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+/** A request the mock refuses and can say why: the only errors whose text is sent back. */
+class BadRequest extends Error {}
+
 export const DD_API_KEY = "demo-api-key";
 export const DD_APP_KEY = "demo-app-key";
 /** The demo's "now": relative times (now-15m) are counted from here. */
@@ -28,7 +31,7 @@ function when(value) {
   const relative = /^now(?:-(\d+)([smhd]))?$/.exec(String(value));
   if (relative) return NOW - (relative[1] ? Number(relative[1]) * UNITS[relative[2]] : 0);
   const time = Date.parse(value);
-  if (Number.isNaN(time)) throw new Error(`cannot parse the time "${value}"`);
+  if (Number.isNaN(time)) throw new BadRequest(`cannot parse the time "${value}"`);
   return time;
 }
 
@@ -72,7 +75,7 @@ export function parseQuery(query) {
   const terms = [...String(query ?? "").matchAll(/"([^"]*)"|(\S+)/g)].map((m) => m[1] ?? m[2]);
   for (const term of terms) {
     if (/^(OR|AND|NOT)$/.test(term) || /[()]/.test(term) || /[?*]/.test(term.replace(/^\*$/, ""))) {
-      throw new Error(
+      throw new BadRequest(
         `the demo's fake Datadog does not understand "${term}": use service:, status:, host:, env:, @attribute:value, words, -term`,
       );
     }
@@ -118,7 +121,7 @@ function searchLogs(workspace, env, body) {
 function queryMetric(workspace, env, params) {
   const query = params.get("query") ?? "";
   const m = /^(\w+):([\w.]+)\{([^}]*)\}/.exec(query);
-  if (!m) throw new Error(`cannot parse the metric query "${query}": use aggregation:metric{scope}`);
+  if (!m) throw new BadRequest(`cannot parse the metric query "${query}": use aggregation:metric{scope}`);
   const [from, to] = [Number(params.get("from")) * 1000, Number(params.get("to")) * 1000];
   const known = JSON.parse(readFileSync(join(workspace, "data", env, "metrics.json"), "utf8")).series;
   const found = known[m[2]];
@@ -223,7 +226,13 @@ export async function datadogApi(workspace, env, request, response, url) {
     if (route === routes[0]) {
       let text = "";
       for await (const chunk of request) text += chunk;
-      send(200, searchLogs(workspace, env, JSON.parse(text || "{}")));
+      let search;
+      try {
+        search = JSON.parse(text || "{}");
+      } catch {
+        throw new BadRequest("the request body is not valid JSON");
+      }
+      send(200, searchLogs(workspace, env, search));
     } else if (route === routes[1]) send(200, queryMetric(workspace, env, url.searchParams));
     else {
       const name = url.searchParams.get("name")?.toLowerCase();
@@ -234,7 +243,12 @@ export async function datadogApi(workspace, env, request, response, url) {
       );
     }
   } catch (error) {
-    send(400, { errors: [error instanceof Error ? error.message : String(error)] });
+    if (error instanceof BadRequest) send(400, { errors: [error.message] });
+    else {
+      // Anything else is the mock's own fault: say so, and keep the details (paths, stack) in the server log.
+      console.error(error);
+      send(500, { errors: ["internal error in the demo's Datadog mock"] });
+    }
   }
   return true;
 }

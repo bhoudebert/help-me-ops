@@ -356,6 +356,9 @@ test("fake datadog: a wrong key is a 403, an unsupported query is said, other ro
     });
     assert.equal(or.status, 400);
     assert.match(((await or.json()) as { errors: string[] }).errors[0]!, /does not understand "OR"/);
+    const garbled = await fetch(`${base}/api/v2/logs/events/search`, { method: "POST", headers: keys, body: "{nope" });
+    assert.equal(garbled.status, 400);
+    assert.deepEqual(await garbled.json(), { errors: ["the request body is not valid JSON"] });
     assert.equal((await fetch(`${base}/api/v1/dashboard`, { headers: keys })).status, 404);
     assert.equal((await fetch(`${base}/api/v1/monitor`, { method: "DELETE", headers: keys })).status, 405);
     assert.equal((await fetch(`${base}/api/v2/logs/events/search`, { headers: keys })).status, 405);
@@ -369,6 +372,27 @@ test("fake datadog: a wrong key is a 403, an unsupported query is said, other ro
     assert.equal(first.data.length, 2);
     assert.equal(first.meta.page.after, "2");
   } finally {
+    Object.values(servers).forEach((s) => s.close());
+  }
+});
+
+test("fake datadog: an error of its own is a plain 500, with no path or stack in the answer", async () => {
+  const empty = mkdtempSync(join(tmpdir(), "ops-dd-empty-"));
+  const servers = await backend.start(empty, { prod: 0 });
+  const base = `http://127.0.0.1:${(servers.prod!.address() as { port: number }).port}`;
+  const keys = { "DD-API-KEY": datadog.DD_API_KEY, "DD-APPLICATION-KEY": datadog.DD_APP_KEY };
+  const log = console.error;
+  const logged: unknown[] = [];
+  console.error = (...args: unknown[]) => void logged.push(args);
+  try {
+    const answer = await fetch(`${base}/api/v2/logs/events/search`, { method: "POST", headers: keys, body: "{}" });
+    assert.equal(answer.status, 500);
+    const text = await answer.text();
+    assert.deepEqual(JSON.parse(text), { errors: ["internal error in the demo's Datadog mock"] });
+    assert.ok(!text.includes(empty) && !/ENOENT|at /.test(text));
+    assert.equal(logged.length, 1, "the detail goes to the server log");
+  } finally {
+    console.error = log;
     Object.values(servers).forEach((s) => s.close());
   }
 });
