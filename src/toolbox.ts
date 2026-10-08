@@ -29,6 +29,14 @@ export async function openToolbox(workspace = resolveWorkspace(), extraAddons: s
 
   const note = (addon: string, text: string) =>
     report.find((r) => r.name === addon && r.status === "loaded")?.notes.push(text);
+  const idle = (addon: string) => {
+    const entry = report.find((r) => r.name === addon && r.status === "loaded");
+    if (entry)
+      Object.assign(entry, {
+        status: "idle",
+        reason: `no environment sets it up: add "addons": { "${addon}": { … } } in ops.config.json`,
+      });
+  };
   const playbooks = await loadPlaybooks(resolve(baseDir, config.playbooks));
   for (const addon of addons) {
     if (!addon.playbooks) continue;
@@ -39,7 +47,7 @@ export async function openToolbox(workspace = resolveWorkspace(), extraAddons: s
     workspace: baseDir,
     apps,
     playbooks,
-    addonTools: addonTools(addons, apps, baseDir, note),
+    addonTools: addonTools(addons, apps, baseDir, note, process.env, globalThis.fetch, idle),
     addons: report,
     warnings,
   };

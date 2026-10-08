@@ -28,7 +28,7 @@ export interface AddonReport {
   name: string;
   dir: string;
   origin: Origin;
-  status: "loaded" | "skipped" | "replaced";
+  status: "loaded" | "skipped" | "replaced" | "idle";
   reason?: string;
   /** Things that do not work although the addon loaded, e.g. settings missing in one environment. */
   notes: string[];

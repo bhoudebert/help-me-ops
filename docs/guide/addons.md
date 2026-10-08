@@ -186,9 +186,15 @@ keeps working:
 npm run ops -- --workspace my-workspace doctor
 ```
 
-lists every addon as loaded, skipped or replaced, with the reason: a wrong
+lists every addon as loaded, skipped, replaced or **idle** (shipped with the kit,
+but no environment sets it up: nothing is served and nothing printed), with the reason: a wrong
 `apiVersion`, a tool in `addon.json` without its function (or the reverse), an
 invalid parameter, a missing package.
+
+## Ready-made addons
+
+Some addons ship with the kit, such as `rest` for a REST API of your own: no
+code to write, only settings. See [ready-made addons](/shipped-addons).
 
 ## Where addons are read from
 

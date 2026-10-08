@@ -34,6 +34,14 @@ export function resolveSettings(
   return parsed.data as Settings;
 }
 
+/** Is the addon set up in this environment: an entry in the configuration, one of its variables, or nothing to set. */
+function isConfigured(addon: LoadedAddon, overrides: Settings | undefined, env: NodeJS.ProcessEnv): boolean {
+  const definition = addon.definition;
+  if (!definition?.settings || overrides !== undefined) return true;
+  if (Object.values(definition.env ?? {}).some((name) => env[name] !== undefined)) return true;
+  return definition.settings.safeParse({}).success;
+}
+
 /** The connector types the addons bring, by the `type` they answer to; a later addon wins. */
 export function connectorTypes(addons: LoadedAddon[]): Map<string, ConnectorType> {
   const types = new Map<string, ConnectorType>();
@@ -47,7 +55,8 @@ export function connectorTypes(addons: LoadedAddon[]): Map<string, ConnectorType
  * The tools of the addons, namespaced (`order.getOrder`), each reading one app
  * and environment like the core tools. Settings are checked for every
  * environment now; an environment where they are invalid is noted and refused
- * at call time, and the rest works.
+ * at call time, and the rest works. An addon no environment sets up serves no
+ * tools and is reported through `idle`, so shipped addons cost nothing until used.
  */
 export function addonTools(
   addons: LoadedAddon[],
@@ -56,15 +65,22 @@ export function addonTools(
   notes: (addon: string, note: string) => void,
   env: NodeJS.ProcessEnv = process.env,
   fetchImpl: typeof fetch = globalThis.fetch,
+  idle: (addon: string) => void = () => undefined,
 ): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
   for (const addon of addons) {
     const definition = addon.definition;
     if (!definition?.tools?.length) continue;
     const settings = new Map<string, Settings | string>();
+    let setUp = false;
     for (const app of apps) {
       for (const environment of app.envs) {
         const key = `${app.name}/${environment.name}`;
+        if (!isConfigured(addon, environment.addons[addon.name], env)) {
+          settings.set(key, `not set up: add "addons": { "${addon.name}": { … } } to ${key} in ops.config.json`);
+          continue;
+        }
+        setUp = true;
         try {
           settings.set(key, resolveSettings(addon, environment.addons[addon.name], env));
         } catch (error) {
@@ -73,6 +89,10 @@ export function addonTools(
           notes(addon.name, `unavailable in ${key}: ${reason}`);
         }
       }
+    }
+    if (!setUp) {
+      idle(addon.name);
+      continue;
     }
     for (const tool of definition.tools) {
       const name = `${addon.name}.${tool.name}`;

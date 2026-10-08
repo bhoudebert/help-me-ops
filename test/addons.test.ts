@@ -134,7 +134,7 @@ test("addons: settings come from the environment, the configuration overrides, $
   assert.deepEqual(resolveSettings({ ...order, definition: null }, { a: 1 }, {}), {});
 });
 
-/** A workspace with shop in prod and staging; the order addon is set up in prod only. */
+/** A workspace with shop in prod and staging; the order addon is set up in prod, and wrongly in staging. */
 function workspaceWithAddons() {
   const ws = mkdtempSync(join(tmpdir(), "ops-ws-"));
   const logs = { id: "logs", type: "file-logs", path: "app.log", description: "Logs" };
@@ -151,7 +151,7 @@ function workspaceWithAddons() {
               sources: [logs, { id: "db", type: "postgres", description: "Orders DB" }],
               addons: { order: { dbUrl: "pg://prod" } },
             },
-            staging: { sources: [logs] },
+            staging: { sources: [logs], addons: { order: {} } },
           },
         },
       },

@@ -34,6 +34,7 @@ export default defineConfig({
           { text: "Connect your sources", link: "/connectors" },
           { text: "Write a playbook", link: "/playbooks" },
           { text: "Write an addon", link: "/addons" },
+          { text: "Ready-made addons", link: "/shipped-addons" },
         ],
       },
     ],
