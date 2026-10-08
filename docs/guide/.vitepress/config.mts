@@ -51,6 +51,9 @@ export default defineConfig({
           { text: "PostgreSQL", link: "/ready-made/postgres" },
           { text: "datadog (experimental)", link: "/ready-made/datadog" },
           { text: "github (experimental)", link: "/ready-made/github" },
+          { text: "prometheus (experimental)", link: "/ready-made/prometheus" },
+          { text: "loki (experimental)", link: "/ready-made/loki" },
+          { text: "elasticsearch (experimental)", link: "/ready-made/elasticsearch" },
         ],
       },
       {

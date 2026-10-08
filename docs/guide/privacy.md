@@ -32,15 +32,18 @@ your system ──▶ an addon or connector ──▶ the tool's result ──�
 
 Each ready-made addon page has a **"Data it can return"** section. In short:
 
-| Addon      | Can return                                                                 |
-| ---------- | -------------------------------------------------------------------------- |
-| logs       | whatever your log lines contain: emails, user ids, IPs, names in free text |
-| rest       | whatever the API returns on the paths you allow                            |
-| git        | code, commit messages, and the names and emails of authors                 |
-| PostgreSQL | the rows your queries select                                               |
-| datadog    | log messages (often with user data); metrics and monitors rarely           |
-| github     | pull request and issue text, author logins and names                       |
-| knowledge  | your runbooks: often the names and phone numbers of people on call         |
+| Addon         | Can return                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| logs          | whatever your log lines contain: emails, user ids, IPs, names in free text                 |
+| rest          | whatever the API returns on the paths you allow                                            |
+| git           | code, commit messages, and the names and emails of authors                                 |
+| PostgreSQL    | the rows your queries select                                                               |
+| datadog       | log messages (often with user data); metrics and monitors rarely                           |
+| github        | pull request and issue text, author logins and names                                       |
+| prometheus    | metrics and alerts: label values (sometimes a user or customer id) and alert annotations   |
+| loki          | log lines, with everything they contain: user ids, emails, IPs, bodies, names in free text |
+| elasticsearch | the documents of the indices you list, every field of `_source`                            |
+| knowledge     | your runbooks: often the names and phone numbers of people on call                         |
 
 The **demo** holds only invented data.
 

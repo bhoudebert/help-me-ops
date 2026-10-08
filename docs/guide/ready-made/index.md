@@ -10,14 +10,17 @@ What a tool returns is sent to the AI provider of your client, and **help-me-ops
 
 ## At a glance
 
-| Addon          | Reads                                                 | You need                                                              | Status                       |                              |
-| -------------- | ----------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------- | ---------------------------- |
-| **logs**       | text log files, one event per line                    | the file, readable from this machine                                  | ready                        | [page](/ready-made/logs)     |
-| **rest**       | your own HTTP API, `GET` only, on the paths you allow | its URL, the allowed path prefixes, a read-only token if it needs one | ready                        | [page](/ready-made/rest)     |
-| **git**        | a repository on disk: tags, commits, diffs, code      | `git` installed and an up-to-date clone                               | ready                        | [page](/ready-made/git)      |
-| **PostgreSQL** | a database, `SELECT` only                             | the `pg` driver and a read-only database user                         | template + [demo](/database) | [page](/ready-made/postgres) |
-| **datadog**    | Datadog logs, metrics and monitors                    | an API key, an application key with read scopes, your site            | **experimental**             | [page](/ready-made/datadog)  |
-| **github**     | pull requests, releases, commits, issues, builds      | a fine-grained read-only token, the list of repositories              | **experimental**             | [page](/ready-made/github)   |
+| Addon             | Reads                                                                   | You need                                                              | Status                       |                                   |
+| ----------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------- | --------------------------------- |
+| **logs**          | text log files, one event per line                                      | the file, readable from this machine                                  | ready                        | [page](/ready-made/logs)          |
+| **rest**          | your own HTTP API, `GET` only, on the paths you allow                   | its URL, the allowed path prefixes, a read-only token if it needs one | ready                        | [page](/ready-made/rest)          |
+| **git**           | a repository on disk: tags, commits, diffs, code                        | `git` installed and an up-to-date clone                               | ready                        | [page](/ready-made/git)           |
+| **PostgreSQL**    | a database, `SELECT` only                                               | the `pg` driver and a read-only database user                         | template + [demo](/database) | [page](/ready-made/postgres)      |
+| **datadog**       | Datadog logs, metrics and monitors                                      | an API key, an application key with read scopes, your site            | **experimental**             | [page](/ready-made/datadog)       |
+| **github**        | pull requests, releases, commits, issues, builds                        | a fine-grained read-only token, the list of repositories              | **experimental**             | [page](/ready-made/github)        |
+| **prometheus**    | metrics and firing alerts (PromQL), also Mimir, Thanos, VictoriaMetrics | its URL, an authorization header and a tenant if needed               | **experimental**             | [page](/ready-made/prometheus)    |
+| **loki**          | logs with LogQL, and the labels                                         | its URL, an authorization header, the tenant if multi-tenant          | **experimental**             | [page](/ready-made/loki)          |
+| **elasticsearch** | logs and documents of the indices you list (Elasticsearch, OpenSearch)  | its URL, the indices, a key limited to read on them                   | **experimental**             | [page](/ready-made/elasticsearch) |
 
 _Ready_ means it has been run for real (a log file, a live HTTP backend, a real
 git repository, a real PostgreSQL). _Experimental_ means written from the
@@ -85,7 +88,7 @@ npm run ops -- doctor
 
 The demo workspace has stand-ins, so you can see every addon work before pointing
 it at anything of yours: a small **live backend** in Docker (the shop's REST API,
-a mock of three Datadog APIs and of six GitHub endpoints), a script that builds a
+a mock of three Datadog APIs, of six GitHub endpoints and of the Prometheus, Loki and Elasticsearch APIs), a script that builds a
 **git repository**, and a **PostgreSQL** with a `SELECT`-only user. Each page has a
 "Try it without an account" section; the
 [demo workspace README](https://github.com/bhoudebert/help-me-ops/blob/main/examples/my-workspace/README.md)

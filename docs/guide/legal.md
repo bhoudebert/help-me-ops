@@ -25,7 +25,7 @@ means "an addon that talks to that product's public API", not "made by" or
 ## Experimental integrations
 
 An integration with a third-party service that has not been run against the real
-service is labelled **experimental** (the `datadog` and `github` addons are, today). It is
+service is labelled **experimental** (the `datadog`, `github`, `prometheus`, `loki` and `elasticsearch` addons are, today). It is
 written from the service's public documentation and tested against recorded
 responses and a mock, so it **may not work, or may behave differently, on a real
 account**. A label comes off only once it has been verified on one.
