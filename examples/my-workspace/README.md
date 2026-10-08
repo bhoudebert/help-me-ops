@@ -155,7 +155,7 @@ npm run ops -- --workspace examples/my-workspace doctor     # datadog: loaded
 Ask: "in Datadog, show the payment errors in prod between 9 and 11 on 7 October
 2026, and which monitors are alerting." It is a stand-in, not Datadog (a subset
 of the query syntax); [what it is and how to check your own
-Datadog](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons#datadog-logs-metrics-and-monitors).
+Datadog](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons#datadog-logs-metrics-and-monitors-experimental).
 
 ## 5. Make it yours
 

@@ -117,7 +117,9 @@ PostgreSQL project, Docker or any other company it names. Product names and
 trademarks belong to their owners and appear only to say what it works with; no
 logo is used. It talks to those products through their published interfaces,
 with your own accounts and keys, and ships none of their software. The demo's
-Datadog is an independent mock of a few documented endpoints, not Datadog.
+Datadog is an independent mock of a few documented endpoints, not Datadog, and
+the `datadog` addon is experimental: written from the public API and not yet
+verified on a real account, so it may not work as is.
 Provided as is, without warranty: read-only is a layered design, not a
 guarantee, and an AI assistant's conclusions must be checked.
 [Details](docs/guide/legal.md).

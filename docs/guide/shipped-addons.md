@@ -88,7 +88,17 @@ The addon cannot be talked into anything else than reading what you allowed:
 Still give it a token that can only read: that is your part
 ([read-only](/addons#read-only-your-part)).
 
-## datadog: logs, metrics and monitors
+## datadog: logs, metrics and monitors (experimental)
+
+::: warning Experimental: it may or may not work against your Datadog
+This addon is written from Datadog's **documented** APIs and tested against
+recorded responses in those shapes and a mock. It has **not** been run against a
+real Datadog account, so details (a field, a scope, a limit, a region) can
+differ and it may fail on yours. Its tools say so to the assistant too. Use a
+read-only key, run the [checklist below](#check-it-on-your-own-datadog) before you
+rely on it, and open an issue with what you see: that is how it becomes
+verified.
+:::
 
 Datadog has a public HTTP API, and this addon reads three things from it,
 nothing else. (help-me-ops is independent of Datadog, Inc., and is not

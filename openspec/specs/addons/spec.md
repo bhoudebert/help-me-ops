@@ -126,6 +126,10 @@ issue no request other than these three, and the only non-GET is the log
 search, a query that changes nothing. A refused key SHALL be reported as such
 with what to check.
 
+Until it has been verified against a real Datadog instance, the addon and each of
+its tools SHALL be described as experimental to people and to the assistant, and
+the documentation SHALL say it may not work as is.
+
 #### Scenario: Logs of an incident
 
 - **WHEN** `datadog.searchLogs` is called with `service:payments status:error` and a time range

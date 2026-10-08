@@ -22,6 +22,14 @@ relationship or approval. An addon named after a product, such as `datadog`,
 means "an addon that talks to that product's public API", not "made by" or
 "approved by" its owner.
 
+## Experimental integrations
+
+An integration with a third-party service that has not been run against the real
+service is labelled **experimental** (the `datadog` addon is, today). It is
+written from the service's public documentation and tested against recorded
+responses and a mock, so it **may not work, or may behave differently, on a real
+account**. A label comes off only once it has been verified on one.
+
 ## How it talks to those products
 
 Only through their **published interfaces**: the Model Context Protocol for the
