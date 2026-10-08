@@ -1,0 +1,30 @@
+[
+  {
+    "name": "the stuck order",
+    "tool": "getOrder",
+    "input": {
+      "id": "4512"
+    },
+    "settings": {
+      "path": "../../data/prod/orders.json"
+    },
+    "expect": {
+      "minRecords": 1,
+      "summaryIncludes": "awaiting_payment",
+      "withTime": true
+    }
+  },
+  {
+    "name": "orders waiting for payment",
+    "tool": "listOrders",
+    "input": {
+      "status": "awaiting_payment"
+    },
+    "settings": {
+      "path": "../../data/prod/orders.json"
+    },
+    "expect": {
+      "minRecords": 3
+    }
+  }
+]

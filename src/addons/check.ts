@@ -55,6 +55,17 @@ function recordedFetch(responses: z.infer<typeof Case>["responses"]): typeof fet
   }) as typeof fetch;
 }
 
+/** A description sits on the schema it was given to; `optional` and `default` wrap it in another that has none. */
+function described(schema: z.ZodType): boolean {
+  let current: z.ZodType | undefined = schema;
+  for (let depth = 0; current && depth < 5; depth++) {
+    if (current.description) return true;
+    const wrapped = current as unknown as { unwrap?: () => z.ZodType; _zod?: { def?: { innerType?: z.ZodType } } };
+    current = wrapped.unwrap?.() ?? wrapped._zod?.def?.innerType;
+  }
+  return false;
+}
+
 const first = (error: unknown) => (error instanceof Error ? error.message : String(error)).split("\n")[0] ?? "";
 
 /** What to do about an error the loader reports, when there is a known fix. */
@@ -76,7 +87,10 @@ export async function checkAddon(
   } = {},
 ): Promise<CheckResult> {
   const dir = resolve(folder);
-  const name = basename(dir);
+  const folderName = basename(dir);
+  // A folder starting with _ or . is off for the server: normal, and checked anyway under its real name.
+  const prefix = /^[_.]+/.exec(folderName)?.[0] ?? "";
+  const name = folderName.slice(prefix.length);
   const lines: string[] = [`Checking ${dir}`];
   let failed = 0;
   let passed = 0;
@@ -85,13 +99,15 @@ export async function checkAddon(
     failed++,
     lines.push(`  FAIL  ${text}`, ...(fix ? [`        fix: ${fix}`] : []))
   );
-  const warn = (text: string) => lines.push(`  warn  ${text}`);
+  let warnings = 0;
+  const warn = (text: string) => (warnings++, lines.push(`  warn  ${text}`));
+  const note = (text: string) => lines.push(`  note  ${text}`);
   const done = (): CheckResult => {
     lines.push(
       "",
       failed
         ? `${failed} failed, ${passed} passed.`
-        : `All ${passed} checks passed: this addon is ready to be dropped into a workspace.`,
+        : `All ${passed} checks passed${warnings ? ` (${warnings} warning${warnings > 1 ? "s" : ""}, worth a look)` : ""}: this addon is ready to be dropped into a workspace.`,
     );
     return { ok: failed === 0, text: lines.join("\n") };
   };
@@ -103,6 +119,11 @@ export async function checkAddon(
   if (!NAME.test(name))
     fail(`the folder name "${name}" must be lowercase letters, digits and hyphens`, "rename the folder");
   else ok(`name "${name}"`);
+  if (prefix) {
+    note(
+      `the folder is called "${folderName}": the server skips a folder starting with "${prefix}" (it is off), which is normal. Checked anyway; drop the "${prefix}" to turn it on`,
+    );
+  }
 
   const manifest = existsSync(join(dir, "addon.json"));
   const advanced = existsSync(join(dir, "addon.ts"));
@@ -141,7 +162,7 @@ export async function checkAddon(
     if (tool.description.length < 20)
       warn(`${tool.name}: a one-word description is little for the assistant to choose by; say what it returns`);
     for (const [key, schema] of shape) {
-      if (!(schema as z.ZodType).description)
+      if (!described(schema as z.ZodType))
         warn(`${tool.name}: parameter ${key} has no description (the assistant reads it)`);
     }
   }
@@ -164,13 +185,13 @@ export async function checkAddon(
     }
   }
   if (apps && fields.length) {
+    const noBlock: string[] = [];
+    const waiting = new Map<string, string[]>();
     for (const [app, setup] of Object.entries(apps)) {
       for (const [env, config] of Object.entries(setup.envs)) {
         const block = config.addons[name];
         if (block === undefined) {
-          warn(
-            `${app}/${env}: no block for "${name}" in ops.config.json, so it stays idle there (variables alone can also set it up)`,
-          );
+          noBlock.push(`${app}/${env}`);
           continue;
         }
         try {
@@ -178,8 +199,7 @@ export async function checkAddon(
           ok(`settings in ${app}/${env}: valid`);
         } catch (error) {
           const message = first(error);
-          if (/is not set$/.test(message))
-            warn(`settings in ${app}/${env}: ${message}, so it stays idle there until it is`);
+          if (/is not set$/.test(message)) waiting.set(message, [...(waiting.get(message) ?? []), `${app}/${env}`]);
           else
             fail(
               `settings in ${app}/${env}: ${message}`,
@@ -188,6 +208,11 @@ export async function checkAddon(
         }
       }
     }
+    for (const [message, where] of waiting) note(`${where.join(", ")}: ${message}, so it is idle there until it is`);
+    if (noBlock.length)
+      note(
+        `no block for "${name}" in ops.config.json for ${noBlock.join(", ")}: idle there (set it up with a block, or with its variables)`,
+      );
   }
 
   // Sample calls against recorded answers.
@@ -248,7 +273,8 @@ export async function checkAddon(
       }
     }
   } else {
-    warn("no check.json: add sample calls with recorded answers to test the tools without a network (see the guide)");
+    if (tools.length)
+      note("no check.json: add sample calls with recorded answers to test the tools without a network (see the guide)");
   }
 
   // One real call, only when asked.

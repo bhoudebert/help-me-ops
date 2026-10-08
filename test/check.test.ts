@@ -57,7 +57,7 @@ test("check: scaffolded file and api addons pass, with their samples", async () 
     assert.match(result.text, /sample "[^"]+": 1 record\(s\), 1 with a time/);
     assert.match(result.text, /All \d+ checks passed: this addon is ready/);
     assert.equal(lines(result.text, "FAIL").length, 0);
-    assert.match(result.text, /no block for "my-\w+" in ops.config.json, so it stays idle there/);
+    assert.match(result.text, /note\s+no block for "my-\w+" in ops.config.json for .*idle there/);
   }
 });
 
@@ -102,7 +102,68 @@ test("check: a good hand-written addon with samples, and what it warns about", a
   assert.equal(warned.ok, true);
   assert.match(warned.text, /warn\s+getInvoice: a one-word description/);
   assert.match(warned.text, /warn\s+getInvoice: parameter id has no description/);
-  assert.match(warned.text, /warn\s+no check.json/);
+  assert.match(warned.text, /note\s+no check.json/);
+});
+
+test("check: a folder that starts with _ is off for the server, which is normal: checked under its real name", async () => {
+  const result = await checkAddon(
+    addon({ "addon.json": MANIFEST, "tools.ts": TOOLS, "check.json": [SAMPLE] }, "_billing"),
+  );
+  assert.equal(result.ok, true, result.text);
+  assert.match(result.text, /ok\s+name "billing"/);
+  assert.match(
+    result.text,
+    /note\s+the folder is called "_billing": the server skips a folder starting with "_" \(it is off\), which is normal/,
+  );
+  assert.doesNotMatch(result.text, /FAIL/);
+  const dotted = await checkAddon(addon({ "addon.json": MANIFEST, "tools.ts": TOOLS }, ".billing"));
+  assert.match(dotted.text, /ok\s+name "billing"/);
+  assert.match(
+    (await checkAddon(addon({ "addon.json": MANIFEST, "tools.ts": TOOLS }, "_Bad_Name"))).text,
+    /FAIL\s+the folder name "Bad_Name"/,
+  );
+});
+
+test("check: a description given before optional or default counts, and the same note is not repeated per environment", async () => {
+  const manifest = {
+    ...MANIFEST,
+    tools: {
+      getInvoice: {
+        description: "One invoice: its status and amount, by number",
+        params: {
+          id: { type: "string", description: "The invoice number" },
+          since: { type: "string", optional: true, description: "From when" },
+          limit: { type: "integer", default: 5, description: "How many" },
+        },
+      },
+    },
+  };
+  const dir = addon({ "addon.json": manifest, "tools.ts": TOOLS });
+  const ws = temp();
+  const envs = Object.fromEntries(
+    ["prod", "staging", "dev"].map((e) => [
+      e,
+      { sources: [], addons: e === "dev" ? {} : { billing: { url: "${BILLING_UNSET}", token: "t" } } },
+    ]),
+  );
+  writeFileSync(join(ws, "ops.config.json"), JSON.stringify({ apps: { shop: { envs } } }));
+  const result = await checkAddon(dir, { workspace: ws });
+  assert.doesNotMatch(result.text, /has no description/);
+  assert.equal([...result.text.matchAll(/BILLING_UNSET/g)].length, 1, "one line for both environments");
+  assert.match(
+    result.text,
+    /note\s+shop\/prod, shop\/staging: environment variable BILLING_UNSET is not set, so it is idle there until it is/,
+  );
+  assert.match(result.text, /note\s+no block for "billing" in ops.config.json for shop\/dev: idle there/);
+  assert.match(result.text, /All \d+ checks passed: this addon is ready/);
+});
+
+test("check: warnings are counted in the verdict", async () => {
+  const thin = addon({
+    "addon.json": { ...MANIFEST, tools: { getInvoice: { description: "Invoice", params: { id: "string" } } } },
+    "tools.ts": TOOLS,
+  });
+  assert.match((await checkAddon(thin)).text, /checks passed \(2 warnings, worth a look\)/);
 });
 
 test("check: what is wrong with the files, each with the fix", async () => {
@@ -203,10 +264,10 @@ test("check: the settings of each environment are checked against the workspace"
   assert.match(result.text, /ok\s+settings in shop\/prod: valid/);
   assert.match(
     result.text,
-    /warn\s+settings in shop\/staging: environment variable BILLING_NOT_SET_ANYWHERE is not set, so it stays idle there until it is/,
+    /note\s+shop\/staging: environment variable BILLING_NOT_SET_ANYWHERE is not set, so it is idle there until it is/,
   );
   assert.match(result.text, /FAIL\s+settings in shop\/dev: invalid settings: .*token/);
-  assert.match(result.text, /warn\s+shop\/qa: no block for "billing"/);
+  assert.match(result.text, /note\s+no block for "billing" in ops.config.json for shop\/qa/);
   assert.equal(result.ok, false);
   const nothing = await checkAddon(dir, { workspace: join(temp(), "none") });
   assert.match(nothing.text, /no workspace found at .*settings were not checked/);

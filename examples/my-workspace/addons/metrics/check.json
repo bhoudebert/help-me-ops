@@ -1,0 +1,17 @@
+[
+  {
+    "name": "worker memory",
+    "tool": "queryMetric",
+    "input": {
+      "metric": "worker_memory_mb"
+    },
+    "settings": {
+      "path": "../../data/prod/metrics.json"
+    },
+    "expect": {
+      "minRecords": 3,
+      "summaryIncludes": "512",
+      "withTime": true
+    }
+  }
+]

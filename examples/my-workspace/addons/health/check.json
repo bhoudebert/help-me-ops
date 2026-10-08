@@ -1,0 +1,17 @@
+[
+  {
+    "name": "the webhook endpoint",
+    "tool": "checkHealth",
+    "input": {
+      "target": "hooks"
+    },
+    "settings": {
+      "path": "../../data/prod/health.json"
+    },
+    "expect": {
+      "minRecords": 1,
+      "summaryIncludes": "503",
+      "withTime": true
+    }
+  }
+]
