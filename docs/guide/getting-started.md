@@ -20,6 +20,15 @@ The demo [**workspace**](/workspace) in `examples/my-workspace` is one app, `sho
 around an order that got stuck: [the story](/demo). A workspace is a folder:
 `ops.config.json` (apps, environments, sources) and `playbooks/`.
 
+## Connect your AI client
+
+```bash
+npm run ops -- setup
+```
+
+prints, with your real paths, what Claude Code, Codex and Copilot need, after
+checking that the server starts and answers. [Details](/clients#connect).
+
 ## Where do I run what
 
 help-me-ops is not published: you use it from your **clone** (the folder above,

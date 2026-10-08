@@ -23,13 +23,10 @@ test("docs: there is a page, a README and a catalog row for every shipped addon"
   for (const name of shipped) {
     assert.ok(existsSync(join("docs/guide/ready-made", `${name}.md`)), `${name}: page`);
     assert.ok(existsSync(join("addons", name, "README.md")), `${name}: README in the addon folder`);
-    assert.match(catalog, new RegExp(`\\]\\(/ready-made/${name}\\)`), `${name}: catalog row`);
-    assert.match(sidebar, new RegExp(`/ready-made/${name}"`), `${name}: sidebar`);
-    assert.match(
-      read(join("addons", name, "README.md")),
-      new RegExp(`ready-made/${name}`),
-      `${name}: README links its page`,
-    );
+    // plain text, not a pattern built from a folder name
+    assert.ok(catalog.includes(`](/ready-made/${name})`), `${name}: catalog row`);
+    assert.ok(sidebar.includes(`/ready-made/${name}"`), `${name}: sidebar`);
+    assert.ok(read(join("addons", name, "README.md")).includes(`ready-made/${name}`), `${name}: README links its page`);
   }
 });
 

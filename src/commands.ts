@@ -6,6 +6,7 @@ import { createToolDefinitions, type Toolbox } from "./tools/index.ts";
 
 export const USAGE = `Usage: npm run ops -- <command>
 
+  setup [claude|codex|copilot|all]      The configuration that connects an AI client, with your paths, checked
   demo [--scenario <id>] [--pace <ms>]  Watch an investigation of the demo shop in the terminal, no model needed
   scope [question]                      The apps and environments, and which ones a question points at
   sources                               The sources of an app and environment

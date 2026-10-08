@@ -12,5 +12,6 @@
 - [x] `ops demo`: the scenario replayed through the real tools, tested against the demo world
 - [x] `ops init workspace`
 - [x] `ops addon check`
-- [ ] Setup helpers: `ops doctor` checks, MCP setup tools
+- [x] `ops setup`: the configuration of each client, checked
+- [ ] Setup helpers: `ops doctor` checks
 - [ ] Guide ("Plug in your infrastructure", "Write an addon", "Try the demo" per client), README, site, roadmap

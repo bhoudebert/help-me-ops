@@ -6,6 +6,35 @@ server's instructions, so each client investigates the same way.
 
 ## Connect
 
+One command prints the configuration for your clients, **with your real paths**, after
+checking that it works:
+
+```bash
+npm run ops -- setup                 # all three
+npm run ops -- setup claude          # or codex, copilot
+npm run ops -- setup --workspace ../my-app/ops     # your own workspace
+```
+
+It checks that Node is 24 or more, that the workspace loads, and **starts the server
+exactly as the client will and asks it for its tools over MCP**: if it says `ok`, the
+client will connect. Then it prints what to paste: the `claude mcp add` command and
+the `.mcp.json` for Claude Code, the block of `~/.codex/config.toml` for Codex, the
+`.vscode/mcp.json` for Copilot in VS Code. A problem is a `FAIL` line with the reason,
+and a non-zero exit code.
+
+To write the files of a project for you (Claude Code and Copilot):
+
+```bash
+npm run ops -- setup claude --into ../my-app --write
+```
+
+It adds the server to that project's `.mcp.json` (and `.vscode/mcp.json` for
+Copilot), **keeps everything else in the file, and never replaces an existing
+`help-me-ops` entry**. It does not write your Codex configuration: that file is
+yours, paste the block.
+
+The snippets by hand, if you prefer:
+
 ::: code-group
 
 ```bash [Claude Code]
