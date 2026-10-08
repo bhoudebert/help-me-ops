@@ -51,7 +51,16 @@ one set of addons for several workspaces.
 
 ## Try it
 
-The fastest way is [the demo](/demo): open the folder in your AI client and ask
+**30 seconds, no model, no setup:**
+
+```bash
+npm run ops -- demo
+```
+
+It replays the demo shop's investigation through the real tools, step by step,
+and ends with the checked conclusion. Add `--pace 0` to print it at once.
+
+With an AI client, [the demo](/demo): open the folder in your AI client and ask
 "client u-881 paid but cannot find order 4512". From the terminal, to see what
 the assistant sees:
 

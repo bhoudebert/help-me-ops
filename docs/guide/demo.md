@@ -89,6 +89,32 @@ The same story runs on a real PostgreSQL in Docker, where the assistant finds th
 the three customers **paid** (165.20 EUR) and have no order:
 [same investigation, with a real database](/database).
 
+## Watch it first: `ops demo`
+
+No client, no model, nothing to set up:
+
+```bash
+npm run ops -- demo
+```
+
+It takes the scenario of the demo workspace (`scenarios/stuck-order.json`: the
+question, the calls an investigation makes, the conclusion) and replays it through
+the **real tools**: each step is printed with what the tool answered (the first
+four pieces of evidence, with their time), and it ends with the conclusion passed
+through the **same check** an assistant's conclusion goes through. If a quote were
+not returned by a tool, it prints `REFUSED` with the problems and exits with a
+non-zero code, so it also serves as a smoke test of an install.
+
+| Option              | What                                                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `--scenario <id>`   | which scenario, when `scenarios/` has several                                                                                      |
+| `--pace <ms>`       | pause between steps (350 in a terminal, none when piped); `--pace 0` prints at once                                                |
+| `--workspace <dir>` | replay a scenario of another workspace. Without it the demo always uses the shipped one, even when `OPS_WORKSPACE` points at yours |
+
+Colours appear in a terminal and not when the output is piped or `NO_COLOR` is set.
+If you add a `privacy.mask` to the demo configuration, the demo shows the stars:
+and its conclusion, which quotes the unmasked line, is refused, as it should be.
+
 ## Without a model
 
 The same tools work from the terminal, to see what the assistant sees:

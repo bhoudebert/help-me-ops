@@ -42,10 +42,10 @@ Working today, with a demo world to try it on: a **workspace** folder per team
 (apps, environments, sources, playbooks), **addons** dropped in to add tools,
 connector types and written knowledge, a `scope` step so a question in prod is
 never read from staging, one read-only toolbox for Claude Code, Codex and
-Copilot over MCP, and a terminal CLI. The model is the client's; this project
-makes no model calls. Next: searchable runbooks, a checked conclusion, a
-scripted demo and setup helpers
-([`openspec/changes/plug-in-kit`](openspec/changes/plug-in-kit/proposal.md)).
+Copilot over MCP, and a terminal CLI with a scripted demo (`npm run ops -- demo`).
+The model is the client's; this project makes no model calls. Next: setup
+helpers for each client, more addons, and local models
+([ROADMAP](ROADMAP.md)).
 
 ## Try it
 
@@ -55,7 +55,17 @@ nvm use && npm install
 claude        # or open the folder in VS Code (Copilot), or add the server to Codex
 ```
 
-Then ask: **"client u-881 paid but cannot find order 4512, what happened?"**
+No AI client yet, or just curious? **Watch an investigation in 30 seconds**, no model, no setup:
+
+```bash
+npm run ops -- demo
+```
+
+It replays the demo shop's investigation step by step through the real tools (the
+order, the logs, the health checks, the metrics, the runbook) and ends with the
+**checked conclusion**: every quote must have been returned by a tool above.
+
+With an AI client, ask: **"client u-881 paid but cannot find order 4512, what happened?"**
 
 The repository ships a small shop to investigate (`examples/my-workspace`): logs,
 orders, metrics and health checks in `prod` and `staging`, with a fault in
