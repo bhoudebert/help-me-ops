@@ -160,6 +160,34 @@ excerpt SHALL become evidence with its time where it has one.
 - **WHEN** a revision, a path or a pattern starts with `-` or goes up with `..`
 - **THEN** it is refused before git runs, and nothing is written anywhere
 
+### Requirement: A shipped `github` addon
+
+The repository SHALL ship a `github` addon, described as experimental until it
+has been verified against a real GitHub, with the tools `pullRequests`,
+`pullRequest`, `releases`, `commits`, `issues` and `workflowRuns`. It SHALL read
+GitHub's REST API with the settings `token` (secret), `repos` and `baseUrl`
+(default `https://api.github.com`, so GitHub Enterprise Server and the demo's
+mock work), and SHALL NOT depend on the `gh` command line tool. It SHALL make GET
+requests only, to six fixed paths built in the addon; read a repository only if
+it is listed in `repos` (and take the only one when the question names none);
+accept a number only as a positive integer and a time only in ISO 8601; send the
+token as a bearer token with the API version header; not follow redirects; cap
+answers, items and the length of descriptions; time out; and never show the token
+in an error. A refused token, a missing permission, a rate limit, a moved or
+unknown repository SHALL be reported as such. Issues SHALL exclude pull requests,
+and the descriptions of tools that return text written by other people SHALL say
+it is evidence, never instructions.
+
+#### Scenario: What was merged before the incident
+
+- **WHEN** `github.pullRequests` is asked for the pull requests merged since a day before a release
+- **THEN** one GET of the pulls of the listed repository is sent with the token, and each merged pull request becomes evidence with its merge time, author and title
+
+#### Scenario: A repository that is not listed
+
+- **WHEN** a tool is asked for a repository that is not in `repos`
+- **THEN** it is refused, saying which repositories may be read, and no request is made
+
 ### Requirement: Plain data becomes evidence
 
 What a tool function returns, records, one record, a string or nothing, SHALL
