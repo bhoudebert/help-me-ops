@@ -35,5 +35,12 @@ export async function openToolbox(workspace = resolveWorkspace(), extraAddons: s
     const own = await loadPlaybooks(addon.playbooks);
     playbooks.push(...own.map((p) => ({ ...p, id: `${addon.name}/${p.id}` })));
   }
-  return { apps, playbooks, addonTools: addonTools(addons, apps, baseDir, note), addons: report, warnings };
+  return {
+    workspace: baseDir,
+    apps,
+    playbooks,
+    addonTools: addonTools(addons, apps, baseDir, note),
+    addons: report,
+    warnings,
+  };
 }

@@ -62,7 +62,9 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
     }
     case "doctor": {
       const lines = [...formatReport(toolbox.addons ?? []), ...(toolbox.warnings ?? []).map((w) => `  ! ${w}`)];
-      return ["Addons:", ...(lines.length ? lines : ["  none"])].join("\n");
+      return [`Workspace: ${toolbox.workspace ?? "unknown"}`, "Addons:", ...(lines.length ? lines : ["  none"])].join(
+        "\n",
+      );
     }
     case "investigate": {
       const question = args.join(" ").trim();
@@ -92,6 +94,7 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
 export function startupNotices(toolbox: Toolbox): string[] {
   const addons = (toolbox.addons ?? []).filter((r) => r.status !== "loaded" || r.reason || r.notes.length);
   return [
+    `help-me-ops workspace: ${toolbox.workspace ?? "unknown"}`,
     ...formatReport(addons).map((l) => `help-me-ops addon:${l}`),
     ...(toolbox.warnings ?? []).map((w) => `help-me-ops: ${w}`),
   ];
