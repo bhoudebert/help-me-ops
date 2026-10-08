@@ -11,5 +11,7 @@
 | [0007](0007-workspace-and-client-model.md) | The client hosts the model; a workspace folder with apps and environments  | accepted |
 | [0008](0008-addons.md)                     | Extend through addons: a folder dropped in, loaded at startup              | accepted |
 
-New records start from [template.md](template.md).
 | [0009](0009-addon-authoring.md) | Write an addon as a manifest and plain functions, with no MCP knowledge | accepted |
+| [0010](0010-mask-at-the-tool-boundary.md) | Mask what the tools return, at the one place every answer passes | accepted |
+
+New records start from [template.md](template.md).

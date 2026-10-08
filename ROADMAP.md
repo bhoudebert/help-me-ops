@@ -15,16 +15,14 @@
 - **More addons people ask for**: PostgreSQL and MySQL (read-only user, from
   the `sql` scaffold), Loki or Elasticsearch logs, Prometheus metrics. Each an
   addon following `examples/my-workspace/addons/`.
-- **Personal data** (guide written; the rest soon), in this order:
+- **Personal data** (guide and the `privacy.mask` safeguard done; the rest soon), in this order:
   1. _Declare it_: each source and addon says whether it can return personal
      data, and `doctor` shows it.
-  2. _Mask it_, opt in and per source: fields to drop, patterns to hide (emails,
-     phone numbers, card and bank numbers, IPs, tokens) and stable placeholders
-     (`user-3f2a`) so the assistant still follows one customer across sources,
-     translated back in the tool inputs it gives. Structured data can be masked
-     reliably, **free text cannot** (a name in a sentence), so it is a second line
-     of defence and never a promise of anonymity. It must also cover what the
-     conclusion check keeps and what case files would save. Starts with an ADR.
+  2. _Stable placeholders_ (`user-3f2a`) as an option next to the stars of
+     `privacy.mask` (done: fields and patterns hidden in everything the tools
+     return, ADR 0010), so the assistant still follows one customer across
+     sources, translated back in the tool inputs it gives. Case files, when they
+     exist, must save the masked evidence.
   3. _A strict mode_ that serves only sources declared free of personal data.
   4. _Local models_ (next item), the strongest answer when data cannot leave.
 - **API mode and local models** (soon): run the investigation without an AI
