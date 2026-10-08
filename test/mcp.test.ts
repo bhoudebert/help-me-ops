@@ -13,7 +13,7 @@ test("mcp: the server lists its tools with all four hints and answers a search",
     new StdioClientTransport({
       command: process.execPath,
       args: ["src/mcp.ts"],
-      env: { PATH: process.env.PATH ?? "", OPS_WORKSPACE: resolve("examples/workspace") },
+      env: { PATH: process.env.PATH ?? "", OPS_WORKSPACE: resolve("examples/my-workspace") },
       stderr: "pipe",
     }),
   );

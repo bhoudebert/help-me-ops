@@ -5,7 +5,7 @@ import { runCommand, USAGE } from "../src/commands.ts";
 import { openToolbox } from "../src/toolbox.ts";
 import { createToolDefinitions } from "../src/tools/index.ts";
 
-const toolbox = await openToolbox(resolve("examples/workspace"));
+const toolbox = await openToolbox(resolve("examples/my-workspace"));
 
 test("tools: every tool states all four hints, and none may change the system", () => {
   const tools = createToolDefinitions(toolbox);

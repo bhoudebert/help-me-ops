@@ -10,7 +10,7 @@ import { createConnectors } from "../src/connectors/registry.ts";
 
 const types = connectorTypes((await loadAddons(addonFolders(process.cwd(), []))).addons);
 
-const logs = fileLogs({ id: "app-logs", description: "app", path: "examples/workspace/logs/prod.log" });
+const logs = fileLogs({ id: "app-logs", description: "app", path: "examples/my-workspace/logs/prod.log" });
 
 test("file logs: lines with the term, oldest first, with their time", async () => {
   const found = await logs.search({ query: "order=4512" });
@@ -51,7 +51,7 @@ test("registry: built-in and module sources; unique ids; a module must export cr
   );
   const { connectors: sources } = await createConnectors(
     [
-      { type: "file-logs", id: "app-logs", description: "logs", path: "examples/workspace/logs/prod.log" },
+      { type: "file-logs", id: "app-logs", description: "logs", path: "examples/my-workspace/logs/prod.log" },
       { type: "module", id: "mine", description: "mine", module: "mine.ts" },
     ],
     dir,

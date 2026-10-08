@@ -55,7 +55,7 @@ export async function getOrder({ id }: { id: string }, { settings }: { settings:
 ```
 
 That is the whole addon. Three working ones to copy from are in
-`examples/workspace/addons/`: `order`, `metrics` and `health`.
+`examples/my-workspace/addons/`: `order`, `metrics` and `health`.
 
 ## What you get without writing it
 

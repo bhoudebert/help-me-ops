@@ -11,7 +11,7 @@
   GitHub and a team's own REST API.
 - **More addons people ask for**: PostgreSQL and MySQL (read-only user, from
   the `sql` scaffold), Loki or Elasticsearch logs, Prometheus metrics. Each an
-  addon following `examples/workspace/addons/`.
+  addon following `examples/my-workspace/addons/`.
 - **A terminal investigator** calling a model API, if people without an MCP
   client ask for it.
 - **Case files**: an investigation saved with its question, steps, evidence

@@ -38,12 +38,12 @@ is the payment worker healthy on staging?
 ```
 
 The first one is the [demo](/demo): the answer is in the files of
-`examples/workspace`.
+`examples/my-workspace`.
 
 In Claude Code, `/mcp__help-me-ops__investigate <problem>` sends the method
 and the problem in one go.
 
-The shipped client files point at the demo workspace (`examples/workspace`);
+The shipped client files point at the demo workspace (`examples/my-workspace`);
 change `--workspace` / `OPS_WORKSPACE` to yours. Paths in `ops.config.json`
 (log files, connector modules, playbooks) are read relative to the workspace,
 so the server works from any folder.

@@ -9,7 +9,7 @@ shown and tested without a real system.
 
 ### Requirement: A world to investigate
 
-The repository SHALL ship a demo workspace, `examples/workspace`, with one app
+The repository SHALL ship a demo workspace, `examples/my-workspace`, with one app
 (`shop`) in two environments (`prod`, `staging`), fake services as fixtures
 read by addons (`logs`, `order`, `metrics`, `health`), a playbook, and a
 scenario in which the fault exists only in `prod`.
@@ -21,7 +21,7 @@ scenario in which the fault exists only in `prod`.
 
 ### Requirement: The scenario is a test
 
-A scenario file (`examples/workspace/scenarios/`) SHALL hold the question, the
+A scenario file (`examples/my-workspace/scenarios/`) SHALL hold the question, the
 scope and playbook it should lead to, the tool calls of the investigation, and
 the conclusion (cause, certainty, evidence as source, time and quote, unknowns,
 next step). The test suite SHALL replay the calls through the real tools and
