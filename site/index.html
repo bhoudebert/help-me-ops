@@ -143,6 +143,18 @@
   pre { margin: 0; background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; padding: 18px; font-size: .8rem; line-height: 1.65; overflow-x: auto; position: relative; }
   pre .fn { position: absolute; top: 0; right: 0; background: var(--brand-soft); color: var(--brand-ink); font: 600 .72rem Inter, sans-serif; padding: 3px 10px; border-bottom-left-radius: 10px; border-top-right-radius: 11px; }
   pre .k { color: #1d4ed8; } pre .s { color: #15803d; } pre .c { color: #64748b; font-style: italic; }
+  .sub-h { margin: 44px 0 4px; font-size: 1.3rem; letter-spacing: -.01em; }
+  .note-line { margin: 0 0 16px; color: var(--muted); }
+  .steps4 { list-style: none; counter-reset: st; margin: 0 0 22px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .steps4 li { counter-increment: st; position: relative; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 12px 46px; font-size: .9rem; line-height: 1.4; color: var(--muted); }
+  .steps4 li::before { content: counter(st); position: absolute; left: 12px; top: 12px; width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 700; font-size: .8rem; display: grid; place-items: center; }
+  .steps4 b { display: block; color: var(--ink); font-size: .95rem; }
+  a.node.addon { text-decoration: none; color: inherit; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+  a.node.addon:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--brand); }
+  .node .needs { font-weight: 400; font-size: .8rem; line-height: 1.35; color: var(--muted); border-top: 1px dashed var(--line-strong); padding-top: 8px; width: 100%; }
+  .node .needs b { display: block; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--brand-ink); }
+  .node .go { margin-top: auto; font-size: .82rem; font-weight: 700; color: var(--brand-ink); }
+  .node .go::after { content: " \2192"; }
   .gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 34px; }
   .gallery .node { flex-direction: column; align-items: flex-start; gap: 8px; height: 100%; }
   .gallery .node .row { display: flex; align-items: center; gap: 10px; width: 100%; }
@@ -181,13 +193,13 @@
 
   @media (max-width: 1020px) {
     .hero .wrap, .story, .trust { grid-template-columns: 1fr; gap: 36px; }
-    .grid4, .gallery { grid-template-columns: repeat(2, 1fr); }
+    .grid4, .gallery, .steps4 { grid-template-columns: repeat(2, 1fr); }
     .arch { grid-template-columns: 1fr; gap: 0; }
     .wire { height: 48px; } .wire::before { left: 50%; right: auto; top: 0; bottom: 0; border-top: 0; border-left: 2px dashed var(--brand); }
   }
   @media (max-width: 640px) {
     section { padding: 56px 0; } .hero .wrap { padding-top: 40px; padding-bottom: 44px; }
-    .two, .grid4, .gallery { grid-template-columns: 1fr; } .flow li { padding-left: 48px; }
+    .two, .grid4, .gallery, .steps4 { grid-template-columns: 1fr; } .flow li { padding-left: 48px; }
     nav .links a.hide-s { display: none; }
     .trail li { grid-template-columns: 50px 1fr; } .trail li .chip { grid-column: 2; justify-self: start; } .trail li span.t { grid-column: 2; }
   }
@@ -426,17 +438,60 @@
     </div>
     <div class="scaffold" role="group" aria-label="Scaffold command"><span class="c">$</span><span>npm run ops -- init addon billing --template sql</span><span class="c">&nbsp;&nbsp;# or file, api: a working addon with TODOs</span></div>
 
+    <h3 class="sub-h">Or switch on one that is ready-made</h3>
+    <p class="note-line">They ship with help-me-ops and stay idle until you turn one on: the same four steps for all of them.</p>
+    <ol class="steps4" aria-label="Four steps to turn on a ready-made addon">
+      <li><b>Get what it needs</b>a key, a token, a clone</li>
+      <li><b>Secrets in <code>.env</code></b>never in a committed file</li>
+      <li><b>One block per environment</b>in <code>ops.config.json</code></li>
+      <li><b>Check</b><code>npm run ops -- doctor</code> says loaded</li>
+    </ol>
     <div class="gallery">
-      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg></span>Logs<span class="tag ok">ready</span></div><small>Search log files, per environment, with times.</small></div>
-      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-globe"/></svg></span>REST<span class="tag ok">ready</span></div><small>Read your own API: GET only, allow-listed paths, no redirects.</small></div>
-      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-db"/></svg></span>PostgreSQL<span class="tag ok">demo</span></div><small>Parameterised SELECT in a read-only transaction. Docker demo included.</small></div>
-      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-pulse"/></svg></span>Metrics, health<span class="tag ok">demo</span></div><small>Templates to copy: swap the recorded file for your monitoring.</small></div>
-      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-chart"/></svg></span>Datadog<span class="tag warn">experimental</span></div><small>Logs, metrics and monitors through its API. Not yet verified on a real account; a mock in the demo to try it.</small></div>
-      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-git"/></svg></span>Git<span class="tag ok">ready</span></div><small>What changed before the incident: tags, commits, diffs and code search on a clone. No token, no network.</small></div>
-      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-github"/></svg></span>GitHub<span class="tag warn">experimental</span></div><small>Pull requests, releases, issues and builds, with a read-only token and a list of repositories.</small></div>
-      <div class="node yours"><div class="row"><span class="ic" style="background:var(--brand);color:#fff"><svg class="i" aria-hidden="true"><use href="#i-plug"/></svg></span>Yours</div><small>Kafka, Redis, Stripe, a CRM, a spreadsheet: if you can read it, it is an addon. <a href="guide/addons">Write one</a>.</small></div>
+      <a class="node addon" href="guide/ready-made/logs">
+        <div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg></span>Logs<span class="tag ok">ready</span></div>
+        <small>Search log files per environment, with their times.</small>
+        <span class="needs"><b>You need</b>a log file, one event per line, starting with a time</span>
+        <span class="go">Set it up</span>
+      </a>
+      <a class="node addon" href="guide/ready-made/rest">
+        <div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-globe"/></svg></span>REST<span class="tag ok">ready</span></div>
+        <small>Read your own API: GET only, on the paths you allow.</small>
+        <span class="needs"><b>You need</b>its URL, the allowed paths, a read-only token</span>
+        <span class="go">Set it up</span>
+      </a>
+      <a class="node addon" href="guide/ready-made/git">
+        <div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-git"/></svg></span>Git<span class="tag ok">ready</span></div>
+        <small>What changed before the incident: tags, commits, diffs, code. No token, no network.</small>
+        <span class="needs"><b>You need</b>git installed and an up-to-date clone</span>
+        <span class="go">Set it up</span>
+      </a>
+      <a class="node addon" href="guide/ready-made/postgres">
+        <div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-db"/></svg></span>PostgreSQL<span class="tag ok">template</span></div>
+        <small>A SELECT in a read-only transaction. A Docker demo is included.</small>
+        <span class="needs"><b>You need</b>the pg driver and a read-only database user</span>
+        <span class="go">Set it up</span>
+      </a>
+      <a class="node addon" href="guide/ready-made/datadog">
+        <div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-chart"/></svg></span>Datadog<span class="tag warn">experimental</span></div>
+        <small>Logs, metrics and monitors through its API. A mock in the demo.</small>
+        <span class="needs"><b>You need</b>an API key, an application key with read scopes, your site</span>
+        <span class="go">Set it up</span>
+      </a>
+      <a class="node addon" href="guide/ready-made/github">
+        <div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-github"/></svg></span>GitHub<span class="tag warn">experimental</span></div>
+        <small>Pull requests, releases, issues and builds. A mock in the demo.</small>
+        <span class="needs"><b>You need</b>a fine-grained read-only token, the list of repositories</span>
+        <span class="go">Set it up</span>
+      </a>
+      <a class="node addon yours" href="guide/addons">
+        <div class="row"><span class="ic" style="background:var(--brand);color:#fff"><svg class="i" aria-hidden="true"><use href="#i-plug"/></svg></span>Yours</div>
+        <small>Kafka, Redis, Stripe, a CRM, a spreadsheet: if you can read it, it is an addon.</small>
+        <span class="needs"><b>You need</b>two small files, no AI knowledge</span>
+        <span class="go">Write one</span>
+      </a>
     </div>
-    <p class="section-note">Try the live pieces without an account: <a href="guide/demo">the demo</a>, <a href="guide/database">the shop on PostgreSQL</a>, <a href="guide/shipped-addons">the REST addon on a running backend</a>, and <a href="guide/shipped-addons#datadog-logs-metrics-and-monitors-experimental">a mocked Datadog</a> (experimental).</p>
+    <p style="margin-top:26px"><a class="btn primary" href="guide/ready-made/">What each one needs, side by side</a></p>
+    <p class="section-note" style="margin-top:14px">Try every one without an account: <a href="guide/demo">the demo</a> has a live backend, a mock of Datadog and GitHub, a git repository and a PostgreSQL.</p>
   </div>
 </section>
 
