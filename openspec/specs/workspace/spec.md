@@ -21,6 +21,28 @@ top-level `sources` list) SHALL be refused, saying where sources go now.
 - **WHEN** the server is started with `--workspace ../shop/ops`
 - **THEN** sources and playbooks are read from that folder only, with paths relative to it
 
+### Requirement: Create a workspace
+
+`ops init workspace <folder> [--app <name>] [--envs a,b]` SHALL create a folder
+holding an `ops.config.json` for the app and environments named (default
+`my-app` with `prod` and `staging`, no sources yet), a starter playbook, a
+`playbooks/` and an `addons/` note, and a README saying what each file is for.
+The result SHALL load, with its playbook served and without any addon reported
+as failing. Names SHALL be lowercase letters, digits and hyphens, and
+environments unique. It SHALL NOT overwrite: when any file it would write
+exists, it SHALL write nothing and say which exist. It SHALL end by saying what
+to do next.
+
+#### Scenario: A first workspace
+
+- **WHEN** `init workspace ../my-app/ops --app shop` is run
+- **THEN** the folder loads as the app `shop` in `prod` and `staging`, `doctor` lists its addons, and the output says to set `OPS_WORKSPACE`
+
+#### Scenario: A folder that already has files
+
+- **WHEN** the folder already holds a `README.md`
+- **THEN** nothing is written, that file is unchanged, and the message names it
+
 ### Requirement: Apps and environments
 
 The configuration SHALL declare at least one app, each with at least one

@@ -20,8 +20,9 @@ MCP (src/mcp.ts) ──┘  (src/toolbox.ts)    └─▶ playbooks (<workspace>
   namespaced tools and connector types (`runtime.ts`), and holds the API of the
   advanced `addon.ts` form (`types.ts`). `addons/` at the root holds the built-ins.
 - `src/init.ts` scaffolds an addon (`ops init addon`) by copying a folder of
-  `templates/addon/` (`file`, `api`, `sql`) with the name filled in; it never
-  overwrites, and tests load the result.
+  `templates/addon/` (`file`, `api`, `sql`) with the name filled in, and a whole
+  workspace (`ops init workspace`) from `templates/workspace/` and a generated
+  `ops.config.json`; neither overwrites, and tests load the result.
 - `docs/guide/ready-made/` documents each shipped addon on one pattern (what you need, set-up, settings and tools, safety, demo, troubleshooting), with a catalog page; `test/docs.test.ts` checks that each page names every tool, setting and variable of its `addon.json`, and each addon folder has a README.
 - `src/scope.ts` resolves the app and environment a read applies to, and
   proposes them from a question.
@@ -84,6 +85,7 @@ src/
   scope.ts              app and environment of a read
   addons/               addon loader, manifest compiler, settings, tools
 templates/addon/        what `ops init addon` writes: file, api, sql
+templates/workspace/    what `ops init workspace` copies: README, a starter playbook
 addons/                 built-in addons (logs: the file-logs connector type; rest: GETs of a team API; datadog: logs, metrics, monitors; git: a repository on disk; github: its REST API), idle until an environment sets them up
   init.ts               ops init addon: write a template addon
   toolbox.ts            workspace → apps, connectors, playbooks
