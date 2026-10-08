@@ -3,141 +3,437 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>help-me-ops · ask your AI what went wrong in production</title>
-<meta name="description" content="Ask Claude Code, Codex or Copilot what went wrong in production. It searches your logs, database and metrics, follows your playbook, and answers with the cause, the evidence and what is unknown. Read-only, with a demo to try.">
+<title>help-me-ops · ask your infrastructure what went wrong</title>
+<meta name="description" content="Give Claude Code, Codex or Copilot read-only tools to investigate your logs, databases, APIs and repositories, and a method to conclude with the cause, the evidence and what is still unknown. Plug in anything with two small files. Demo included.">
+<meta name="color-scheme" content="light">
+<meta property="og:title" content="help-me-ops: ask your infrastructure what went wrong">
+<meta property="og:description" content="Read-only investigation tools for Claude Code, Codex and Copilot. Plug in your logs, databases, APIs and repos with two small files.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Ccircle cx='14' cy='14' r='6' fill='none' stroke='white' stroke-width='3'/%3E%3Cpath d='M19 19l6 6' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --bg: #f7f5f0; --ink: #1d1b18; --soft: #5f5a52; --rule: #d9d3c7; --accent: #b4441e; --panel: #1f1d1a; --panel-ink: #ece6da; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #151412; --ink: #ece6da; --soft: #a39c90; --rule: #34312c; --accent: #e07a4f; --panel: #0d0c0b; --panel-ink: #ece6da; }
+  :root {
+    --bg: #ffffff; --soft: #f6f8fb; --tint: #eef3ff;
+    --ink: #0f172a; --muted: #475569; --line: #e2e8f0; --line-strong: #cbd5e1;
+    --brand: #2563eb; --brand-ink: #1d4ed8; --brand-soft: #dbe7ff;
+    --ok: #15803d; --ok-soft: #dcfce7; --bad: #b91c1c; --bad-soft: #fee2e2; --warn: #b45309; --warn-soft: #fef3c7;
+    --logs: #1d4ed8; --metrics: #6d28d9; --health: #0f766e; --db: #b45309; --api: #be185d; --git: #15803d;
+    --radius: 14px; --shadow: 0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width: 980px; margin: 0 auto; padding: 56px 16px 80px; }
-  h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.05; margin: 0 0 12px; letter-spacing: -0.02em; }
-  h1 em { color: var(--accent); font-style: normal; }
-  .lede { font-size: 1.15rem; color: var(--soft); max-width: 640px; }
-  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 28px 0 48px; }
-  .cta a { padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; }
-  .cta .primary { background: var(--accent); color: #fff; }
-  .cta .secondary { border: 1px solid var(--rule); color: var(--ink); }
-  pre { background: var(--panel); color: var(--panel-ink); padding: 20px; border-radius: 10px; overflow-x: auto; font: 14px/1.6 ui-monospace, "JetBrains Mono", monospace; margin: 0; white-space: pre-wrap; }
-  .q { color: #e8b36a; }
-  h2 { font-size: 1.4rem; margin: 56px 0 16px; }
-  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px 20px; }
-  .steps { padding-left: 1.2rem; margin: 0; color: var(--soft); }
-  .steps li { margin: 0 0 10px; }
-  .steps b { color: var(--ink); }
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-  .two p { margin: 0 0 12px; }
-  .c { color: #9a9285; }
-  .note { color: var(--soft); margin: 14px 0 0; }
-  a { color: var(--accent); }
-  pre b { color: #e8b36a; font-weight: 600; }
-  code { font: 0.9em ui-monospace, "JetBrains Mono", monospace; }
-  .grid div { border-top: 2px solid var(--accent); padding-top: 12px; }
-  .grid h3 { margin: 0 0 6px; font-size: 1.05rem; }
-  .grid p { margin: 0; color: var(--soft); }
-  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 0.9rem; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--brand-ink); }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; border-radius: 6px; }
+  code, pre { font-family: var(--mono); }
+  code { font-size: .88em; background: var(--soft); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .hero .wrap > *, .story > *, .trust > *, .two > *, .arch > *, .col > * { min-width: 0; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+  .skip { position: absolute; left: -999px; top: 8px; background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 8px; z-index: 50; }
+  .skip:focus { left: 8px; }
+
+  /* nav */
+  header { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.88); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  nav { display: flex; align-items: center; gap: 22px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); text-decoration: none; font-size: 1.05rem; }
+  .brand .mark { width: 30px; height: 30px; border-radius: 9px; background: var(--brand); color: #fff; display: grid; place-items: center; }
+  nav .links { display: flex; gap: 20px; margin-left: auto; align-items: center; }
+  nav .links a { color: var(--muted); text-decoration: none; font-weight: 500; font-size: .95rem; padding: 8px 2px; }
+  nav .links a:hover { color: var(--ink); }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid var(--line-strong); color: var(--ink); background: #fff; transition: transform .15s ease, box-shadow .15s ease, background .15s ease; cursor: pointer; font-size: 1rem; min-height: 44px; }
+  .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .btn.primary:hover { background: var(--brand-ink); }
+  nav .btn { padding: 8px 14px; min-height: 40px; font-size: .92rem; }
+
+  /* hero */
+  .hero { background: radial-gradient(1100px 420px at 85% -10%, var(--brand-soft), transparent 60%), linear-gradient(#fff, var(--soft)); border-bottom: 1px solid var(--line); }
+  .hero .wrap { display: grid; grid-template-columns: 1.02fr 1fr; gap: 48px; align-items: center; padding-top: 72px; padding-bottom: 72px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: .85rem; font-weight: 600; color: var(--brand-ink); background: var(--tint); border: 1px solid var(--brand-soft); padding: 5px 12px; border-radius: 999px; }
+  h1 { font-size: clamp(2.3rem, 5.2vw, 3.9rem); line-height: 1.04; letter-spacing: -.035em; margin: 18px 0 18px; font-weight: 800; }
+  h1 em { font-style: normal; color: var(--brand); }
+  .lede { font-size: 1.2rem; color: var(--muted); max-width: 560px; margin: 0 0 26px; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .install { margin-top: 26px; min-width: 0; width: 100%; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line-strong); border-radius: 12px; padding: 6px 6px 6px 16px; max-width: 560px; box-shadow: var(--shadow); }
+  .install code { flex: 1; background: none; border: 0; padding: 8px 0; font-size: .86rem; white-space: nowrap; overflow-x: auto; }
+  .install button { border: 1px solid var(--line); background: var(--soft); border-radius: 8px; padding: 8px 12px; font: 600 .82rem Inter, sans-serif; color: var(--ink); cursor: pointer; min-height: 40px; }
+  .facts { display: flex; gap: 8px 22px; flex-wrap: wrap; margin: 28px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: .92rem; }
+  .facts li { display: flex; align-items: center; gap: 8px; }
+  .facts svg { color: var(--ok); }
+
+  /* the investigation card */
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 2px 4px rgba(15,23,42,.05), 0 24px 60px rgba(30,64,175,.14); overflow: hidden; }
+  .card .bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--soft); font-size: .8rem; color: var(--muted); font-weight: 500; }
+  .card .bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); }
+  .ask { margin: 16px 16px 6px; padding: 12px 14px; border-radius: 12px; background: var(--tint); border: 1px solid var(--brand-soft); font-weight: 500; }
+  .ask small { display: block; color: var(--brand-ink); font-weight: 700; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 2px; }
+  .trail { list-style: none; margin: 10px 16px 6px; padding: 0; }
+  .trail li { display: grid; grid-template-columns: 56px 88px 1fr; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: .86rem; line-height: 1.4; }
+  .trail time { font-family: var(--mono); color: var(--muted); font-size: .78rem; }
+  .verdict { margin: 12px 16px 16px; padding: 14px; border-radius: 12px; background: var(--soft); border: 1px solid var(--line); font-size: .88rem; }
+  .verdict p { margin: 0 0 6px; } .verdict p:last-child { margin: 0; }
+  .verdict b { color: var(--ink); }
+
+  .chip { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .02em; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; background: #fff; white-space: nowrap; }
+  .c-logs { color: var(--logs); } .c-metrics { color: var(--metrics); } .c-health { color: var(--health); }
+  .c-db { color: var(--db); } .c-api { color: var(--api); } .c-git { color: var(--git); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .trail li { opacity: 0; animation: rise .5s ease forwards; }
+    .trail li:nth-child(1) { animation-delay: .1s } .trail li:nth-child(2) { animation-delay: .35s } .trail li:nth-child(3) { animation-delay: .6s }
+    .trail li:nth-child(4) { animation-delay: .85s } .trail li:nth-child(5) { animation-delay: 1.1s } .trail li:nth-child(6) { animation-delay: 1.35s }
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  }
+
+  /* sections */
+  section { padding: 84px 0; }
+  section.soft { background: var(--soft); border-block: 1px solid var(--line); }
+  .kicker { color: var(--brand-ink); font-weight: 700; font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; }
+  h2 { font-size: clamp(1.7rem, 3.4vw, 2.5rem); line-height: 1.12; letter-spacing: -.025em; margin: 8px 0 14px; font-weight: 800; }
+  .sub { color: var(--muted); font-size: 1.1rem; max-width: 680px; margin: 0 0 40px; }
+  h3 { margin: 0 0 6px; font-size: 1.08rem; letter-spacing: -.01em; }
+
+  /* architecture */
+  .arch { display: grid; grid-template-columns: 1fr 64px 1.25fr 64px 1.2fr; align-items: stretch; }
+  .col { display: flex; flex-direction: column; gap: 12px; justify-content: center; }
+  .col h4 { margin: 0 0 4px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .node { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--line-strong); border-radius: 12px; padding: 12px 14px; font-weight: 600; box-shadow: 0 1px 2px rgba(15,23,42,.05); }
+  .node small { display: block; color: var(--muted); font-weight: 400; font-size: .8rem; line-height: 1.3; }
+  .node .ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--tint); color: var(--brand-ink); flex: none; }
+  .node.planned { border-style: dashed; background: var(--soft); }
+  .node.yours { border: 2px dashed var(--brand); background: var(--tint); }
+  .node .tag { margin-left: auto; font-size: .68rem; font-weight: 700; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 8px; background: #fff; white-space: nowrap; }
+  .node .tag.ok { color: var(--ok); border-color: #86efac; background: var(--ok-soft); }
+  .core { background: linear-gradient(180deg, #fff, var(--tint)); border: 2px solid var(--brand); border-radius: 18px; padding: 20px; box-shadow: 0 18px 50px rgba(37,99,235,.18); display: flex; flex-direction: column; gap: 10px; }
+  .core .title { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; }
+  .core .step { display: flex; gap: 12px; align-items: flex-start; background: #fff; border: 1px solid var(--brand-soft); border-radius: 10px; padding: 10px 12px; font-size: .9rem; line-height: 1.4; }
+  .core .step b { display: block; }
+  .core .step span.n { width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 700; font-size: .8rem; display: grid; place-items: center; flex: none; margin-top: 1px; }
+  .badge-ro { align-self: flex-start; display: inline-flex; gap: 6px; align-items: center; background: var(--ok-soft); color: var(--ok); font-weight: 700; font-size: .8rem; border: 1px solid #86efac; padding: 4px 10px; border-radius: 999px; }
+  .wire { position: relative; display: grid; place-items: center; color: var(--brand); }
+  .wire::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px dashed var(--brand); opacity: .55; }
+  .wire span { position: relative; background: #fff; border: 1px solid var(--brand-soft); border-radius: 999px; padding: 2px 8px; font-size: .72rem; font-weight: 700; color: var(--brand-ink); }
+  .section-note { margin-top: 28px; color: var(--muted); max-width: 760px; }
+
+  /* timeline */
+  .story { display: grid; grid-template-columns: 1fr 1.15fr; gap: 56px; align-items: start; }
+  .story ul.tl { list-style: none; padding: 0 0 0 22px; margin: 0; border-left: 2px solid var(--line-strong); }
+  .tl li { position: relative; padding: 0 0 20px 22px; }
+  .tl li::before { content: ""; position: absolute; left: -29px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--brand); }
+  .tl li.fault::before { border-color: var(--bad); background: var(--bad-soft); }
+  .tl li.key::before { border-color: var(--db); background: var(--warn-soft); }
+  .tl time { font-family: var(--mono); font-size: .8rem; color: var(--muted); display: block; }
+  .tl p { margin: 2px 0 0; font-size: .96rem; }
+  .callout { background: #fff; border: 1px solid #fcd34d; border-left: 5px solid var(--db); border-radius: 12px; padding: 16px 18px; margin-top: 8px; box-shadow: var(--shadow); }
+  .callout b { color: var(--warn); }
+
+  /* steps */
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; counter-reset: s; }
+  .tile { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); transition: transform .15s ease; }
+  .tile:hover { transform: translateY(-2px); }
+  .tile .ic { width: 42px; height: 42px; border-radius: 12px; background: var(--tint); color: var(--brand-ink); display: grid; place-items: center; margin-bottom: 14px; }
+  .tile p { margin: 0; color: var(--muted); font-size: .95rem; }
+
+  /* addons */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  pre { margin: 0; background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; padding: 18px; font-size: .8rem; line-height: 1.65; overflow-x: auto; position: relative; }
+  pre .fn { position: absolute; top: 0; right: 0; background: var(--brand-soft); color: var(--brand-ink); font: 600 .72rem Inter, sans-serif; padding: 3px 10px; border-bottom-left-radius: 10px; border-top-right-radius: 11px; }
+  pre .k { color: #1d4ed8; } pre .s { color: #15803d; } pre .c { color: #64748b; font-style: italic; }
+  .gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 34px; }
+  .gallery .node { flex-direction: column; align-items: flex-start; gap: 8px; height: 100%; }
+  .gallery .node .row { display: flex; align-items: center; gap: 10px; width: 100%; }
+  .scaffold { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 26px; padding: 16px 18px; border-radius: 12px; background: var(--ink); color: #e2e8f0; font-family: var(--mono); font-size: .86rem; }
+  .scaffold .c { color: #94a3b8; font-style: normal; }
+
+  /* trust */
+  .trust { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+  .layers { display: grid; gap: 0; }
+  .layer { border: 2px solid; border-radius: 18px; padding: 14px 16px 16px; background: #fff; }
+  .layer .t { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: .92rem; margin-bottom: 10px; }
+  .layer .t small { font-weight: 400; color: var(--muted); }
+  .l1 { border-color: #93c5fd; background: #f8fbff; } .l2 { border-color: #86efac; background: #f6fef9; } .l3 { border-color: #fcd34d; background: #fffdf5; }
+  .layer.core-sys { border-color: var(--ink); background: var(--ink); color: #fff; text-align: center; font-weight: 700; padding: 18px; }
+  .ticks { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .ticks li { display: flex; gap: 12px; }
+  .ticks svg { color: var(--ok); margin-top: 3px; }
+  .ticks p { margin: 2px 0 0; color: var(--muted); font-size: .95rem; }
+
+  .finale { text-align: center; background: radial-gradient(800px 300px at 50% 0, var(--brand-soft), transparent 70%), var(--soft); }
+  .finale .sub { margin-inline: auto; }
+  .finale .cta { justify-content: center; }
+  footer { padding: 30px 0 44px; color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); }
+  footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
   footer a { color: inherit; }
-  @media (max-width: 720px) { .grid, .two { grid-template-columns: 1fr; } }
+
+  @media (max-width: 1020px) {
+    .hero .wrap, .story, .trust { grid-template-columns: 1fr; gap: 36px; }
+    .grid4, .gallery { grid-template-columns: repeat(2, 1fr); }
+    .arch { grid-template-columns: 1fr; gap: 0; }
+    .wire { height: 48px; } .wire::before { left: 50%; right: auto; top: 0; bottom: 0; border-top: 0; border-left: 2px dashed var(--brand); }
+  }
+  @media (max-width: 640px) {
+    section { padding: 56px 0; } .hero .wrap { padding-top: 40px; padding-bottom: 44px; }
+    .two, .grid4, .gallery { grid-template-columns: 1fr; }
+    nav .links a.hide-s { display: none; }
+    .trail li { grid-template-columns: 50px 1fr; } .trail li .chip { grid-column: 2; justify-self: start; } .trail li span.t { grid-column: 2; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <h1>Oh, help me, <em>ops</em>.</h1>
-  <p class="lede">Ask your AI assistant what went wrong in production. It searches your logs, database, metrics and health checks, follows your team's playbook, and answers with the likely cause, the evidence, and what it still doesn't know. It never changes a thing.</p>
-  <div class="cta">
-    <a class="primary" href="guide/demo">Try the demo</a>
-    <a class="secondary" href="guide/getting-started">Get started</a>
-    <a class="secondary" href="https://github.com/bhoudebert/help-me-ops">Source on GitHub</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 01-12 0z"/><path d="M12 17v4"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></symbol>
+    <symbol id="i-git" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7M18 11.5c0 4-6 3-11 5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></symbol>
+  </defs>
+</svg>
+<a class="skip" href="#main">Skip to content</a>
+
+<header>
+  <div class="wrap">
+    <nav aria-label="Main">
+      <a class="brand" href="#top"><span class="mark"><svg class="i" aria-hidden="true"><use href="#i-search"/></svg></span>help-me-ops</a>
+      <div class="links">
+        <a class="hide-s" href="#how">How it works</a>
+        <a class="hide-s" href="#story">The demo</a>
+        <a class="hide-s" href="#addons">Addons</a>
+        <a class="hide-s" href="#trust">Trust</a>
+        <a href="guide/">Guide</a>
+        <a class="btn" href="https://github.com/bhoudebert/help-me-ops"><svg class="i" aria-hidden="true"><use href="#i-github"/></svg>GitHub</a>
+      </div>
+    </nav>
   </div>
+</header>
 
-  <pre><span class="q">› client u-881 paid but cannot find order 4512</span>
+<main id="main">
+<div class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow"><svg class="i" style="width:16px;height:16px" aria-hidden="true"><use href="#i-shield"/></svg>Read-only. Open source. Works with the AI you already use.</span>
+      <h1>Ask your infrastructure <em>what went wrong.</em></h1>
+      <p class="lede">help-me-ops gives Claude Code, Codex and Copilot read-only tools to investigate your logs, databases, APIs and repositories, and a method to answer with the likely cause, the evidence, and what is still unknown.</p>
+      <div class="cta">
+        <a class="btn primary" href="guide/demo">Try the demo</a>
+        <a class="btn" href="guide/getting-started">Get started</a>
+      </div>
+      <div class="install" role="group" aria-label="Install">
+        <code id="cmd">git clone https://github.com/bhoudebert/help-me-ops && cd help-me-ops && npm install</code>
+        <button type="button" id="copy" aria-label="Copy the install command">Copy</button>
+      </div>
+      <ul class="facts">
+        <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Claude Code, Codex, Copilot</li>
+        <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>No API key, no bill from us</li>
+        <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>An addon is two small files</li>
+      </ul>
+    </div>
 
-scope         shop, production
-order         09:58:13  order 4512 of u-881: awaiting_payment
-app-logs      10:00:02  webhook endpoint /hooks/acme-pay returned 503 (queue full)
-health        10:00:00  acme-pay provider status -> 200: the refusal is ours
-metrics       10:01:00  payment_confirm_queue_depth = 1240 jobs
-app-logs      10:01:04  container shop-worker-1 OOMKilled (exit 137)
-staging       same release 2.14.0, memory flat: the fault is prod only
+    <div class="card" role="img" aria-label="Example investigation: a customer paid but cannot find order 4512. The assistant reads the order, the logs, the health checks and the metrics, then concludes the payment webhook was refused because the queue was full.">
+      <div class="bar"><i></i><i></i><i></i><span style="margin-left:6px">Claude Code · help-me-ops</span></div>
+      <div class="ask"><small>You</small>Client u-881 paid but cannot find order 4512.</div>
+      <ol class="trail">
+        <li><time>09:58</time><span class="chip c-api">order</span><span class="t">order 4512: awaiting_payment</span></li>
+        <li><time>10:00</time><span class="chip c-logs">logs</span><span class="t">webhook returned 503 (queue full)</span></li>
+        <li><time>10:00</time><span class="chip c-health">health</span><span class="t">provider answers 200: the refusal is ours</span></li>
+        <li><time>10:01</time><span class="chip c-metrics">metrics</span><span class="t">queue depth 1240 jobs</span></li>
+        <li><time>10:01</time><span class="chip c-logs">logs</span><span class="t">shop-worker-1 OOMKilled (exit 137)</span></li>
+        <li><time>10:03</time><span class="chip c-db">database</span><span class="t">3 customers paid 165.20 EUR, no order</span></li>
+      </ol>
+      <div class="verdict">
+        <p><b>Likely cause:</b> the payment webhook was refused while the worker, slowed since 2.14.0, ran out of memory.</p>
+        <p><b>Unknown:</b> a leak in 2.14.0, or a limit too low for the load.</p>
+        <p><b>Next step, for a person:</b> restart the worker, replay the webhooks.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
-<b>Likely cause:</b> the payment webhook was refused while the confirmation
-worker, slowed since 2.14.0, ran out of memory. Orders 4513 and 4514 are
-stuck the same way.
-<b>Unknown:</b> a leak in 2.14.0, or a limit too low for the load.
-<b>Next step, for a person:</b> restart the worker, replay the webhooks.</pre>
+<section id="how">
+  <div class="wrap">
+    <span class="kicker">The picture</span>
+    <h2>One toolbox between your AI and everything you run.</h2>
+    <p class="sub">Your assistant brings the reasoning. help-me-ops brings the method, the plumbing and a safe way to read your systems. Every system you can read becomes an addon, and an addon is a folder.</p>
 
-  <h2>How it works</h2>
-  <ol class="steps">
-    <li><b>You ask</b> in plain words, in Claude Code, Codex or GitHub Copilot: the model is the one you already pay for.</li>
-    <li><b>It follows your method.</b> It settles the app and environment, takes your playbook for this kind of problem, and reads your sources, read-only.</li>
-    <li><b>It concludes with its evidence</b>: each line quotes its source and time, and what is unknown is said, not guessed.</li>
-  </ol>
+    <div class="arch" role="group" aria-label="Architecture: AI clients talk MCP to help-me-ops, which reads your systems through addons">
+      <div class="col">
+        <h4>Your AI client</h4>
+        <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-bot"/></svg></span><span>Claude Code<small>reasons, asks, concludes</small></span></div>
+        <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-bot"/></svg></span><span>Codex<small>same tools, same method</small></span></div>
+        <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-bot"/></svg></span><span>Copilot<small>in VS Code, agent mode</small></span></div>
+      </div>
+      <div class="wire" aria-hidden="true"><span>MCP</span></div>
+      <div class="col">
+        <div class="core">
+          <div class="title"><svg class="i" aria-hidden="true" style="color:var(--brand)"><use href="#i-search"/></svg>help-me-ops</div>
+          <span class="badge-ro"><svg class="i" style="width:16px;height:16px" aria-hidden="true"><use href="#i-lock"/></svg>Read-only</span>
+          <div class="step"><span class="n">1</span><span><b>Scope</b>which app, which environment: prod is never answered from staging</span></div>
+          <div class="step"><span class="n">2</span><span><b>Playbook</b>how your team investigates this kind of problem</span></div>
+          <div class="step"><span class="n">3</span><span><b>Evidence</b>every finding with its source and its time</span></div>
+          <div class="step"><span class="n">4</span><span><b>Conclusion</b>cause, certainty, what is unknown, next step for a person</span></div>
+        </div>
+      </div>
+      <div class="wire" aria-hidden="true"><span>addons</span></div>
+      <div class="col">
+        <h4>Your systems</h4>
+        <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg></span><span>Logs<small>files, services</small></span><span class="tag ok">ready</span></div>
+        <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-db"/></svg></span><span>Databases<small>PostgreSQL, any driver</small></span><span class="tag ok">template</span></div>
+        <div class="node"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-globe"/></svg></span><span>Your REST APIs<small>allow-listed GETs</small></span><span class="tag ok">ready</span></div>
+        <div class="node planned"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-chart"/></svg></span><span>Datadog<small>logs, metrics</small></span><span class="tag">planned</span></div>
+        <div class="node planned"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-git"/></svg></span><span>Git, GitHub<small>what changed before</small></span><span class="tag">planned</span></div>
+        <div class="node yours"><span class="ic" style="background:var(--brand);color:#fff"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></span><span>Anything else<small>two files, no AI knowledge</small></span></div>
+      </div>
+    </div>
+    <p class="section-note">Playbooks in Markdown carry your team's method. Updating help-me-ops never touches your folder: your workspace, playbooks and addons live in your own repository.</p>
+  </div>
+</section>
 
-  <h2>Try it in two minutes</h2>
-  <pre>git clone https://github.com/bhoudebert/help-me-ops.git &amp;&amp; cd help-me-ops
-npm install
-claude          <span class="c"># or open the folder in VS Code with Copilot, or add the server to Codex</span></pre>
-  <p class="note">The repository ships a small shop to investigate, in <code>prod</code> and <code>staging</code>, with a fault in <code>prod</code> only. No system of yours needed. <a href="guide/demo">The story and what to expect</a>.</p>
-  <p class="note">Want more than files? <b>The same shop runs on a real PostgreSQL in Docker.</b> The assistant reads the payments table and finds what no log says: three customers paid 165.20 EUR and have no order, while a <code>SELECT</code>-only user makes a write impossible. <a href="guide/database">Five minutes, with Docker</a>.</p>
+<section class="soft" id="story">
+  <div class="wrap story">
+    <div>
+      <span class="kicker">What an investigation finds</span>
+      <h2>The answer is never in one place.</h2>
+      <p class="sub" style="margin-bottom:24px">A customer paid and has no order. The logs show a refusal, the metrics show why, and only the database shows the damage. The assistant crosses them, and tells you what it could not see.</p>
+      <div class="callout"><b>Only a database says it:</b> orders 4512, 4513 and 4514 were captured by the payment provider and are still <code>awaiting_payment</code>. Three paying customers, 165.20 EUR, no order. A log search alone would have stopped at "a webhook failed".</div>
+      <p style="margin-top:24px"><a class="btn" href="guide/database">Run it on a real PostgreSQL</a></p>
+    </div>
+    <ul class="tl" aria-label="Timeline of the demo incident">
+      <li><time>09:31</time><span class="chip c-logs">logs</span><p>Release 2.14.0 of the confirmation worker goes out.</p></li>
+      <li><time>09:50</time><span class="chip c-metrics">metrics</span><p>Backlog 620 jobs, 41 per minute instead of 190. Memory climbing toward 512 MB.</p></li>
+      <li class="fault"><time>10:00</time><span class="chip c-logs">logs</span> <span class="chip c-health">health</span><p>The shop refuses the provider's webhook with a 503, while the provider itself answers 200: <b>the refusal is ours.</b></p></li>
+      <li class="fault"><time>10:01</time><span class="chip c-logs">logs</span><p>Queue past 1000 jobs, the worker is OOMKilled and restarts again and again.</p></li>
+      <li class="key"><time>now</time><span class="chip c-db">database</span><p>Three orders paid, never confirmed. Staging runs the same release and is fine, so the conclusion keeps an honest unknown.</p></li>
+    </ul>
+  </div>
+</section>
 
-  <h2>Then plug in your own</h2>
-  <p class="note" style="margin:0 0 18px">Your infrastructure is a folder you keep in your own repository and review like code. <b>No AI or MCP knowledge needed</b>: to add a database, Datadog, GitHub or your own API, you write a manifest and a plain function.</p>
-  <div class="two">
-    <pre><span class="c"># addons/order/addon.json</span>
+<section>
+  <div class="wrap">
+    <span class="kicker">The method</span>
+    <h2>It investigates the way your team does.</h2>
+    <p class="sub">Not a chatbot guessing: a loop with guard rails, shared by every client.</p>
+    <div class="grid4">
+      <div class="tile"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-map"/></svg></div><h3>Scope first</h3><p>Apps and environments are explicit. A question about prod is never answered from staging, and when it is unclear, the assistant asks.</p></div>
+      <div class="tile"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg></div><h3>Your playbook</h3><p>Markdown runbooks say what to check, in which order, and what your names mean. They grow after every incident.</p></div>
+      <div class="tile"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-search"/></svg></div><h3>Evidence, quoted</h3><p>Each result has a source and a time. The conclusion quotes them, and never states what no evidence shows.</p></div>
+      <div class="tile"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-flag"/></svg></div><h3>An honest verdict</h3><p>Likely cause, how sure, what is unknown, and a next step for a person to take. Nothing is changed for you.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="soft" id="addons">
+  <div class="wrap">
+    <span class="kicker">Plug in anything</span>
+    <h2>Two files. No MCP. No AI knowledge.</h2>
+    <p class="sub">An addon teaches help-me-ops to read one more place. Describe it in a manifest, write plain functions, drop the folder in. The tool is served to every client, for each environment, always read-only.</p>
+    <div class="two">
+<pre><span class="fn">addons/billing/addon.json</span><span class="c">// what it offers</span>
 {
-  "apiVersion": 1,
-  "settings": {
-    "dbUrl": { "type": "string", "env": "ORDER_DB_URL", "secret": true }
+  <span class="k">"apiVersion"</span>: 1,
+  <span class="k">"settings"</span>: {
+    <span class="k">"dbUrl"</span>: { <span class="k">"type"</span>: <span class="s">"string"</span>, <span class="k">"secret"</span>: true,
+              <span class="k">"env"</span>: <span class="s">"BILLING_DB_URL"</span> }
   },
-  "tools": {
-    "getOrder": {
-      "description": "One order: status and last change",
-      "params": { "id": "string" }
+  <span class="k">"tools"</span>: {
+    <span class="k">"getInvoice"</span>: {
+      <span class="k">"description"</span>: <span class="s">"One invoice: status, amount"</span>,
+      <span class="k">"params"</span>: { <span class="k">"id"</span>: <span class="s">"string"</span> }
     }
   }
 }</pre>
-    <pre><span class="c"># addons/order/tools.ts</span>
-import pg from "pg";
+<pre><span class="fn">addons/billing/tools.ts</span><span class="c">// what it does</span>
+<span class="k">import</span> pg <span class="k">from</span> <span class="s">"pg"</span>;
 
-export async function getOrder({ id }, { settings }) {
-  const db = new pg.Client(settings.dbUrl);
-  await db.connect();
-  const { rows } = await db.query(
-    "SELECT * FROM orders WHERE id = $1", [id]);
-  await db.end();
-  return rows;  <span class="c">// the assistant quotes these</span>
+<span class="k">export async function</span> getInvoice({ id }, { settings }) {
+  <span class="k">const</span> db = <span class="k">new</span> pg.Client(settings.dbUrl);
+  <span class="k">await</span> db.connect();
+  <span class="k">const</span> { rows } = <span class="k">await</span> db.query(
+    <span class="s">"SELECT * FROM invoices WHERE id = $1"</span>, [id]);
+  <span class="k">await</span> db.end();
+  <span class="k">return</span> rows; <span class="c">// the assistant quotes these</span>
 }</pre>
+    </div>
+    <div class="scaffold" role="group" aria-label="Scaffold command"><span class="c">$</span><span>npm run ops -- init addon billing --template sql</span><span class="c">&nbsp;&nbsp;# or file, api: a working addon with TODOs</span></div>
+
+    <div class="gallery">
+      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg></span>Logs<span class="tag ok">ready</span></div><small>Search log files, per environment, with times.</small></div>
+      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-globe"/></svg></span>REST<span class="tag ok">ready</span></div><small>Read your own API: GET only, allow-listed paths, no redirects.</small></div>
+      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-db"/></svg></span>PostgreSQL<span class="tag ok">demo</span></div><small>Parameterised SELECT in a read-only transaction. Docker demo included.</small></div>
+      <div class="node"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-pulse"/></svg></span>Metrics, health<span class="tag ok">demo</span></div><small>Templates to copy: swap the recorded file for your monitoring.</small></div>
+      <div class="node planned"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-chart"/></svg></span>Datadog<span class="tag">planned</span></div><small>Logs and metrics through its API, with a fake to try it.</small></div>
+      <div class="node planned"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-git"/></svg></span>Local git<span class="tag">planned</span></div><small>What changed before the incident, from a repository on disk.</small></div>
+      <div class="node planned"><div class="row"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-github"/></svg></span>GitHub<span class="tag">planned</span></div><small>Pull requests, releases and issues, with a read-only token.</small></div>
+      <div class="node yours"><div class="row"><span class="ic" style="background:var(--brand);color:#fff"><svg class="i" aria-hidden="true"><use href="#i-plug"/></svg></span>Yours</div><small>Kafka, Redis, Stripe, a CRM, a spreadsheet: if you can read it, it is an addon. <a href="guide/addons">Write one</a>.</small></div>
+    </div>
+    <p class="section-note">Try the live pieces without an account: <a href="guide/demo">the demo</a>, <a href="guide/database">the shop on PostgreSQL</a>, <a href="guide/shipped-addons">the REST addon on a running backend</a>.</p>
   </div>
-  <div class="two" style="margin-top:24px">
-    <pre>my-workspace/             <span class="c"># in your app's repository</span>
-  ops.config.json         <span class="c"># apps, environments, sources</span>
-  playbooks/              <span class="c"># how your team investigates</span>
-  addons/
-    order/                <span class="c"># drop a folder in: it loads</span>
-    datadog/
-    _health/              <span class="c"># _ turns one off</span></pre>
+</section>
+
+<section id="trust">
+  <div class="wrap trust">
     <div>
-      <p><b>The tool is served to every client as <code>order.getOrder</code></b>, for each environment, always read-only. You never write the MCP part.</p>
-      <p>Credentials come from the environment, never from a file. A missing driver or a mistake skips that addon with a reason; the rest keeps working. Updating this project never touches your folder.</p>
-      <p>Start from a working one: <code>npm run ops -- init addon billing --template api</code> (or <code>file</code>, <code>sql</code>) writes both files with comments on what to change.</p>
-      <p>Or none to write: <a href="guide/shipped-addons">ready-made addons</a>, such as a read-only <code>rest</code> for your own API, only need settings.</p>
-      <p><a href="guide/addons">Write an addon</a> · <a href="guide/workspace">What is in a workspace</a> · <a href="guide/playbooks">Write a playbook</a></p>
+      <span class="kicker">Trusted with production</span>
+      <h2>Read-only is not a promise. It is layers.</h2>
+      <p class="sub" style="margin-bottom:28px">The assistant can only ask questions. Each layer below refuses a write on its own, so a mistake in one is caught by the next.</p>
+      <ul class="ticks">
+        <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg><div><h3>Declared and tested</h3><p>Every tool says it cannot change anything, and a test checks it. No tool can write.</p></div></li>
+        <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg><div><h3>Fenced in</h3><p>Allow-listed paths, parameterised queries, no redirects, capped answers. Secrets never reach an error message.</p></div></li>
+        <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg><div><h3>Your accounts decide</h3><p>A SELECT-only database user, a read-only token. Even a buggy addon cannot go further.</p></div></li>
+        <li><svg class="i" aria-hidden="true"><use href="#i-check"/></svg><div><h3>No keys, no bill</h3><p>The model is your client's, on your subscription. This project makes no model calls and stores nothing.</p></div></li>
+      </ul>
+    </div>
+    <div class="layers" role="img" aria-label="Layers of protection around your system: tool declarations, then allow-lists and limits, then read-only accounts, then your system at the centre">
+      <div class="layer l1"><div class="t"><svg class="i" aria-hidden="true"><use href="#i-shield"/></svg>Tools are read-only <small>declared, tested</small></div>
+        <div class="layer l2"><div class="t"><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>Allow-lists and limits <small>paths, queries, sizes</small></div>
+          <div class="layer l3"><div class="t"><svg class="i" aria-hidden="true"><use href="#i-db"/></svg>Read-only accounts <small>SELECT only, read tokens</small></div>
+            <div class="layer core-sys">Your system, unchanged</div>
+          </div></div></div>
     </div>
   </div>
+</section>
 
-  <h2>Built to be trusted with production</h2>
-  <div class="grid">
-    <div><h3>Read-only, enforced</h3><p>Every tool declares it cannot change anything, and a test checks it. A fix is proposed for a person to make.</p></div>
-    <div><h3>Prod is not staging</h3><p>Sources belong to an environment. A question about prod is never answered from staging, and when it is unclear the assistant asks.</p></div>
-    <div><h3>One toolbox, every client</h3><p>One MCP server for Claude Code, Codex and Copilot, and a CLI. Same tools, same method everywhere.</p></div>
-    <div><h3>Your method first</h3><p>Playbooks in Markdown say how your team investigates. The assistant follows them before improvising.</p></div>
-    <div><h3>No keys, no bill from us</h3><p>The model is your client's, on your subscription. This project makes no model calls.</p></div>
-    <div><h3>Specified and tested</h3><p>Requirements per capability, tests against fixtures, decisions recorded. Nothing runs against a real system in CI.</p></div>
+<section class="finale">
+  <div class="wrap">
+    <h2>See it find the cause in five minutes.</h2>
+    <p class="sub">Clone it, open it in your AI client, and ask about the stuck order. No account, nothing to configure, nothing of yours at risk.</p>
+    <div class="cta">
+      <a class="btn primary" href="guide/demo">Try the demo</a>
+      <a class="btn" href="guide/getting-started">Read the guide</a>
+      <a class="btn" href="https://github.com/bhoudebert/help-me-ops">Star on GitHub</a>
+    </div>
   </div>
-
-  <footer>help-me-ops · MIT · <a href="guide/">guide</a> · <a href="guide/demo">demo</a> · <a href="https://github.com/bhoudebert/help-me-ops">GitHub</a></footer>
+</section>
 </main>
+
+<footer>
+  <div class="wrap">
+    <span>help-me-ops · MIT · built to investigate, never to change</span>
+    <span><a href="guide/">Guide</a> · <a href="guide/demo">Demo</a> · <a href="guide/addons">Write an addon</a> · <a href="https://github.com/bhoudebert/help-me-ops">GitHub</a></span>
+  </div>
+</footer>
+
+<script>
+  try {
+    var b = document.getElementById("copy"), c = document.getElementById("cmd");
+    b.addEventListener("click", function () {
+      navigator.clipboard.writeText(c.textContent).then(function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1600); });
+    });
+  } catch (e) {}
+</script>
 </body>
 </html>
