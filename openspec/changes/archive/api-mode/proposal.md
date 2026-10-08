@@ -288,3 +288,7 @@ model's text, native Anthropic or Google wire formats (adapters later), embeddin
 5. **Limits** (steps, token budget, context trimming) start with provisional
    defaults (20 steps; a budget from the model's context size) and are tuned with
    `ops eval` once there are numbers.
+
+## Dropped after review
+
+The compose file for Ollama (`compose.llm.yml`) and the manual smoke workflow (layer 3 above) were built and then removed: too much to maintain for a project that only needs a URL. People bring their own model server.

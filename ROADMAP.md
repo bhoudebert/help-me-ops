@@ -47,8 +47,8 @@
   [the proposal](openspec/changes/archive/api-mode/proposal.md). Done: `ops chat`
   and `ops ask` against any OpenAI-compatible endpoint, `ops eval` (counts how
   often a model reaches an accepted conclusion and names the expected facts, with
-  `npm run eval:local` and a compose file for Ollama), `privacy.modelHosts`, the
-  model line of `doctor`, a manual smoke workflow. Next: more scenarios with
+  `npm run eval:local`), `privacy.modelHosts`, the
+  model line of `doctor`. Next: more scenarios with
   `expect`, follow-up questions in `eval`, guided mode if the numbers call for it,
   an Anthropic Messages adapter.
 - **Case files**: an investigation saved with its question, steps, evidence

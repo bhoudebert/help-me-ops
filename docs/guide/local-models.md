@@ -153,7 +153,7 @@ A fact counts when **any** of its words appears in the answer, case ignored. It 
 
 Writing your own scenario: copy `examples/my-workspace/scenarios/stuck-order.json` (a question, the steps of a good investigation for `ops demo`, a conclusion, an `expect`).
 
-`compose.llm.yml` starts an Ollama in a container if you have none (`docker compose -f compose.llm.yml up -d`, then `exec ollama ollama pull qwen3:8b`); the models stay in a volume. Nothing here costs money and nothing is part of the test suite: the tests use a scripted fake server, and a manual GitHub workflow (`Model smoke`) checks the wire against a real server with a tiny model.
+Bring your own model server: help-me-ops only needs its URL. Nothing here costs money and nothing is part of the test suite: the tests use a scripted fake server.
 
 ### What one setup measured
 

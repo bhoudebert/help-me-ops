@@ -84,7 +84,7 @@ and SHALL NOT reach a real model or spend money.
 
 The repository's tests and workflows SHALL NOT require a paid API or a key. The
 gating tests use the scripted server. Runs against a real model SHALL be opt-in
-(a script on the person's machine, or a manual workflow) and SHALL NOT fail a
+(a script on the person's machine) and SHALL NOT fail a
 build on a model's answer.
 
 ### Requirement: Where the model is, said
