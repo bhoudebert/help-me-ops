@@ -18,11 +18,11 @@ npm run quality    # typecheck, lint, format check, tests with coverage
 
 Installed by `npm install` (`simple-git-hooks`, configured in `package.json`):
 
-| Hook         | Runs                                    | Why                                         |
-| ------------ | --------------------------------------- | ------------------------------------------- |
-| `pre-commit` | ESLint and Prettier on the staged files | style, in a second                          |
-| `commit-msg` | `commitlint`                            | Conventional Commits                        |
-| `pre-push`   | `npm run quality`                       | the gate of CI, before CI: about 30 seconds |
+| Hook         | Runs                                    | Why                                      |
+| ------------ | --------------------------------------- | ---------------------------------------- |
+| `pre-commit` | ESLint and Prettier on the staged files | style, in a second                       |
+| `commit-msg` | `commitlint`                            | Conventional Commits                     |
+| `pre-push`   | `npm run quality`                       | the gate of CI, before CI: a few seconds |
 
 The `pre-push` hook is what keeps a red build off the pull request. CI still
 runs the same check on another machine, which catches what only differs there
