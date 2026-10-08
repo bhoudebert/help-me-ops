@@ -1,5 +1,6 @@
 {
   "apiVersion": 1,
+  "personalData": "possible",
   "description": "EXPERIMENTAL: written from Datadog's documented API and tested against recorded and mock responses, not yet against a real Datadog, so it may not work as is. Reads logs, metrics and monitors, read-only. Off until an environment sets it up.",
   "settings": {
     "apiKey": {

@@ -196,8 +196,8 @@ test("the checked conclusion is built on what the assistant saw: the masked line
 test("config and doctor: the mask is read from ops.config.json, shown by doctor, and a bad one is refused", async () => {
   const dir = maskedDemo({ fields: ["email", "phone"], patterns: ["card"] });
   const { config } = await loadConfig(dir);
-  assert.deepEqual(config.privacy!.mask.fields, ["email", "phone"]);
-  assert.equal(config.privacy!.mask.replacement, "***");
+  assert.deepEqual(config.privacy!.mask!.fields, ["email", "phone"]);
+  assert.equal(config.privacy!.mask!.replacement, "***");
   const toolbox = await openToolbox(dir);
   assert.match(
     await runCommand(toolbox, "doctor", []),

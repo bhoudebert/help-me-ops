@@ -176,6 +176,13 @@ export async function checkAddon(
     ok(`setting ${key}${variable ? ` (variable ${variable})` : ""}${secret}`);
   }
 
+  if (definition.personalData)
+    ok(`personal data: ${definition.personalData === "none" ? "declared free of it" : "declared possible"}`);
+  else
+    note(
+      'it does not say whether it can return personal data; add "personalData": "none" or "possible" so strict mode knows',
+    );
+
   if (definition.privacy) {
     const { personalFields, detectors } = definition.privacy;
     ok(

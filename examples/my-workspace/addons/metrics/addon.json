@@ -1,5 +1,6 @@
 {
   "apiVersion": 1,
+  "personalData": "none",
   "description": "Metrics of the shop (CPU, memory, queue depth). Demo: recorded series in a JSON file. For real: query your metrics store.",
   "settings": {
     "path": { "type": "string", "env": "METRICS_PATH", "description": "JSON file with the series (demo only)" }

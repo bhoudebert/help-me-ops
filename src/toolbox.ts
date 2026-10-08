@@ -6,6 +6,7 @@ import { addonTools, connectorTypes } from "./addons/runtime.ts";
 import { loadConfig, resolveWorkspace } from "./config.ts";
 import { createConnectors } from "./connectors/registry.ts";
 import { loadPlaybooks } from "./playbooks.ts";
+import { createDataPolicy, type Declaration } from "./data.ts";
 import { createMasker } from "./privacy.ts";
 import type { AppSetup } from "./scope.ts";
 import type { Toolbox } from "./tools/index.ts";
@@ -52,8 +53,15 @@ export async function openToolbox(workspace = resolveWorkspace(), extraAddons: s
       ...(addon.playbooks ? [{ dir: addon.playbooks, origin: `addon:${addon.name}` }] : []),
     ]),
   ];
+  const defaults: Record<string, Declaration> = {};
+  for (const a of addons) if (a.definition?.personalData) defaults[a.name] = a.definition.personalData;
+  const data = createDataPolicy(config.privacy, defaults, [
+    ...apps.flatMap((a) => a.envs.flatMap((e) => e.sources.map((s) => s.id))),
+    ...addons.map((a) => a.name),
+  ]);
   return {
     workspace: baseDir,
+    data,
     privacy: config.privacy,
     masker: createMasker(
       config.privacy,

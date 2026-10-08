@@ -152,8 +152,9 @@ What the tools return is sent to the AI provider of your client, and help-me-ops
 there; expose only what an investigation needs (a database view without the
 personal columns, an API path without personal data, scrubbed logs), and use a
 local model when data cannot leave. [The guide](docs/guide/privacy.md) says what
-each addon can return, how to mask, and what is coming (declaring personal
-data, placeholders, local models).
+each addon can return, how to mask, and how to declare which sources
+hold personal data (with an optional strict mode that serves only the ones
+declared free of it), and what is coming (placeholders, local models).
 
 ## Independence and trademarks
 

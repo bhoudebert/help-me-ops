@@ -17,8 +17,9 @@
   candidates: Grafana, Sentry, PagerDuty. Each an addon following
   `examples/my-workspace/addons/`.
 - **Personal data** (guide and the `privacy.mask` safeguard done; the rest soon), in this order:
-  1. _Declare it_: each source and addon says whether it can return personal
-     data, and `doctor` shows it.
+  1. _Declare it_ (done, ADR 0012): each source and addon says whether it can
+     return personal data (`privacy.data`, `personalData` in an addon), and
+     `doctor` shows it.
   2. _Stable placeholders_ (`user-3f2a`) as an option next to the stars of
      `privacy.mask` (done: fields and patterns hidden in everything the tools
      return, ADR 0010), so the assistant still follows one customer across
@@ -31,7 +32,8 @@
      national number), named in `privacy.mask.patterns` like the built-in ones.
      Declared as JSON (a regex and an optional checksum such as `luhn` or
      `iban`), not as code, so a detector can only hide.
-  4. _A strict mode_ that serves only sources declared free of personal data.
+  4. _A strict mode_ (done, ADR 0012, off by default) that serves only sources
+     declared free of personal data.
   5. _Local models_ (next item), the strongest answer when data cannot leave.
 - **API mode and local models** (soon): run the investigation without an AI
   client, from the terminal or a script, by calling a model API directly (a
