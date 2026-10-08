@@ -25,6 +25,7 @@ MCP (src/mcp.ts) ──┘  (src/toolbox.ts)    └─▶ playbooks (<workspace>
   workspace (`ops init workspace`) from `templates/workspace/` and a generated
   `ops.config.json`; neither overwrites, and tests load the result.
 - `docs/guide/ready-made/` documents each shipped addon on one pattern (what you need, set-up, settings and tools, safety, demo, troubleshooting), with a catalog page; `test/docs.test.ts` checks that each page names every tool, setting and variable of its `addon.json`, and each addon folder has a README.
+- `src/conclusion.ts` keeps, per session, the evidence every tool returned (the `Ledger`, filled by a wrapper around each tool in `createToolDefinitions`) and checks a conclusion against it: each quote must be in a result, from the source, at the time and for the environment it claims; it then renders the one report layout of every client.
 - `src/knowledge.ts` cuts the Markdown of `knowledge/`, `playbooks/` and the addons' into passages at their headings and ranks them (BM25 over the words, the section's own heading counting most); files are read per call, symbolic links never followed.
 - `src/scope.ts` resolves the app and environment a read applies to, and
   proposes them from a question.
@@ -60,13 +61,14 @@ record for the case file.
 
 ## Tools
 
-| Tool              | Input                                       | Returns                                |
-| ----------------- | ------------------------------------------- | -------------------------------------- |
-| `listSources`     | none                                        | Sources with kind and description      |
-| `searchSource`    | `source`, `query`, `from?`, `to?`, `limit?` | Evidence, in source order              |
-| `listPlaybooks`   | `question?`                                 | Playbooks, matching ones first         |
-| `searchKnowledge` | `query`, `app?`, `limit?`                   | Passages of runbooks and notes, ranked |
-| `getPlaybook`     | `id`                                        | The playbook's steps                   |
+| Tool              | Input                                       | Returns                                                              |
+| ----------------- | ------------------------------------------- | -------------------------------------------------------------------- |
+| `listSources`     | none                                        | Sources with kind and description                                    |
+| `searchSource`    | `source`, `query`, `from?`, `to?`, `limit?` | Evidence, in source order                                            |
+| `listPlaybooks`   | `question?`                                 | Playbooks, matching ones first                                       |
+| `searchKnowledge` | `query`, `app?`, `limit?`                   | Passages of runbooks and notes, ranked                               |
+| `checkConclusion` | cause, certainty, evidence, unknowns, next  | Accepted with a report, or refused with the quotes it could not find |
+| `getPlaybook`     | `id`                                        | The playbook's steps                                                 |
 
 All read-only (`readOnlyHint: true`, `destructiveHint: false`); `searchSource`
 is open-world (it reaches the investigated system).

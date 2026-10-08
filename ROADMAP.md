@@ -3,9 +3,8 @@
 ## Next
 
 - **The rest of the plug-in kit** (`openspec/changes/plug-in-kit/`):
-  a checked conclusion (cause, evidence,
-  unknowns, every quote from a result), a scripted terminal demo (`ops demo`)
-  and setup helpers (`ops init`, `ops doctor`, `ops addon check`).
+  a scripted terminal demo (`ops demo`) and the last setup helpers (richer `ops doctor`
+  checks, MCP setup tools).
 - **Writing an addon without MCP knowledge** (ADR 0009): a manifest and plain
   functions (done), an `ops init addon` scaffold (done), shipped addons: `rest` for
   a team's own API (done), Datadog (done, with a mock), a local `git` addon (done), GitHub (done, with a mock).
