@@ -1,0 +1,28 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "streams",
+    "result": [
+      {
+        "stream": {
+          "service": "worker",
+          "level": "error",
+          "app": "shop"
+        },
+        "values": [["1791367264000000000", "container shop-worker-1 OOMKilled (exit 137), restart 1"]]
+      },
+      {
+        "stream": {
+          "service": "payments",
+          "level": "error",
+          "app": "shop"
+        },
+        "values": [
+          ["1791367202000000000", "webhook endpoint /hooks/acme-pay returned 503 to provider (queue full)"],
+          ["1791367322123456789", "order=4513 still awaiting_payment"]
+        ]
+      }
+    ],
+    "stats": {}
+  }
+}

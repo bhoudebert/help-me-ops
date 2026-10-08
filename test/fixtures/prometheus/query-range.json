@@ -1,0 +1,29 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "matrix",
+    "result": [
+      {
+        "metric": {
+          "__name__": "payment_confirm_queue_depth",
+          "env": "prod",
+          "job": "shop-worker"
+        },
+        "values": [
+          [1791366000, "12"],
+          [1791366600, "620"],
+          [1791366900, "NaN"],
+          [1791367260, "1240"]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "payment_confirm_queue_depth",
+          "env": "staging",
+          "job": "shop-worker"
+        },
+        "values": [[1791366000, "3"]]
+      }
+    ]
+  }
+}

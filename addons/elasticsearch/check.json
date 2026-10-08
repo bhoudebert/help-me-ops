@@ -1,0 +1,44 @@
+[
+  {
+    "name": "search the logs",
+    "tool": "search",
+    "input": {
+      "query": "service:payments AND level:error",
+      "from": "2026-10-07T09:00:00Z",
+      "to": "2026-10-07T11:00:00Z"
+    },
+    "settings": {
+      "baseUrl": "http://es.test:9200",
+      "indices": "logs-shop-*"
+    },
+    "responses": {
+      "POST http://es.test:9200/logs-shop-*/_search": {
+        "body": {
+          "took": 3,
+          "timed_out": false,
+          "hits": {
+            "hits": [
+              {
+                "_index": "logs-shop-prod",
+                "_id": "a1",
+                "_source": {
+                  "@timestamp": "2026-10-07T10:00:02Z",
+                  "message": "webhook returned 503 to provider (queue full)",
+                  "level": "error",
+                  "service": {
+                    "name": "payments"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "expect": {
+      "minRecords": 1,
+      "summaryIncludes": "503",
+      "withTime": true
+    }
+  }
+]

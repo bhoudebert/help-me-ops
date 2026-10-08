@@ -1,0 +1,13 @@
+{
+  "error": {
+    "root_cause": [
+      {
+        "type": "query_shard_exception",
+        "reason": "Failed to parse query [service:(]"
+      }
+    ],
+    "type": "search_phase_execution_exception",
+    "reason": "all shards failed"
+  },
+  "status": 400
+}

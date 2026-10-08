@@ -1,0 +1,46 @@
+{
+  "took": 3,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "max_score": null,
+    "hits": [
+      {
+        "_index": "logs-shop-prod",
+        "_id": "a1",
+        "_score": null,
+        "_source": {
+          "@timestamp": "2026-10-07T10:00:02Z",
+          "message": "webhook endpoint /hooks/acme-pay returned 503 to provider (queue full)",
+          "level": "error",
+          "service": {
+            "name": "payments"
+          },
+          "host": {
+            "name": "shop-prod-1"
+          }
+        },
+        "sort": [1791367202000]
+      },
+      {
+        "_index": "logs-shop-prod",
+        "_id": "a2",
+        "_score": null,
+        "_source": {
+          "@timestamp": "2026-10-07T10:01:04Z",
+          "message": "container shop-worker-1 OOMKilled (exit 137)",
+          "log": {
+            "level": "error"
+          },
+          "service": "worker"
+        },
+        "sort": [1791367264000]
+      }
+    ]
+  }
+}
