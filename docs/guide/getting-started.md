@@ -73,7 +73,7 @@ itself runs in an AI client, which brings its own model:
 
 ## Make it yours
 
-1. Copy `examples/my-workspace` to a folder of your own (in your app's repository, for example) and point to it with `--workspace` or `OPS_WORKSPACE`.
+1. Create a workspace in your own repository, with `npm run ops -- init workspace ../my-app/ops --app my-app` (a configuration, a starter playbook and a README: it never overwrites), and point to it with `OPS_WORKSPACE` in `.env`. Or copy `examples/my-workspace` to start from the demo.
 2. [Connect your sources](/connectors): describe them in `ops.config.json`, per app and environment, write a module for any that is not a log file.
 3. [Write a playbook](/playbooks) for the problem you investigate most often.
 4. [Write an addon](/addons) for a database, an API or metrics: an `addon.json` and a `tools.ts` of plain functions.

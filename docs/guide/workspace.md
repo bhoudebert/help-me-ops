@@ -35,6 +35,19 @@ my-workspace/
 - **Evidence**: one thing found, with its time and a readable line, which the
   assistant quotes in its conclusion.
 
+## Start from nothing
+
+```bash
+# from the help-me-ops clone
+npm run ops -- init workspace ../my-app/ops --app my-app --envs prod,staging
+```
+
+It creates the folder with an `ops.config.json` (your app and environments, no
+sources yet), a starter playbook to copy, an `addons/` folder with a note, and a
+README listing what each file is for. It never overwrites: if any of those files
+exists, nothing is written. It ends by printing what to do next: point
+`OPS_WORKSPACE` at the folder, add a log file or an addon, run `doctor`.
+
 ## Start from the demo
 
 1. Copy `examples/my-workspace` to `ops/` in your app's repository.

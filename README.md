@@ -87,8 +87,9 @@ its safety, how to try it without an account, and what to do when it does not wo
 
 ## Plug in your own
 
-Copy `examples/my-workspace` to a folder of your own (in your app's repository, for
-example) and point to it with `--workspace` or `OPS_WORKSPACE`. Replace the
+Create a workspace in your own repository with
+`npm run ops -- init workspace ../my-app/ops --app my-app` (or copy
+`examples/my-workspace`) and point to it with `OPS_WORKSPACE` in `.env`. Replace the
 fixtures one source at a time: logs need no code; a database, metrics, an API or
 a health check are an addon, a folder you drop in `addons/` with two small
 files, an `addon.json` and a `tools.ts` of plain functions, no AI or MCP
