@@ -174,7 +174,23 @@ October at 09:30." It finds two suspects, a cache of confirmed orders that is
 never emptied (5 October) and a lowered memory limit (6 October). Details:
 [ready-made addons](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons#git-what-changed-before-the-incident).
 
-## 6. Make it yours
+## 6. GitHub, mocked (optional, needs Docker)
+
+The backend of part 3 also mocks six GitHub API endpoints for a repository,
+`shop-co/shop`: the pull requests that changed the worker, the release, its
+deployments and a failed build. With the backend running, add one line to `.env`:
+
+```bash
+echo 'GITHUB_TOKEN=demo-github-token' >> .env
+npm run ops -- --workspace examples/my-workspace doctor     # github: loaded
+```
+
+Ask: "which pull requests were merged in the three days before the 2.14.0
+release, and did a deploy or a build fail?" It is a stand-in, and the addon is
+experimental until verified on a real GitHub; [what it is and how to check your
+own](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons#github-pull-requests-releases-and-builds-experimental).
+
+## 7. Make it yours
 
 Copy this folder into your own repository, rename the app and environments in
 `ops.config.json`, and replace what the addons read with your read-only systems.

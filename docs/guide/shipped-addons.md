@@ -255,7 +255,106 @@ October). `git.diff` and `git.fileAt` show the code. Together with the memory
 curve that reaches the limit, the conclusion gets sharper, and it still says what
 it cannot tell: leak or limit.
 
+## github: pull requests, releases and builds (experimental)
+
+::: warning Experimental: it may or may not work against your GitHub
+Like `datadog`, this addon is written from GitHub's **documented** REST API and
+tested against recorded responses and a mock, **not** a real GitHub account. It may
+fail on yours, and says so to the assistant. Run the checklist below, and open an
+issue with what you see. (help-me-ops is independent of GitHub, Inc. and
+Microsoft: [independence and trademarks](/legal).)
+:::
+
+The local `git` addon answers "what changed in the code". This one answers what
+only GitHub knows: **which pull requests were merged and by whom, when a release
+shipped, which issues people already filed, and whether a build or a deploy
+failed**.
+
+| Tool           | GitHub API                         | For                                              |
+| -------------- | ---------------------------------- | ------------------------------------------------ |
+| `pullRequests` | `GET /repos/{r}/pulls`             | what was merged since a time, by whom            |
+| `pullRequest`  | `GET /repos/{r}/pulls/{n}` + files | one pull request: its description and files      |
+| `releases`     | `GET /repos/{r}/releases`          | when a version shipped, with its notes           |
+| `commits`      | `GET /repos/{r}/commits`           | commits of a branch or path, with no local clone |
+| `issues`       | `GET /repos/{r}/issues`            | what was reported (pull requests left out)       |
+| `workflowRuns` | `GET /repos/{r}/actions/runs`      | builds and deployments, and their result         |
+
+```json
+"prod": {
+  "sources": [],
+  "addons": {
+    "github": { "token": "${GITHUB_TOKEN}", "repos": "acme/shop,acme/infra" }
+  }
+}
+```
+
+| Setting   | What                                                                                                                        |
+| --------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `token`   | A **fine-grained personal access token**, **secret**, also `GITHUB_TOKEN`.                                                  |
+| `repos`   | The repositories the assistant may read, `owner/name`, comma-separated, also `GITHUB_REPOS`. **Nothing else is reachable.** |
+| `baseUrl` | Default `https://api.github.com`. For GitHub Enterprise Server: `https://github.example.com/api/v3`. Also `GITHUB_API_URL`. |
+
+### Why an API token, and not the `gh` command line tool
+
+`gh` is excellent for a person, and it is what the maintainers use to open pull
+requests. For an assistant reading production, a token is the better door:
+
+- **A token can be limited, `gh`'s login cannot.** `gh auth login` gives a broad
+  session of _you_, with write access. A fine-grained token is limited to the
+  repositories you list and to **read** permissions (Metadata, Contents, Pull
+  requests, Issues, Actions: all _Read_), so even a bug in this addon could not
+  write, and revoking it touches nothing else.
+- **Nothing to install** on the machine that runs the server, and the same code
+  works against GitHub Enterprise Server and the demo's mock.
+- **Testable**: plain HTTP requests, checked against recorded responses, with no
+  subprocess and no login state.
+
+Create the token at _Settings > Developer settings > Fine-grained tokens_, pick
+the repositories, give the five read permissions, and put it in `.env`.
+
+### Why it is safe
+
+- **GET only**, six fixed paths built in the addon; the token is a secret setting
+  that never appears in an error;
+- a repository is read **only if it is in `repos`**; `acme/other` is refused with
+  the list, and no request is made;
+- numbers must be positive integers and times ISO 8601, so nothing from the
+  question is glued into a path;
+- redirects are not followed, answers and descriptions are capped, calls time out;
+- the text of pull requests and issues is **written by other people** and may try
+  to give the assistant orders. It comes back trimmed, and the tools tell the
+  assistant it is evidence, never instructions.
+
+### Try it without an account: a mock of the GitHub API
+
+The demo backend also mocks six of its endpoints for one repository,
+`shop-co/shop`, telling the same story as the demo repository: the pull request
+that batched confirmations behind a cache (412), the one that lowered the memory
+limit (418), the 2.14.0 release, its deployments, a failed build, and an issue
+about worker memory in a load test. The demo configuration already sets the addon
+up for it:
+
+```bash
+# from the help-me-ops clone, with the backend running (see the REST demo above)
+echo 'GITHUB_TOKEN=demo-github-token' >> .env
+npm run ops -- --workspace examples/my-workspace doctor     # github: loaded
+```
+
+Restart your client and ask: "which pull requests were merged in the three days
+before the 2.14.0 release, and did a deploy or a build fail?" The assistant calls
+`github.pullRequests` and `github.workflowRuns`, then `github.pullRequest` on 412
+to read why the cache was added. It is a stand-in, not GitHub: it answers only
+this repository, only GET, and a subset of the filters.
+
+### Check it on your own GitHub
+
+1. Create a fine-grained token on one repository with the five read permissions.
+2. Put it in `.env` as `GITHUB_TOKEN`, and add the `github` block with that repository to one environment.
+3. `npm run ops -- doctor`: `github` must be `loaded`.
+4. Ask for the pull requests merged this week and compare with GitHub; ask for the last release and the last failed workflow run.
+5. A `403` says what is missing (a permission, or the token cannot see that repository); anything else that differs from the GitHub UI, open an issue with the request and the answer.
+
 ## Coming
 
-`github` (pull requests, releases and issues through its API, with a read-only
-token and a list of repositories).
+A way to check an addon before using it (`ops addon check`), a scaffold for a
+whole workspace (`ops init workspace`), and searchable runbooks (`knowledge/`).
