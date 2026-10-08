@@ -141,6 +141,24 @@ the documentation SHALL say it may not work as is.
 - **WHEN** `datadog.searchLogs` is called with `service:payments status:error` and a time range
 - **THEN** one POST of the documented search body is sent, and each returned log becomes evidence with its timestamp and a `status service: message` line
 
+### Requirement: Shipped addons are documented
+
+Every shipped addon SHALL have a page in the guide (`docs/guide/ready-made/`) on
+one pattern: its status, what you need before starting, the steps to set it up
+(secrets in `.env`, a block per environment, `doctor`), its settings with their
+environment variables, its tools with their parameters, example questions, its
+safety, how to try it without an account, what each `doctor` message or error
+means, and its limits. A catalog page SHALL list every shipped addon with what it
+reads, what it needs and its status, and the four steps common to all. Each addon
+folder SHALL hold a README pointing to its page. The pages SHALL name every tool,
+setting and variable of the addon's manifest, and the suite SHALL fail when one
+is missing.
+
+#### Scenario: A new setting
+
+- **WHEN** a setting is added to an addon's `addon.json` and its page is not updated
+- **THEN** the documentation test fails, naming the addon and the setting
+
 ### Requirement: A shipped `git` addon
 
 The repository SHALL ship a `git` addon reading a repository on disk, set by
