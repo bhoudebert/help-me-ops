@@ -133,10 +133,11 @@ the other environments keep working.
 ## Dependencies: a database driver, an SDK
 
 An addon owns its packages. Install them next to it, in the addon folder or in
-the workspace:
+the workspace. `my-workspace` below stands for **your workspace folder** (the
+one holding `ops.config.json`), not for this repository:
 
 ```bash
-cd ops && npm install pg
+cd my-workspace && npm install pg
 ```
 
 If a package is missing, the addon is **skipped with the reason** (`doctor`
@@ -161,7 +162,7 @@ An addon that cannot load is **skipped with one line saying why**, and the rest
 keeps working:
 
 ```bash
-npm run ops -- --workspace ops doctor
+npm run ops -- --workspace my-workspace doctor
 ```
 
 lists every addon as loaded, skipped or replaced, with the reason: a wrong
