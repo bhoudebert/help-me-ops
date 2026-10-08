@@ -12,6 +12,8 @@ import type { Model } from "./endpoint.ts";
 export interface Hooks {
   /** One line per tool call, as it happens. */
   step?(line: string): void;
+  /** The model is being asked, and how long it took: a local model can be silent for minutes. */
+  waiting?(line: string): void;
   /** Something the person should know: old results dropped, a call refused. */
   notice?(line: string): void;
 }
@@ -88,7 +90,10 @@ export class Session {
     try {
       for (;;) {
         this.trim(hooks);
+        hooks.waiting?.(`asking ${this.model.model}… (a local model can take minutes)`);
+        const began = Date.now();
         const reply = await ask(this.model, this.messages, this.specs, this.fetchImpl);
+        hooks.waiting?.(`${this.model.model} answered in ${Math.round((Date.now() - began) / 1000)} s`);
         used += reply.tokens;
         this.tokens += reply.tokens;
         this.messages.push({

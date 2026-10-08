@@ -30,7 +30,15 @@ const goodRun = (): Step[] => [
 const quiet = () => {
   const out: string[] = [];
   const steps: string[] = [];
-  return { out, steps, io: { write: (l: string) => out.push(l), step: (l: string) => steps.push(l) } };
+  const waits: string[] = [];
+  // "asking the model…" and "answered in N s" are timing lines, kept apart from the steps.
+  const isWait = (l: string) => /asking .*…|answered in \d+ s/.test(l);
+  return {
+    out,
+    steps,
+    waits,
+    io: { write: (l: string) => out.push(l), step: (l: string) => (isWait(l) ? waits : steps).push(l) },
+  };
 };
 const flagsFor = (url: string, extra = {}) => ({ baseUrl: url, model: "fake", ...extra });
 const noEnv = {} as NodeJS.ProcessEnv;
@@ -55,6 +63,27 @@ test("ask: the scenario's investigation through the real tools ends in the check
     assert.ok(names.every((n) => /^[\w-]+$/.test(n)));
     // each tool result went back as a tool message
     assert.equal(server.requests.at(-1)!.messages.filter((m) => m.role === "tool").length, scenario.steps.length);
+  } finally {
+    await server.close();
+  }
+});
+
+test("ask and chat: the person sees that the model is being asked, and how long it took", async () => {
+  const server = await fakeChat([{ content: "one" }, { content: "two" }]);
+  try {
+    const one = quiet();
+    await runAsk(await openToolbox(workspace), "q", one.io, flagsFor(server.url), noEnv);
+    assert.match(one.waits[0]!, /^asking fake… \(a local model can take minutes\)$/);
+    assert.match(one.waits[1]!, /^fake answered in \d+ s$/);
+    const lines = ["hello"];
+    const chat = quiet();
+    await runChat(
+      await openToolbox(workspace),
+      { ...chat.io, read: async () => lines.shift() ?? null },
+      flagsFor(server.url),
+      noEnv,
+    );
+    assert.match(chat.waits[0]!, /^ {2}… asking fake…/);
   } finally {
     await server.close();
   }
@@ -188,6 +217,30 @@ test("ask: no model configured, an unreachable server, a slow one, a refusal and
       timeoutMs: 1000,
     };
     await assert.rejects(runAsk(toolbox, "q", io, {}, noEnv), /did not answer within 1 s/);
+  } finally {
+    await server.close();
+  }
+});
+
+test("the reasoning effort is sent only when configured", async () => {
+  const server = await fakeChat([{ content: "a" }, { content: "b" }]);
+  try {
+    const toolbox = await openToolbox(workspace);
+    const { io } = quiet();
+    await runAsk(toolbox, "q", io, flagsFor(server.url), noEnv);
+    toolbox.model = {
+      baseUrl: server.url,
+      model: "fake",
+      maxSteps: 20,
+      temperature: 0,
+      contextTokens: 16000,
+      timeoutMs: 5000,
+      reasoningEffort: "none",
+    };
+    await runAsk(toolbox, "q", io, {}, noEnv);
+    const bodies = server.requests as unknown as { reasoning_effort?: string }[];
+    assert.equal(bodies[0]!.reasoning_effort, undefined);
+    assert.equal(bodies[1]!.reasoning_effort, "none");
   } finally {
     await server.close();
   }

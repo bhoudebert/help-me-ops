@@ -11,6 +11,8 @@ export const ModelConfig = z.object({
   model: z.string().min(1).optional(),
   /** Name it as ${VAR}: a key is never stored in the file. */
   apiKey: z.string().min(1).optional(),
+  /** Sent as `reasoning_effort` when set (`none` turns thinking off on servers that support it, such as Ollama, and is much faster). Left out when absent: not every server accepts it. */
+  reasoningEffort: z.enum(["none", "low", "medium", "high"]).optional(),
   /** Most rounds of tool calls for one question. */
   maxSteps: z.number().int().min(1).max(100).default(20),
   temperature: z.number().min(0).max(2).default(0),

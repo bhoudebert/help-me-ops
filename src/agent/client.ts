@@ -64,6 +64,7 @@ export async function ask(
   const body = {
     model: model.model,
     temperature: model.temperature,
+    ...(model.reasoningEffort ? { reasoning_effort: model.reasoningEffort } : {}),
     messages: messages.map((m) =>
       m.role === "assistant" && m.tool_calls
         ? {

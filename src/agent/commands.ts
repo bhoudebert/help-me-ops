@@ -34,7 +34,7 @@ export async function runAsk(
 ): Promise<TurnResult> {
   if (!question.trim()) throw new Error('Usage: ask "<question>" [--model <name>] [--base-url <url>] [--max-steps N]');
   const session = new Session(toolbox, modelFor(toolbox, flags, env), fetchImpl);
-  const result = await session.turn(question, { step: io.step, notice: io.step });
+  const result = await session.turn(question, { step: io.step, notice: io.step, waiting: io.step });
   io.write(result.text);
   return result;
 }
@@ -68,7 +68,11 @@ export async function runChat(
       continue;
     }
     try {
-      const result = await session.turn(text, { step: (l) => io.step(`  ${l}`), notice: io.step });
+      const result = await session.turn(text, {
+        step: (l) => io.step(`  ${l}`),
+        notice: io.step,
+        waiting: (l) => io.step(`  … ${l}`),
+      });
       io.write(`assistant ▸ ${result.text}`);
     } catch (error) {
       // The conversation is as it was before this question: the person may ask again.
