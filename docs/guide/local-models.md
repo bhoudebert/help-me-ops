@@ -35,7 +35,8 @@ OPS_MODEL_URL=http://localhost:11434/v1 OPS_MODEL=qwen3:8b npm run ops -- chat
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `baseUrl`         | The chat endpoint, up to and including `/v1`. Any URL: this machine, a company server, a provider.                                                                                                                                                                                                                                 | none     |
 | `model`           | The model's name on that server.                                                                                                                                                                                                                                                                                                   | none     |
-| `apiKey`          | Name it as `${VAR}`; `OPS_MODEL_KEY` also works. Never written in the file.                                                                                                                                                                                                                                                        | none     |
+| `apiKey`          | Sent as `Authorization: Bearer <key>`, which most providers expect. Name it as `${VAR}` (read from the environment); `OPS_MODEL_KEY` also works. Never written in the file.                                                                                                                                                        | none     |
+| `headers`         | Other headers to send, for a provider or gateway with its own (`api-key`, `x-api-key`, a tenant). A value may use `${VAR}`. A header named `authorization` replaces the one `apiKey` sends.                                                                                                                                        | none     |
 | `reasoningEffort` | `none`, `low`, `medium` or `high`, sent as `reasoning_effort`. Also `--reasoning` and `OPS_MODEL_REASONING`. `none` turns off the long thinking of models like Qwen 3 on Ollama and makes each step much faster; leave it out for servers that do not accept it. Whether the investigation stays as good is for `ops eval` to say. | not sent |
 | `maxSteps`        | Most rounds of tool calls for one question (`--max-steps`).                                                                                                                                                                                                                                                                        | 20       |
 | `temperature`     | 0 is the most repeatable.                                                                                                                                                                                                                                                                                                          | 0        |
@@ -46,6 +47,29 @@ OPS_MODEL_URL=http://localhost:11434/v1 OPS_MODEL=qwen3:8b npm run ops -- chat
 | `retryDelayMs`    | The first wait before a retry, in milliseconds; it doubles each time.                                                                                                                                                                                                                                                              | 1000     |
 
 There is no default model and no default address: nothing happens until you write them.
+
+## Another provider, or a company gateway
+
+help-me-ops speaks the **OpenAI-compatible chat API** (`POST {baseUrl}/chat/completions` with `tools`) with plain HTTP, and authenticates with a **Bearer key** or with **headers you list**. So:
+
+| Case                                                                                                                                                            | What to set                                                                                                                                                           | Status                                                                                                    |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| A provider with an OpenAI-compatible endpoint and a Bearer key (OpenAI, DeepSeek's and Moonshot's APIs, OpenRouter, Groq, Together, a LiteLLM or other gateway) | `baseUrl`, `model`, `apiKey: "${THE_KEY}"`                                                                                                                            | The format is the same as Ollama's, which is what was tested. **No hosted provider has been called yet.** |
+| A key in another header (`x-api-key`, a tenant id)                                                                                                              | `headers: { "x-api-key": "${THE_KEY}" }`                                                                                                                              | Supported, untested against a real one                                                                    |
+| Azure OpenAI                                                                                                                                                    | `baseUrl: "https://<resource>.openai.azure.com/openai/deployments/<deployment>?api-version=<version>"`, `headers: { "api-key": "${AZURE_KEY}" }`, `model` as you like | The query string is kept on the request and never shown. Untested against Azure                           |
+| Anthropic's, Google's or another **native** API that is not OpenAI-compatible                                                                                   | not supported                                                                                                                                                         | Use the OpenAI-compatible endpoint if the provider offers one; a native adapter is on the roadmap         |
+| Tokens that expire and are minted by a command or OAuth, request signing (AWS Bedrock), client certificates                                                     | not supported                                                                                                                                                         | Put a gateway in front that accepts a plain key                                                           |
+
+```json
+"model": {
+  "baseUrl": "https://api.example.com/v1",
+  "model": "the-model-name",
+  "apiKey": "${EXAMPLE_API_KEY}",
+  "retries": 3
+}
+```
+
+A hosted URL sends your evidence to that provider: see [where the model is](#where-the-model-is-say-it-and-restrict-it). Providers rate-limit; a 429 or a busy gateway is retried with a growing wait (see `retries`).
 
 ## Chat
 

@@ -1,7 +1,7 @@
 // One request to the model, over the OpenAI-compatible chat wire format: plain
 // fetch, no SDK (ADR 0014).
 import { z } from "zod";
-import type { Model } from "./endpoint.ts";
+import { chatUrl, displayUrl, type Model } from "./endpoint.ts";
 
 // ---- the wire format ----
 
@@ -90,12 +90,14 @@ export async function ask(
       function: { name: t.name, description: t.description, parameters: t.parameters },
     })),
   };
-  const url = `${model.baseUrl}/chat/completions`;
+  const url = chatUrl(model.baseUrl);
+  const own = Object.keys(model.headers).map((k) => k.toLowerCase());
   const init = () => ({
     method: "POST",
     headers: {
       "content-type": "application/json",
-      ...(model.apiKey ? { authorization: `Bearer ${model.apiKey}` } : {}),
+      ...(model.apiKey && !own.includes("authorization") ? { authorization: `Bearer ${model.apiKey}` } : {}),
+      ...model.headers,
     },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(model.timeoutMs),
@@ -108,8 +110,8 @@ export async function ask(
       const timedOut = error instanceof Error && error.name === "TimeoutError";
       throw new Error(
         timedOut
-          ? `The model at ${model.baseUrl} did not answer within ${Math.round(model.timeoutMs / 1000)} s (timeoutMs). A large model on a CPU can be that slow.`
-          : `Cannot reach the model at ${model.baseUrl}: ${error instanceof Error ? error.message : String(error)}. Is the server running (for Ollama: ollama serve)?`,
+          ? `The model at ${displayUrl(model.baseUrl)} did not answer within ${Math.round(model.timeoutMs / 1000)} s (timeoutMs). A large model on a CPU can be that slow.`
+          : `Cannot reach the model at ${displayUrl(model.baseUrl)}: ${error instanceof Error ? error.message : String(error)}. Is the server running (for Ollama: ollama serve)?`,
         { cause: error },
       );
     }
@@ -142,7 +144,9 @@ export async function ask(
   }
   const parsed = ChatResponse.safeParse(await response.json().catch(() => null));
   if (!parsed.success) {
-    throw new Error(`${model.baseUrl} did not answer like an OpenAI-compatible chat endpoint (choices[].message).`);
+    throw new Error(
+      `${displayUrl(model.baseUrl)} did not answer like an OpenAI-compatible chat endpoint (choices[].message).`,
+    );
   }
   const message = parsed.data.choices[0]!.message;
   return {

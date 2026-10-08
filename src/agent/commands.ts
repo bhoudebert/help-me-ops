@@ -1,7 +1,7 @@
 // `ops chat` and `ops ask`: the loop in the terminal (ADR 0014).
 import type { Toolbox } from "../tools/index.ts";
 import { Session, type TurnResult } from "./loop.ts";
-import { assertModelAllowed, resolveModel } from "./endpoint.ts";
+import { assertModelAllowed, displayUrl, resolveModel } from "./endpoint.ts";
 
 export interface AgentFlags {
   baseUrl?: string;
@@ -53,7 +53,9 @@ export async function runChat(
 ): Promise<void> {
   const model = modelFor(toolbox, flags, env);
   const session = new Session(toolbox, model, fetchImpl);
-  io.step(`help-me-ops chat: ${model.model} at ${model.baseUrl}, workspace ${toolbox.workspace ?? "unknown"}. ${HELP}`);
+  io.step(
+    `help-me-ops chat: ${model.model} at ${displayUrl(model.baseUrl)}, workspace ${toolbox.workspace ?? "unknown"}. ${HELP}`,
+  );
   for (;;) {
     const line = await io.read("you ▸ ");
     if (line === null) return;

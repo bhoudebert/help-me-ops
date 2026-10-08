@@ -9,8 +9,16 @@ export const ModelConfig = z.object({
   /** e.g. http://localhost:11434/v1 (Ollama); any OpenAI-compatible chat endpoint. */
   baseUrl: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
-  /** Name it as ${VAR}: a key is never stored in the file. */
+  /** Sent as `Authorization: Bearer <key>`, what most providers expect. Name it as ${VAR}: a key is never stored in the file. */
   apiKey: z.string().min(1).optional(),
+  /**
+   * Other headers to send, for a provider or a gateway that wants its own
+   * (`api-key`, `x-api-key`, a tenant). A value may use ${VAR}. A header named
+   * `authorization` replaces the one `apiKey` would send.
+   */
+  headers: z
+    .record(z.string().regex(/^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/, "not a valid header name"), z.string())
+    .default({}),
   /** Sent as `reasoning_effort` when set (`none` turns thinking off on servers that support it, such as Ollama, and is much faster). Left out when absent: not every server accepts it. */
   reasoningEffort: z.enum(["none", "low", "medium", "high"]).optional(),
   /** Most rounds of tool calls for one question. */
@@ -35,6 +43,33 @@ export interface Model extends Omit<ModelConfig, "baseUrl" | "model"> {
   model: string;
 }
 
+/** `${NAME}` in a configured text is the environment variable NAME: credentials stay out of the file. */
+function fill(text: string, env: NodeJS.ProcessEnv, what: string): string {
+  return text.replace(/\$\{(\w+)\}/g, (_, name: string) => {
+    const found = env[name];
+    if (found === undefined)
+      throw new Error(`${what} uses ${"$"}{${name}}, and the environment variable ${name} is not set.`);
+    return found;
+  });
+}
+
+/** An address as it is shown: without the query string or a login, which can carry a key. */
+export function displayUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.origin}${u.pathname}${u.search ? "?…" : ""}`;
+  } catch {
+    return url;
+  }
+}
+
+/** The chat endpoint of an address, keeping any query string (Azure's api-version, for one). */
+export function chatUrl(baseUrl: string): string {
+  const u = new URL(baseUrl);
+  u.pathname = `${u.pathname.replace(/\/+$/, "")}/chat/completions`;
+  return u.toString();
+}
+
 /** The model from the flags, the environment and the config, in that order of strength. */
 export function resolveModel(
   config: ModelConfig | undefined,
@@ -56,13 +91,14 @@ export function resolveModel(
   }
   return {
     ...base,
-    baseUrl: baseUrl.replace(/\/+$/, ""),
+    baseUrl: fill(baseUrl, env, "the model address").replace(/\/+$/, ""),
+    headers: Object.fromEntries(Object.entries(base.headers).map(([k, v]) => [k, fill(v, env, `the header ${k}`)])),
     model,
     maxSteps: flags.maxSteps ?? base.maxSteps,
     reasoningEffort: ModelConfig.shape.reasoningEffort.parse(
       flags.reasoningEffort ?? env.OPS_MODEL_REASONING ?? base.reasoningEffort,
     ),
-    apiKey: env.OPS_MODEL_KEY ?? base.apiKey,
+    apiKey: env.OPS_MODEL_KEY ?? (base.apiKey === undefined ? undefined : fill(base.apiKey, env, "the apiKey")),
   };
 }
 
@@ -92,8 +128,8 @@ export function describeEndpoint(baseUrl: string): string {
   const host = hostOf(baseUrl);
   const place = placeOf(host);
   return place === "a named host"
-    ? `${baseUrl} (${host}: a named host; the evidence goes to whoever runs it)`
-    : `${baseUrl} (${place}: nothing leaves your network)`;
+    ? `${displayUrl(baseUrl)} (${host}: a named host; the evidence goes to whoever runs it)`
+    : `${displayUrl(baseUrl)} (${place}: nothing leaves your network)`;
 }
 
 /** Refuses a model outside `privacy.modelHosts`, before any request. No list: anything goes. */
