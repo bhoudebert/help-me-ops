@@ -64,11 +64,12 @@ the assistant (and its provider) sees them. List what to hide in `ops.config.jso
 }
 ```
 
-| Setting       | What                                                                                                                                                                                                                                                                                                                                                                                      |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fields`      | keys whose **values** are hidden, at any depth, in the data of the evidence. **Case, underscores, hyphens and spaces are ignored**, so `firstName` also hides `first_name`, `first-name`, `FIRST_NAME` and `first name`; `*` is a wildcard (`*address*`, and `*firstname*` for a key that only contains it, like `given_first_name`); a dotted path (`customer.name`) names a nested key. |
-| `patterns`    | what is hidden **wherever it appears in a text** (a log line, a summary, a runbook): `email`, `ip` (IPv4), `iban`, `card` (only numbers that pass the Luhn check), `phone` (international, starting with `+`), `token` (bearer tokens, cloud and GitHub keys, JWTs), or **your own regex**: `{ "name": "customer-id", "regex": "CUST-\\d{6}" }`.                                          |
-| `replacement` | what replaces a hidden value, default `***` (it does not keep the length).                                                                                                                                                                                                                                                                                                                |
+| Setting        | What                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fields`       | keys whose **values** are hidden, at any depth, in the data of the evidence. **Case, underscores, hyphens and spaces are ignored**, so `firstName` also hides `first_name`, `first-name`, `FIRST_NAME` and `first name`; `*` is a wildcard (`*address*`, and `*firstname*` for a key that only contains it, like `given_first_name`); a dotted path (`customer.name`) names a nested key. |
+| `patterns`     | what is hidden **wherever it appears in a text** (a log line, a summary, a runbook): `email`, `ip` (IPv4), `iban`, `card` (only numbers that pass the Luhn check), `phone` (international, starting with `+`), `token` (bearer tokens, cloud and GitHub keys, JWTs), or **your own regex**: `{ "name": "customer-id", "regex": "CUST-\\d{6}" }`.                                          |
+| `placeholders` | `true` replaces a hidden value by a [stable placeholder](#keep-the-link-stable-placeholders) (`user-3f2a`) instead of the replacement. Off by default.                                                                                                                                                                                                                                    |
+| `replacement`  | what replaces a hidden value, default `***` (it does not keep the length).                                                                                                                                                                                                                                                                                                                |
 
 Which keys a field matches:
 
@@ -93,6 +94,29 @@ What it does with them:
 Try it on the demo: add the block `"privacy": { "mask": { "fields": ["user"] } }` to the
 demo's `ops.config.json`, restart, and ask about order 4512. The user `u-881`
 reads `***`. (The demo scenario itself runs without the mask.)
+
+### Keep the link: stable placeholders
+
+With stars, a user id hidden in the order and in the logs reads `***` in both, and
+the assistant cannot follow that user from one to the other. Turn on placeholders:
+
+```json
+"privacy": { "mask": { "fields": ["user"], "placeholders": true } }
+```
+
+A hidden value becomes the name of its key and a few hex digits, `user-3f2a`:
+
+- **The same value is the same placeholder** in every tool and source of the session, and two values differ.
+- **Give it back to a tool and it stands for the value**: `searchSource` for `user-3f2a` searches for the real user id, and the answer comes back masked again. An error that would repeat the input shows the placeholder.
+- **It cannot be guessed.** The digits come from a keyed hash with a key made when the server starts: you cannot compute a placeholder from an email, and the same email is another placeholder in the next session.
+- The [checked conclusion](/investigate#a-conclusion-that-is-checked) keeps the placeholders, and its report names `user-3f2a`. The mapping lives in the server's memory for the session only, so you cannot look it up afterwards.
+- A value under a key that is an object or a list stays `***`.
+
+::: warning A pseudonym is still personal data
+The stars hide more. Placeholders hide the value but keep the linkage: the provider
+sees that two lines concern the same person, not who. Whether that is acceptable is
+a decision for the people who answer for your data, like the rest of this page.
+:::
 
 ### Let an addon say what is personal
 
@@ -135,7 +159,7 @@ to the demo config: the order's user is `***`, and so is `user=u-881` in the log
 ::: warning A seat belt, not a guarantee
 
 - **Free text is best effort.** A pattern finds an email address; it does not find a name in a sentence ("Jane called about her order"). Fields are reliable, patterns are not.
-- **A hidden value cannot be used to search further.** If you hide an identifier the investigation needs (a user id), the assistant cannot follow it from one source to the next. Hide what identifies a person; leave the ids that identify an order or a request. (Stable placeholders, `user-3f2a`, that keep the link are a later option.)
+- **A hidden value cannot be used to search further.** If you hide an identifier the investigation needs (a user id), the assistant cannot follow it from one source to the next. Hide what identifies a person; leave the ids that identify an order or a request. To keep the link without the value, turn on [stable placeholders](#keep-the-link-stable-placeholders).
 - **Detectors prefer a miss to hiding every number**: a card number is hidden only if it passes the Luhn check; IPv6 is not covered.
 - It cannot see data **in the questions**: what you type to the assistant goes to the provider as you wrote it.
 - **Playbooks are not masked**: they are written by your team.
@@ -212,7 +236,6 @@ there: whatever the model, it cannot cite a line no tool returned.
 
 On the [roadmap](https://github.com/bhoudebert/help-me-ops/blob/main/ROADMAP.md), in this order:
 
-1. **Stable placeholders** (`user-3f2a`) instead of stars, so the assistant can still follow one customer across sources, translated back when it gives them in a tool call.
-2. **Local models** through API mode.
+1. **Local models** through API mode.
 
 The mask is a second line of defence, never a guarantee of anonymity: the first measure above is the one to rely on.

@@ -20,11 +20,11 @@
   1. _Declare it_ (done, ADR 0012): each source and addon says whether it can
      return personal data (`privacy.data`, `personalData` in an addon), and
      `doctor` shows it.
-  2. _Stable placeholders_ (`user-3f2a`) as an option next to the stars of
-     `privacy.mask` (done: fields and patterns hidden in everything the tools
-     return, ADR 0010), so the assistant still follows one customer across
-     sources, translated back in the tool inputs it gives. Case files, when they
-     exist, must save the masked evidence.
+  2. _Stable placeholders_ (done, ADR 0013): `privacy.mask.placeholders` replaces
+     a hidden value by `user-3f2a`, the same in every source of the session and
+     translated back in the tool inputs the assistant gives, so one customer can
+     still be followed. Case files, when they exist, must save the masked
+     evidence, and could save the mapping.
   3. _Detectors and personal fields from addons_ (done, ADR 0011): an addon (or a shared folder of
      addons a company keeps for all its workspaces) declares what is personal in
      its own domain: the keys its records hold (`personalFields`, switched on by

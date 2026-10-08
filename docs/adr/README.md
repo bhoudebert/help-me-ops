@@ -15,5 +15,6 @@
 | [0010](0010-mask-at-the-tool-boundary.md) | Mask what the tools return, at the one place every answer passes | accepted |
 | [0011](0011-addons-declare-whats-personal.md) | Addons declare what is personal, as JSON that can only hide | accepted |
 | [0012](0012-declare-the-data-and-a-strict-mode.md) | Declare which sources hold personal data, and an optional strict mode | accepted |
+| [0013](0013-stable-placeholders.md) | Stable placeholders, as an option next to the stars | accepted |
 
 New records start from [template.md](template.md).

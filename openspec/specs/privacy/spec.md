@@ -128,3 +128,20 @@ without a `mask`.
 
 - **WHEN** strict mode is on and `order` is declared `possible`
 - **THEN** `order.getOrder` is refused with `Strict mode: "order" is not declared free of personal data`
+
+### Requirement: Stable placeholders
+
+When `privacy.mask.placeholders` is true (default false), a hidden string or number
+SHALL be replaced by a placeholder made of the name of its key or pattern and hex
+digits from a keyed hash whose key is made at start-up, so that the same value is
+the same placeholder in every tool answer of the session, two values differ, and a
+placeholder cannot be computed from a guess. Before a tool other than the
+conclusion check runs, a placeholder handed out in this session found in its input
+SHALL be replaced by its value. An error that would repeat a known value SHALL show
+its placeholder. The checked conclusion SHALL keep the placeholders. The assistant
+SHALL be told what a placeholder is.
+
+#### Scenario: Following a user
+
+- **WHEN** `order.getOrder` shows the user as `user-3f2a` and the assistant searches the logs for `user-3f2a`
+- **THEN** the search is made for the real user id and the lines come back with `user-3f2a`, never the id
