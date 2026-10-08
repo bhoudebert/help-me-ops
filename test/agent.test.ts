@@ -116,6 +116,30 @@ test("ask: a bad call is answered with the error, not run, and the model may cor
   }
 });
 
+test("ask: a tool call the server cannot parse (a 500) is the model's mistake: it is told and may try again, three times at most", async () => {
+  const broken = {
+    status: 500,
+    body: { error: { message: 'error parsing tool call: raw=\'{"app":"shop","cause":"unterminated' } },
+  };
+  const server = await fakeChat([broken, calls({ name: "listPlaybooks", arguments: {} }), { content: "done" }]);
+  const hopeless = await fakeChat([broken, broken, broken, broken]);
+  try {
+    const { io, steps } = quiet();
+    const result = await runAsk(await openToolbox(workspace), "q", io, flagsFor(server.url), noEnv);
+    assert.equal(result.text, "done");
+    assert.ok(steps.some((s) => /wrote a tool call the server could not read/.test(s)));
+    assert.match(server.requests[1]!.messages.at(-1)!.content!, /not valid JSON/);
+    await assert.rejects(
+      runAsk(await openToolbox(workspace), "q", io, flagsFor(hopeless.url), noEnv),
+      /could not parse the arguments of the tool call/,
+    );
+    assert.equal(hopeless.requests.length, 4, "the first try and three more");
+  } finally {
+    await server.close();
+    await hopeless.close();
+  }
+});
+
 test("ask: a model that says nothing is asked again, twice at most", async () => {
   const server = await fakeChat([{}, calls({ name: "listPlaybooks", arguments: {} }), {}, {}, {}]);
   try {

@@ -5,6 +5,9 @@ import type { Model } from "./endpoint.ts";
 
 // ---- the wire format ----
 
+/** The server could not read the arguments of a tool call the model wrote (some servers answer 500): the model's mistake, not a broken server. */
+export class UnreadableToolCall extends Error {}
+
 export interface ToolCall {
   id: string;
   name: string;
@@ -104,7 +107,13 @@ export async function ask(
     );
   }
   if (!response.ok) {
-    const text = (await response.text().catch(() => "")).trim().slice(0, 300);
+    const full = (await response.text().catch(() => "")).trim();
+    if (response.status >= 500 && /error parsing tool call/i.test(full)) {
+      throw new UnreadableToolCall(
+        "The server could not parse the arguments of the tool call: they were not valid JSON.",
+      );
+    }
+    const text = full.slice(0, 300);
     const hint =
       response.status === 401 || response.status === 403
         ? " Check the key (OPS_MODEL_KEY)."

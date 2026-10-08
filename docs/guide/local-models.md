@@ -176,6 +176,10 @@ qwen3:14b · reasoning none       5/5       5/5    2.0/5  11     51,595  16 s
 qwen3:14b · reasoning default    5/5       0/5    0.0/5  6      21,239  40 s
 llama3.1:8b · reasoning none     0/5       0/5    0.0/5  1      3,410   1 s
 llama3.1:8b · reasoning default  0/5       0/5    0.0/5  1      3,410   1 s
+gpt-oss:20b · reasoning low      5/5       0/5    1.0/5  16     74,962  58 s
+gpt-oss:20b · reasoning default  1/5       1/5    0.4/5  0      0       56 s
+deepseek-r1:7b · either          0/5       0/5    0.0/5  0      1,248   5 s
+deepseek-r1:14b · either         0/5       0/5    0.0/5  0      1,377   20 s
 ```
 
 What to read in it, and what not to:
@@ -184,4 +188,7 @@ What to read in it, and what not to:
 - **The best setting here is the larger model with thinking off**: `qwen3:14b` found the direct cause (the 503 refusal and the full queue) in 5 of 5 runs in 16 s. It never found the deeper one (the worker killed for lack of memory after release 2.14.0, and the two other orders).
 - **Thinking was slower and no better**: with it on, both Qwen models were accepted but named none of the expected facts, in two to five times the time. A guess is that the thinking makes them settle on the first plausible reading of the order row; this was not tested.
 - **`llama3.1:8b` called one tool and then answered in words**, never reaching a conclusion. It supports tools in Ollama; it did not follow this method.
-- Five runs of three models on one scenario with temperature 0: a snapshot of one setup, not a ranking. Run `ops eval` on yours.
+- **`gpt-oss:20b`** was accepted 5 of 5 with reasoning `low` but did not name the refused webhook; with its default reasoning, four of five runs ended in an error because the server could not parse the JSON of a tool call the model wrote (the loop asks the model to try again three times, then gives up). It is a 13 GB model on a 16 GB card shared with a desktop, so part of it ran on the CPU (`ollama ps` showed 19% CPU), which is why it was slow.
+- **`deepseek-r1:7b` and `:14b` never called a tool**, though Ollama lists the 7b with the `tools` capability: they answer in words. Whatever the cause (these are distilled, text-only reasoning models), they are of no use for this loop in the Ollama builds tested.
+- **Kimi** was not tested: Ollama offers it only as a cloud model (the prompts go to Moonshot's servers), and the open weights are far too large for a normal machine.
+- Five runs per setting of six models on one scenario with temperature 0: a snapshot of one setup, not a ranking. Run `ops eval` on yours.
