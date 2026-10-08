@@ -5,7 +5,7 @@ you **configure them instead of writing them**. This page is the map: what each
 one reads, what you need to have before you start, and where to find the steps.
 
 ::: danger Personal data
-What a tool returns is sent to the AI provider of your client, and **help-me-ops does not filter it yet**. Do not connect a source whose data you may not send there: [personal data, and what to do](/privacy).
+What a tool returns is sent to the AI provider of your client, and **help-me-ops hides only what you list** ([mask](/privacy#mask-it-a-safeguard-in-ops-config-json)). Do not connect a source whose data you may not send there: [personal data, and what to do](/privacy).
 :::
 
 ## At a glance

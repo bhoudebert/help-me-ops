@@ -25,6 +25,7 @@ MCP (src/mcp.ts) ──┘  (src/toolbox.ts)    └─▶ playbooks (<workspace>
   workspace (`ops init workspace`) from `templates/workspace/` and a generated
   `ops.config.json`; neither overwrites, and tests load the result.
 - `docs/guide/ready-made/` documents each shipped addon on one pattern (what you need, set-up, settings and tools, safety, demo, troubleshooting), with a catalog page; `test/docs.test.ts` checks that each page names every tool, setting and variable of its `addon.json`, and each addon folder has a README.
+- `src/privacy.ts` is the mask (ADR 0010): named detectors (email, ip, iban, card with Luhn, phone, token), the fields and patterns of `privacy.mask`, applied to the evidence of every tool answer in the wrapper of `createToolDefinitions`, before the conclusion ledger; `addon check` uses the same detectors to warn.
 - `src/conclusion.ts` keeps, per session, the evidence every tool returned (the `Ledger`, filled by a wrapper around each tool in `createToolDefinitions`) and checks a conclusion against it: each quote must be in a result, from the source, at the time and for the environment it claims; it then renders the one report layout of every client.
 - `src/knowledge.ts` cuts the Markdown of `knowledge/`, `playbooks/` and the addons' into passages at their headings and ranks them (BM25 over the words, the section's own heading counting most); files are read per call, symbolic links never followed.
 - `src/scope.ts` resolves the app and environment a read applies to, and

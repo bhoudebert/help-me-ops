@@ -133,12 +133,12 @@ MIT. See [LICENSE](LICENSE).
 ## Personal data
 
 What the tools return is sent to the AI provider of your client, and help-me-ops
-**does not filter it yet**. Do not connect a source whose data you may not send
+**hides only what you list** (`privacy.mask` in `ops.config.json`: fields and patterns, replaced by `***`). Do not connect a source whose data you may not send
 there; expose only what an investigation needs (a database view without the
 personal columns, an API path without personal data, scrubbed logs), and use a
 local model when data cannot leave. [The guide](docs/guide/privacy.md) says what
-each addon can return, and what is coming (declaring and masking personal data,
-local models).
+each addon can return, how to mask, and what is coming (declaring personal
+data, placeholders, local models).
 
 ## Independence and trademarks
 
