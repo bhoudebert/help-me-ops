@@ -8,7 +8,7 @@
 - [x] `ops init addon` with the file, api and sql templates
 - [x] Shipped addons: `rest`, `datadog` (with a mock), `git` (local), `github` (with a mock), tested against fixtures
 - [x] Knowledge search: `searchKnowledge`, tests
-- [ ] Conclusion: schema, evidence check, `check_conclusion`, MCP instructions with the same layout
+- [x] Conclusion: schema, evidence check, `checkConclusion`, MCP instructions with the same layout
 - [ ] Scripted model and `ops demo`, tested against the demo world
 - [x] `ops init workspace`
 - [x] `ops addon check`

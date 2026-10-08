@@ -13,6 +13,7 @@ record of how it was decided.
 | demo       | The demo workspace: a shop in prod and staging, a scenario that is a test             |
 | connectors | Sources of evidence: the contract, read-only, log files, team modules, configuration  |
 | playbooks  | How a team investigates a kind of problem, in Markdown, matched to a report           |
+| conclusion | The checked conclusion: a fixed shape, every quote from a result of the session       |
 | knowledge  | Runbooks and past incidents in Markdown, searched by words, returned as evidence      |
 | toolbox    | The tools shared by every client, their hints and errors                              |
 | mcp-server | The server for Claude Code, Codex and Copilot: tools, instructions, prompt            |

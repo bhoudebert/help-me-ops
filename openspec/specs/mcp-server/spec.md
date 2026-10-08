@@ -18,9 +18,10 @@ Code), `.vscode/mcp.json` (Copilot), and a documented `config.toml` entry
 The server instructions SHALL give the method: the scope (app and environment)
 first, asking the person when it is unclear, then the playbook, the
 identifiers of the report searched in the sources, a timeline of quoted
-evidence with source and time, and a conclusion with the likely cause, the
-certainty, the unknowns and the next step for a person; never a claim without
-evidence; never a change to the system.
+evidence with source and time, and a conclusion checked with `checkConclusion`
+(the likely cause, the certainty, the evidence as quotes of tool results, the
+unknowns and the next step for a person), answered with the report it returns;
+never a claim without evidence; never a change to the system.
 
 ### Requirement: Prompt
 

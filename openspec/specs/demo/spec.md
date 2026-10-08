@@ -108,9 +108,10 @@ anything but GET. The documentation SHALL say it is a stand-in, not GitHub.
 A scenario file (`examples/my-workspace/scenarios/`) SHALL hold the question, the
 scope and playbook it should lead to, the tool calls of the investigation, and
 the conclusion (cause, certainty, evidence as source, time and quote, unknowns,
-next step). The test suite SHALL replay the calls through the real tools and
-SHALL fail when a quote of the conclusion is not in a result, or has another
-time.
+next step, with the app and environment). The test suite SHALL replay the calls
+through the real tools and SHALL fail when `checkConclusion` does not accept the
+conclusion, and SHALL show it refuses the same conclusion with a quote that was
+not returned, from another source, at another time or for another environment.
 
 #### Scenario: Paid but no order
 

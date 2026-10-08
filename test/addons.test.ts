@@ -168,7 +168,16 @@ test("addons: tools are namespaced, read one environment, and an unconfigured en
   const tools = createToolDefinitions(toolbox);
   assert.deepEqual(
     tools.map((t) => t.name),
-    ["scope", "listSources", "searchSource", "listPlaybooks", "searchKnowledge", "getPlaybook", "order.getOrder"],
+    [
+      "scope",
+      "listSources",
+      "searchSource",
+      "listPlaybooks",
+      "searchKnowledge",
+      "getPlaybook",
+      "order.getOrder",
+      "checkConclusion",
+    ],
   );
   const order = tools.find((t) => t.name === "order.getOrder")!;
   assert.equal(order.annotations.readOnlyHint, true);

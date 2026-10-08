@@ -3,6 +3,7 @@
 import { z } from "zod";
 import type { AddonReport } from "../addons/loader.ts";
 import type { SearchInput } from "../connectors/types.ts";
+import { CERTAINTIES, checkConclusion, Ledger, type Conclusion } from "../conclusion.ts";
 import { loadKnowledge, searchPassages, toEvidence, type KnowledgeSource } from "../knowledge.ts";
 import { matchPlaybooks, type Playbook } from "../playbooks.ts";
 import { describeScope, resolveScope, type AppSetup } from "../scope.ts";
@@ -160,5 +161,46 @@ export function createToolDefinitions({
       },
     },
   ];
-  return [...core, ...addonTools];
+  // What the tools return in this session, so a conclusion can be checked against it.
+  const ledger = new Ledger();
+  const conclusion: ToolDefinition = {
+    name: "checkConclusion",
+    description:
+      "Check your conclusion before you give it. Give the cause, how sure you are (confirmed, likely, unknown), the evidence (the source, the time and a quote, copied from what a tool returned), what is still unknown and the next step for a person. It refuses a quote no tool returned in this session, or one from another source, time or environment, naming what it could not find; fix the conclusion and check again. When it accepts, answer the person with the report it returns, as it is. Reads no system.",
+    inputSchema: z.object({
+      app: appParam,
+      env: envParam,
+      cause: z.string().describe("The most likely cause, in a sentence or two"),
+      certainty: z.enum(CERTAINTIES).describe("confirmed (two sources agree), likely, or unknown"),
+      evidence: z
+        .array(
+          z.object({
+            source: z
+              .string()
+              .describe("The source of the evidence, as the tool returned it (app-logs, order, metrics ...)"),
+            at: z.string().nullable().describe("Its time as the tool returned it, or null when it has none"),
+            quote: z.string().describe("The line, copied from the tool's result, not paraphrased"),
+          }),
+        )
+        .describe("The evidence the cause rests on"),
+      unknowns: z.array(z.string()).describe("What the evidence does not settle; required unless confirmed"),
+      next: z.string().describe("The next step, for a person to take: the assistant changes nothing"),
+    }),
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    run: async (input) => {
+      const given = input as Conclusion;
+      const scope = given.env ? resolveScope(apps, given.app, given.env) : undefined;
+      return json(
+        checkConclusion({ ...given, ...(scope ? { app: scope.app.name, env: scope.env.name } : {}) }, ledger),
+      );
+    },
+  };
+  return [...core, ...addonTools, conclusion].map((tool) => ({
+    ...tool,
+    run: async (input: unknown) => {
+      const answer = await tool.run(input);
+      if (tool.name !== "checkConclusion") ledger.record(tool.name, answer);
+      return answer;
+    },
+  }));
 }

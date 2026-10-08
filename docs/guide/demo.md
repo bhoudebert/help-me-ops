@@ -79,7 +79,9 @@ And it concludes, quoting each line with its source and time:
 > (for a person): restart or scale the worker, replay the webhook for 4512,
 > 4513 and 4514, tell u-881.
 
-It does not replay anything itself: nothing in help-me-ops can change a system.
+Its conclusion is **checked** before you see it: every quote must be a line a tool
+returned in this session ([how](/investigate#a-conclusion-that-is-checked)). It does
+not replay anything itself: nothing in help-me-ops can change a system.
 
 ## With a real database
 

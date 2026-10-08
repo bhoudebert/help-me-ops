@@ -10,8 +10,8 @@ One set of tools for every client.
 
 The toolbox SHALL offer `scope` (optional question), `listSources` (app, env),
 `searchSource` (app, env, source, query, from, to, limit), `listPlaybooks`
-(optional question, matches first), `searchKnowledge` (query, app, limit) and
-`getPlaybook` (id), defined once and
+(optional question, matches first), `searchKnowledge` (query, app, limit),
+`getPlaybook` (id) and `checkConclusion` (the conclusion), defined once and
 shared by every entry point.
 
 ### Requirement: Evidence is read in one environment
