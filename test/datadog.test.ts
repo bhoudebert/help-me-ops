@@ -2,7 +2,7 @@
 //  1. against recorded responses in Datadog's documented shapes
 //     (test/fixtures/datadog): the requests it builds, what it makes of the answers;
 //  2. over real HTTP against the demo's fake Datadog (the live backend).
-// Neither proves a real Datadog accepts the requests: see docs/guide/shipped-addons.md.
+// Neither proves a real Datadog accepts the requests: see docs/guide/ready-made/datadog.md.
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
