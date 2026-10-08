@@ -20,6 +20,7 @@ test("mcp: the server lists its tools with all four hints and answers a search",
   try {
     assert.match(client.getInstructions() ?? "", /Every tool is read-only/);
     assert.match(client.getInstructions() ?? "", /scope with the problem/);
+    assert.match(client.getInstructions() ?? "", /Workspace loaded: .*examples\/my-workspace/);
     const { tools } = await client.listTools();
     assert.equal(tools.length, 10);
     for (const tool of tools) {

@@ -58,6 +58,7 @@ test("commands: sources, playbooks, search with options, investigate, usage", as
   await assert.rejects(runCommand(toolbox, "sources", []), /Several envs/);
   assert.match(await runCommand(toolbox, "sources", ["--app", "shop", "--env", "prod"]), /"id": "app-logs"/);
   assert.match(await runCommand(toolbox, "scope", ["order", "4512", "in", "production"]), /"env": "prod"/);
+  assert.match(await runCommand(toolbox, "scope", []), /"workspace": ".*my-workspace"/);
   assert.match(await runCommand(toolbox, "playbooks", ["order", "stuck"]), /"id": "order-stuck"/);
   const window = JSON.parse(
     await runCommand(toolbox, "search", [

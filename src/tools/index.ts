@@ -22,6 +22,8 @@ export interface ToolDefinition {
 }
 
 export interface Toolbox {
+  /** The workspace folder these apps, playbooks and addons come from. */
+  workspace?: string;
   apps: AppSetup[];
   playbooks: Playbook[];
   /** Tools the addons bring, already namespaced. */
@@ -46,15 +48,15 @@ export const envParam = z
   .optional()
   .describe("Environment (prod, staging…), from scope; may be left out when there is only one");
 
-export function createToolDefinitions({ apps, playbooks, addonTools = [] }: Toolbox): ToolDefinition[] {
+export function createToolDefinitions({ workspace, apps, playbooks, addonTools = [] }: Toolbox): ToolDefinition[] {
   const core: ToolDefinition[] = [
     {
       name: "scope",
       description:
-        "The apps and environments this workspace knows, and which ones a problem points at, with why. Call it first: sources belong to an environment, and a problem in prod is not read from staging. If it cannot tell, ask the person which. Reads no evidence.",
+        "The workspace loaded (its folder), the apps and environments it knows, and which ones a problem points at, with why. Call it first: sources belong to an environment, and a problem in prod is not read from staging. If it cannot tell, ask the person which. Reads no evidence.",
       inputSchema: z.object({ question: z.string().optional().describe("The problem as reported") }),
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-      run: async (input) => json(describeScope(apps, (input as { question?: string }).question)),
+      run: async (input) => json({ workspace, ...describeScope(apps, (input as { question?: string }).question) }),
     },
     {
       name: "listSources",

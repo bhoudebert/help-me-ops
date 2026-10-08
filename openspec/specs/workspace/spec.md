@@ -41,6 +41,16 @@ ones for a question with the reason (the words of the question they share, or
 being the only choice), without reading any evidence. When it cannot tell, it
 SHALL say what to ask the person.
 
+Every entry point SHALL make the loaded workspace visible: the `scope` answer
+names its folder, the MCP server's instructions state it, `doctor` prints it,
+and the CLI and the server say it on stderr at start-up. A person or a model
+SHALL never have to guess which workspace is being read.
+
+#### Scenario: Which workspace
+
+- **WHEN** a client calls `scope`, or the server starts
+- **THEN** the workspace folder is in the answer and in the start-up line
+
 #### Scenario: Vague question
 
 - **WHEN** the question names no app and there are several
