@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { z } from "zod";
+import { AddonPrivacy } from "../privacy.ts";
 import type { Evidence } from "../connectors/types.ts";
 import { ADDON_API_VERSION, type AddonContext, type AddonDefinition, type AddonTool } from "./types.ts";
 
@@ -42,6 +43,8 @@ export const Manifest = z
     tools: z
       .record(z.string(), z.object({ description: z.string().min(1), params: z.record(z.string(), spec).optional() }))
       .optional(),
+    /** What this addon knows is personal (ADR 0010): the keys its records hold, and the formats it can recognise. */
+    privacy: AddonPrivacy.optional(),
   })
   .superRefine((manifest, context) => {
     const names: [string, string[]][] = [
@@ -184,5 +187,6 @@ export async function loadManifestAddon(dir: string, addon: string): Promise<Add
       typeof item === "object" && "secret" in item && item.secret ? [key] : [],
     ),
     tools,
+    privacy: manifest.privacy,
   };
 }

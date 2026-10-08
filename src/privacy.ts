@@ -62,6 +62,88 @@ export function hintsIn(text: string): string[] {
 
 const names = Object.keys(DETECTORS) as [DetectorName, ...DetectorName[]];
 
+// ---- what an addon declares about personal data (in its addon.json, as JSON: it can only hide) ----
+
+const mod97 = (text: string) => {
+  // ISO 7064 mod 97-10, as an IBAN uses it: the first four characters go last, letters are numbers.
+  const compact = text.replace(/\s/g, "").toUpperCase();
+  if (compact.length < 8) return false;
+  const digits = [...`${compact.slice(4)}${compact.slice(0, 4)}`]
+    .map((c) => (/[A-Z]/.test(c) ? String(c.charCodeAt(0) - 55) : c))
+    .join("");
+  let rest = 0;
+  for (const c of digits) rest = (rest * 10 + Number(c)) % 97;
+  return rest === 1;
+};
+
+/** Checksums an addon can name, so a format with a check digit hides only what really is one. */
+export const VALIDATORS = {
+  luhn: (match: string) => luhn(match.replace(/\D/g, "")),
+  iban: mod97,
+} as const;
+export type ValidatorName = keyof typeof VALIDATORS;
+
+const safeRegex = (source: string): string | null => {
+  if (source.length > 200) return "longer than 200 characters";
+  // A group that repeats and holds a repeat, `(a+)+`, can make a search take forever.
+  if (/\([^)]*[+*][^)]*\)[+*{]/.test(source)) return "a repeated group inside a repeat can run away; write it flat";
+  try {
+    new RegExp(source);
+  } catch {
+    return "not a valid regular expression";
+  }
+  return null;
+};
+
+export const DetectorSpec = z.object({
+  /** What it finds, in words: it names the hint and the line of `doctor`. */
+  description: z.string().optional(),
+  regex: z
+    .string()
+    .min(1)
+    .superRefine((source, context) => {
+      const problem = safeRegex(source);
+      if (problem) context.addIssue({ code: "custom", message: problem });
+    }),
+  /** A checksum the match must pass, or it is left alone. */
+  validate: z.enum(Object.keys(VALIDATORS) as [ValidatorName, ...ValidatorName[]]).optional(),
+  ignoreCase: z.boolean().default(false),
+  /** Checked by `addon check`: what must be hidden, and what must not. */
+  examples: z.object({ matches: z.array(z.string()).default([]), ignores: z.array(z.string()).default([]) }).optional(),
+});
+export type DetectorSpec = z.infer<typeof DetectorSpec>;
+
+export const AddonPrivacy = z.object({
+  /** Keys of the addon's records that are personal, hidden when the workspace asks (`fromAddons`). */
+  personalFields: z.array(z.string().min(1)).default([]),
+  /** Formats only this addon knows, named in `privacy.mask.patterns` as `<addon>.<name>`. */
+  detectors: z
+    .record(
+      z.string().regex(/^[a-z][a-z0-9-]*$/, "a detector name is lowercase letters, digits and hyphens"),
+      DetectorSpec,
+    )
+    .default({}),
+});
+export type AddonPrivacy = z.infer<typeof AddonPrivacy>;
+
+export function buildDetector(spec: DetectorSpec, label: string): Detector {
+  const accept = spec.validate ? VALIDATORS[spec.validate] : () => true;
+  return byRegex(label, new RegExp(spec.regex, spec.ignoreCase ? "gi" : "g"), accept);
+}
+
+/** Runs the examples of a detector: the problems found, none when it does what it says. */
+export function selfTest(name: string, spec: DetectorSpec): string[] {
+  const detector = buildDetector(spec, name);
+  const problems: string[] = [];
+  for (const text of spec.examples?.matches ?? []) {
+    if (detector.replace(text, "***").count === 0) problems.push(`${name}: "${text}" should be hidden and is not`);
+  }
+  for (const text of spec.examples?.ignores ?? []) {
+    if (detector.replace(text, "***").count > 0) problems.push(`${name}: "${text}" should be left alone and is hidden`);
+  }
+  return problems;
+}
+
 export const MaskConfig = z
   .object({
     /** Keys whose values are hidden, at any depth: `email`, `*phone*`, `customer.name`. Case ignored. */
@@ -71,6 +153,10 @@ export const MaskConfig = z
       .array(
         z.union([
           z.enum(names),
+          // `<addon>.<detector>`: a format an addon declares
+          z
+            .string()
+            .regex(/^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*$/, "a built-in pattern, <addon>.<detector>, or { name, regex }"),
           z.object({
             name: z.string().min(1),
             regex: z
@@ -90,8 +176,10 @@ export const MaskConfig = z
       .default([]),
     /** What replaces a hidden value. It does not keep the length of what it hides. */
     replacement: z.string().default("***"),
+    /** Also hide the personal fields addons declare, in their own tools' answers: true, or the addons to take. */
+    fromAddons: z.union([z.boolean(), z.array(z.string().min(1))]).default(false),
   })
-  .default({ fields: [], patterns: [], replacement: "***" });
+  .default({ fields: [], patterns: [], replacement: "***", fromAddons: false });
 export type MaskConfig = z.infer<typeof MaskConfig>;
 
 export const PrivacyConfig = z.object({ mask: MaskConfig });
@@ -106,8 +194,8 @@ export interface Masked {
 export interface Masker {
   /** The one-line description for `doctor` and the instructions. */
   describe(): string;
-  /** Masks the evidence of a tool's answer; an answer without evidence is returned as it is. */
-  answer(text: string): Masked;
+  /** Masks the evidence of a tool's answer (`tool` is its name, `addon.tool` for an addon); an answer without evidence is returned as it is. */
+  answer(text: string, tool?: string): Masked;
 }
 
 const keyMatcher = (pattern: string) => {
@@ -121,15 +209,45 @@ const keyMatcher = (pattern: string) => {
   };
 };
 
-/** A masker for the configuration, or null when nothing is to be hidden. */
-export function createMasker(config: PrivacyConfig | undefined): Masker | null {
+/**
+ * A masker for the configuration, or null when nothing is to be hidden. `addons`
+ * is what the loaded addons declare: the detectors a pattern can name
+ * (`acme.company-id`) and the personal fields `fromAddons` switches on, for the
+ * answers of that addon's own tools. A reference to what does not exist is an
+ * error: a mask that silently hides nothing is worse than none.
+ */
+export function createMasker(
+  config: PrivacyConfig | undefined,
+  addons: Record<string, AddonPrivacy> = {},
+): Masker | null {
   const mask = config?.mask;
-  if (!mask || (!mask.fields.length && !mask.patterns.length)) return null;
+  if (!mask) return null;
   const { replacement } = mask;
+  const taken = mask.fromAddons === true ? Object.keys(addons) : Array.isArray(mask.fromAddons) ? mask.fromAddons : [];
+  for (const name of taken) {
+    if (!addons[name]) {
+      throw new Error(
+        `privacy.mask.fromAddons: no loaded addon "${name}" declares personal fields (those that do: ${Object.keys(addons).join(", ") || "none"})`,
+      );
+    }
+  }
+  const addonMatchers = new Map(taken.map((name) => [name, addons[name]!.personalFields.map(keyMatcher)]));
+  const used = [...addonMatchers.values()].some((m) => m.length);
+  if (!mask.fields.length && !mask.patterns.length && !used) return null;
   const matchers = mask.fields.map(keyMatcher);
-  const detectors: Detector[] = mask.patterns.map((p) =>
-    typeof p === "string" ? DETECTORS[p] : byRegex(p.name, new RegExp(p.regex, "g")),
-  );
+  const detectors: Detector[] = mask.patterns.map((p) => {
+    if (typeof p !== "string") return byRegex(p.name, new RegExp(p.regex, "g"));
+    if (!p.includes(".")) return DETECTORS[p as DetectorName];
+    const [addon = "", name = ""] = p.split(".");
+    const spec = addons[addon]?.detectors[name];
+    if (!spec) {
+      const known = Object.entries(addons).flatMap(([a, x]) => Object.keys(x.detectors).map((d) => `${a}.${d}`));
+      throw new Error(
+        `privacy.mask.patterns: "${p}" is not a detector of a loaded addon (detectors: ${known.join(", ") || "none"})`,
+      );
+    }
+    return buildDetector(spec, p);
+  });
 
   const applyPatterns = (text: string): { text: string; count: number } => {
     let count = 0;
@@ -142,11 +260,16 @@ export function createMasker(config: PrivacyConfig | undefined): Masker | null {
   };
 
   /** Hides the values of the listed fields, collecting what was hidden. */
-  const walk = (value: unknown, path: string[], hidden: Set<string>): { value: unknown; count: number } => {
+  const walk = (
+    value: unknown,
+    path: string[],
+    hidden: Set<string>,
+    rules: ((path: string[]) => boolean)[],
+  ): { value: unknown; count: number } => {
     if (Array.isArray(value)) {
       let count = 0;
       const out = value.map((item) => {
-        const done = walk(item, path, hidden);
+        const done = walk(item, path, hidden, rules);
         count += done.count;
         return done.value;
       });
@@ -157,13 +280,13 @@ export function createMasker(config: PrivacyConfig | undefined): Masker | null {
       const out: Record<string, unknown> = {};
       for (const [key, item] of Object.entries(value)) {
         const here = [...path, key];
-        if (matchers.some((m) => m(here))) {
+        if (rules.some((m) => m(here))) {
           const seen = collect(item);
           seen.forEach((s) => hidden.add(s));
           count += 1;
           out[key] = replacement;
         } else {
-          const done = walk(item, here, hidden);
+          const done = walk(item, here, hidden, rules);
           count += done.count;
           out[key] = done.value;
         }
@@ -235,9 +358,13 @@ export function createMasker(config: PrivacyConfig | undefined): Masker | null {
       const patterns = mask.patterns.length
         ? `patterns ${mask.patterns.map((p) => (typeof p === "string" ? p : p.name)).join(", ")}`
         : "";
-      return `masking ${[fields, patterns].filter(Boolean).join("; ")} as ${replacement}`;
+      const declared = [...addonMatchers.entries()]
+        .filter(([, m]) => m.length)
+        .map(([name]) => `${name}(${addons[name]!.personalFields.join(", ")})`);
+      const fromAddons = declared.length ? `fields declared by addons ${declared.join(", ")}` : "";
+      return `masking ${[fields, patterns, fromAddons].filter(Boolean).join("; ")} as ${replacement}`;
     },
-    answer(text) {
+    answer(text, tool = "") {
       let parsed: unknown;
       try {
         parsed = JSON.parse(text);
@@ -247,9 +374,11 @@ export function createMasker(config: PrivacyConfig | undefined): Masker | null {
       const evidence = (parsed as { evidence?: unknown } | null)?.evidence;
       if (!Array.isArray(evidence)) return { text, count: 0 };
       let count = 0;
+      // The personal fields an addon declares apply to the answers of that addon's own tools.
+      const rules = [...matchers, ...(addonMatchers.get(tool.split(".")[0] ?? "") ?? [])];
       const masked = evidence.map((item: Record<string, unknown>) => {
         const hidden = new Set<string>();
-        const data = walk(item.data, [], hidden);
+        const data = walk(item.data, [], hidden, rules);
         const all = [...hidden].sort((a, b) => b.length - a.length);
         const rest = strings({ summary: item.summary, data: data.value }, all) as {
           value: { summary: unknown; data: unknown };

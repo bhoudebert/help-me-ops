@@ -6,6 +6,7 @@ import { addonTools, connectorTypes } from "./addons/runtime.ts";
 import { loadConfig, resolveWorkspace } from "./config.ts";
 import { createConnectors } from "./connectors/registry.ts";
 import { loadPlaybooks } from "./playbooks.ts";
+import { createMasker } from "./privacy.ts";
 import type { AppSetup } from "./scope.ts";
 import type { Toolbox } from "./tools/index.ts";
 
@@ -54,6 +55,10 @@ export async function openToolbox(workspace = resolveWorkspace(), extraAddons: s
   return {
     workspace: baseDir,
     privacy: config.privacy,
+    masker: createMasker(
+      config.privacy,
+      Object.fromEntries(addons.flatMap((a) => (a.definition?.privacy ? [[a.name, a.definition.privacy]] : []))),
+    ),
     apps,
     playbooks,
     knowledge,

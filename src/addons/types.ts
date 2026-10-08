@@ -4,6 +4,7 @@
 // of its own.
 import type { z } from "zod";
 import type { Connector, Evidence } from "../connectors/types.ts";
+import type { AddonPrivacy } from "../privacy.ts";
 import type { ToolHints } from "../tools/index.ts";
 
 /** The addon API this core understands; an addon declares the one it was written for. */
@@ -52,6 +53,8 @@ export interface AddonDefinition {
   secrets?: string[];
   tools?: AddonTool[];
   connectors?: Record<string, ConnectorType>;
+  /** What the addon knows is personal: its fields, and detectors for its own formats. */
+  privacy?: AddonPrivacy;
 }
 
 /** What the core hands an addon that exports a function: zod, and the typed tool helper. */

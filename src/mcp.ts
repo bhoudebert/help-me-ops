@@ -19,7 +19,7 @@ const GUIDE = `help-me-ops investigates a running system from its own evidence: 
 Every tool is read-only: never suggest changing data yourself; propose the change for a person to make.`;
 
 const toolbox = await openToolbox(resolveWorkspace(), resolveAddonDirs());
-const masking = createMasker(toolbox.privacy);
+const masking = toolbox.masker === undefined ? createMasker(toolbox.privacy) : toolbox.masker;
 const INSTRUCTIONS = `${GUIDE}\nWorkspace loaded: ${toolbox.workspace}. Say which workspace and environment you are reading from when you report.${masking ? `\nPrivacy: ${masking.describe()}. A value shown as the replacement was hidden on purpose and is not available: never try to recover, guess or work around it, and quote it as shown.` : ""}`;
 const server = new McpServer({ name: "help-me-ops", version: "0.1.0" }, { instructions: INSTRUCTIONS });
 

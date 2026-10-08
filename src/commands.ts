@@ -73,7 +73,8 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
     case "doctor": {
       const lines = [...formatReport(toolbox.addons ?? []), ...(toolbox.warnings ?? []).map((w) => `  ! ${w}`)];
       const privacy =
-        createMasker(toolbox.privacy)?.describe() ?? "no masking: what the tools return goes to your AI provider";
+        (toolbox.masker === undefined ? createMasker(toolbox.privacy) : toolbox.masker)?.describe() ??
+        "no masking: what the tools return goes to your AI provider";
       return [
         `Workspace: ${toolbox.workspace ?? "unknown"}`,
         `Privacy: ${privacy}`,

@@ -1,7 +1,7 @@
 // The mask: fields and patterns listed in ops.config.json are replaced by stars
 // in what the tools return, before the assistant sees it. A seat belt.
 import assert from "node:assert/strict";
-import { cpSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
@@ -209,4 +209,182 @@ test("config and doctor: the mask is read from ops.config.json, shown by doctor,
   );
   const bad = maskedDemo({ patterns: ["social-security"] });
   await assert.rejects(openToolbox(bad), /Invalid config/);
+});
+
+// ---- what an addon declares: its personal fields, and detectors for its own formats ----
+
+import { AddonPrivacy, selfTest } from "../src/privacy.ts";
+import { checkAddon } from "../src/addons/check.ts";
+import { loadAddons } from "../src/addons/loader.ts";
+
+const acme = AddonPrivacy.parse({
+  personalFields: ["email", "contact.name"],
+  detectors: {
+    "company-id": {
+      description: "A company id: ACME- and six digits, the last of them a Luhn check",
+      regex: "ACME-\\d{6}",
+      validate: "luhn",
+      examples: { matches: ["ACME-123455"], ignores: ["ACME-123456", "ACME-12"] },
+    },
+    ticket: { regex: "tkt-[a-z]{4}", ignoreCase: true },
+  },
+});
+
+test("addon detectors: named as addon.name, with a checksum so only real ids are hidden", () => {
+  const m = createMasker(PrivacyConfig.parse({ mask: { patterns: ["acme.company-id", "acme.ticket"] } }), { acme })!;
+  const out = evidenceOf(
+    m.answer(answer(record("ACME-123455 paid, ACME-123456 is no id, see TKT-ABCD and tkt-wxyz"))).text,
+  );
+  assert.equal(out.evidence[0]!.summary, "*** paid, ACME-123456 is no id, see *** and ***");
+  assert.match(m.describe(), /patterns acme\.company-id, acme\.ticket/);
+  assert.deepEqual(selfTest("company-id", acme.detectors["company-id"]!), []);
+  assert.deepEqual(
+    selfTest(
+      "x",
+      AddonPrivacy.parse({ detectors: { x: { regex: "a+", examples: { matches: ["b"], ignores: ["aa"] } } } }).detectors
+        .x!,
+    ),
+    ['x: "b" should be hidden and is not', 'x: "aa" should be left alone and is hidden'],
+  );
+  const iban = AddonPrivacy.parse({
+    detectors: { iban: { regex: "[A-Z]{2}\\d{2}[A-Z0-9]{10,30}", validate: "iban" } },
+  });
+  const ibans = createMasker(PrivacyConfig.parse({ mask: { patterns: ["x.iban"] } }), { x: iban })!;
+  assert.equal(
+    evidenceOf(ibans.answer(answer(record("GB82WEST12345698765432 and GB83WEST12345698765432"))).text).evidence[0]!
+      .summary,
+    "*** and GB83WEST12345698765432",
+  );
+});
+
+test("addon fields: declared by the addon, switched on by the workspace, and applied to that addon's own answers", () => {
+  const record1 = answer(
+    record("jane@example.com, Jane Doe, jane@example.com", {
+      email: "jane@example.com",
+      contact: { name: "Jane Doe" },
+    }),
+  );
+  const off = createMasker(PrivacyConfig.parse({ mask: { patterns: ["ip"] } }), { acme })!;
+  assert.ok(off.answer(record1, "acme.getAccount").text.includes("jane@example.com"), "not switched on");
+  for (const fromAddons of [true, ["acme"]]) {
+    const on = createMasker(PrivacyConfig.parse({ mask: { fromAddons } }), { acme })!;
+    const own = evidenceOf(on.answer(record1, "acme.getAccount").text);
+    assert.equal(own.evidence[0]!.data.email, "***");
+    assert.equal(own.evidence[0]!.data.contact.name, "***");
+    assert.equal(own.evidence[0]!.summary, "***, ***, ***");
+    assert.ok(
+      on.answer(record1, "other.getThing").text.includes("jane@example.com"),
+      "another addon's answer is not touched",
+    );
+    assert.ok(on.answer(record1, "searchSource").text.includes("jane@example.com"), "nor a core tool's");
+    assert.match(on.describe(), /fields declared by addons acme\(email, contact\.name\)/);
+  }
+  assert.equal(
+    createMasker(PrivacyConfig.parse({ mask: { fromAddons: true } }), {}),
+    null,
+    "no addon declares anything: nothing to hide",
+  );
+});
+
+test("a reference to what does not exist is refused, not ignored", () => {
+  const config = (mask: object) => PrivacyConfig.parse({ mask });
+  assert.throws(
+    () => createMasker(config({ patterns: ["acme.nope"] }), { acme }),
+    /"acme\.nope" is not a detector of a loaded addon \(detectors: acme\.company-id, acme\.ticket\)/,
+  );
+  assert.throws(
+    () => createMasker(config({ patterns: ["ghost.id"] }), {}),
+    /not a detector of a loaded addon \(detectors: none\)/,
+  );
+  assert.throws(
+    () => createMasker(config({ fromAddons: ["ghost"] }), { acme }),
+    /no loaded addon "ghost" declares personal fields \(those that do: acme\)/,
+  );
+  assert.throws(() => config({ patterns: ["Bad.Name"] }), /built-in pattern, <addon>\.<detector>/);
+});
+
+test("a detector is JSON that can only hide: regex length, runaway repeats and names are checked", () => {
+  const spec = (regex: string) => () => AddonPrivacy.parse({ detectors: { d: { regex } } });
+  assert.throws(spec("("), /not a valid regular expression/);
+  assert.throws(spec("(a+)+$"), /a repeated group inside a repeat/);
+  assert.throws(spec("(\\d*)*"), /a repeated group inside a repeat/);
+  assert.throws(spec("a".repeat(201)), /longer than 200 characters/);
+  assert.doesNotThrow(spec("[A-Z]{3}-\\d{4,8}(?:-[a-z]+)?"));
+  assert.throws(
+    () => AddonPrivacy.parse({ detectors: { "Bad Name": { regex: "x" } } }),
+    /a detector name is lowercase/,
+  );
+  assert.throws(() => AddonPrivacy.parse({ detectors: { d: { regex: "x", validate: "rot13" } } }));
+});
+
+test("in the demo: the order addon's own field and detector hide the customer in the order and in the logs", async () => {
+  const dir = maskedDemo({ fromAddons: ["order"], patterns: ["order.user-id"] });
+  const toolbox = await openToolbox(dir);
+  const tools = createToolDefinitions(toolbox);
+  const order = JSON.parse(await tools.find((t) => t.name === "order.getOrder")!.run({ env: "prod", id: "4512" }));
+  assert.equal(order.evidence[0].data.user, "***");
+  assert.ok(!JSON.stringify(order).includes("u-881"));
+  const logs = JSON.stringify(
+    await tools.find((t) => t.name === "searchSource")!.run({ env: "prod", source: "app-logs", query: "order=4512" }),
+  );
+  assert.ok(
+    !logs.includes("u-881") && logs.includes("user=***"),
+    "the detector of the order addon hides the same customer in the logs",
+  );
+  assert.match(
+    await runCommand(toolbox, "doctor", []),
+    /Privacy: masking patterns order\.user-id; fields declared by addons order\(user\) as \*\*\*/,
+  );
+
+  assert.ok(
+    JSON.stringify(await tools.find((t) => t.name === "metrics.listMetrics")!.run({ env: "prod" })).length > 10,
+    "another addon is untouched",
+  );
+  await assert.rejects(
+    openToolbox(maskedDemo({ patterns: ["order.nope"] })),
+    /"order\.nope" is not a detector of a loaded addon \(detectors: order\.user-id\)/,
+  );
+  await assert.rejects(
+    openToolbox(maskedDemo({ fromAddons: ["metrics"] })),
+    /no loaded addon "metrics" declares personal fields \(those that do: order\)/,
+  );
+});
+
+test("an addon.ts can declare it too, and a bad declaration skips the addon with the reason", async () => {
+  const root = mkdtempSync(join(tmpdir(), "ops-privacy-addon-"));
+  const write = (path: string, text: string) => {
+    mkdirSync(join(root, path, ".."), { recursive: true });
+    writeFileSync(join(root, path), text);
+  };
+  write(
+    "good/addon.ts",
+    `export default { apiVersion: 1, privacy: { personalFields: ["email"], detectors: { id: { regex: "ID-\\\\d{4}" } } } };`,
+  );
+  write("bad/addon.ts", `export default { apiVersion: 1, privacy: { detectors: { id: { regex: "(a+)+" } } } };`);
+  const { addons, report } = await loadAddons([{ dir: root, origin: "workspace" }]);
+  assert.deepEqual(
+    addons.map((a) => a.name),
+    ["good"],
+  );
+  assert.deepEqual(addons[0]!.definition!.privacy!.personalFields, ["email"]);
+  assert.match(report.find((r) => r.name === "bad")!.reason!, /a repeated group inside a repeat/);
+});
+
+test("addon check: the privacy of an addon is tested by its own examples", async () => {
+  const demoOrder = resolve("examples/my-workspace/addons/order");
+  const ok = await checkAddon(demoOrder);
+  assert.match(ok.text, /ok\s+privacy: 1 personal field\(s\) \(user\), 1 detector\(s\)/);
+  assert.match(ok.text, /ok\s+detector order\.user-id: 2 to hide and 3 to leave alone, as declared/);
+
+  const dir = join(mkdtempSync(join(tmpdir(), "ops-privacy-check-")), "order");
+  cpSync(demoOrder, dir, { recursive: true });
+  const manifest = JSON.parse(readFileSync(join(dir, "addon.json"), "utf8"));
+  manifest.privacy.detectors["user-id"].examples.ignores.push("u-999");
+  manifest.privacy.detectors.extra = { regex: "X-\\d{3}" };
+  writeFileSync(join(dir, "addon.json"), JSON.stringify(manifest));
+  const bad = await checkAddon(dir);
+  assert.equal(bad.ok, false);
+  assert.match(bad.text, /FAIL\s+detector order\.user-id: user-id: "u-999" should be left alone and is hidden/);
+  assert.match(bad.text, /fix: fix the regex or the examples in addon.json \(privacy.detectors\)/);
+  assert.match(bad.text, /warn\s+detector order\.extra: no examples/);
 });
