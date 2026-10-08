@@ -60,8 +60,9 @@ test("setup: checks node and the workspace, starts the server as a client would,
     text,
     /ok {4}the server started as a client will start it and answered over MCP: \d+ tools, with its method/,
   );
+  // a heading is a whole line: compared as text, not turned into a regular expression
   for (const heading of ["Claude Code", "Codex", "Copilot (VS Code)"])
-    assert.match(text, new RegExp(`^${heading.replace(/[()]/g, "\\$&")}$`, "m"));
+    assert.ok(text.split("\n").includes(heading), heading);
   assert.ok(text.includes(`claude mcp add help-me-ops --scope user -- node --env-file-if-exists=${clone}/.env`));
   assert.ok(text.includes(`[mcp_servers.help-me-ops]`) && text.includes(`"envFile": "${clone}/.env"`));
   const only = await runSetup(["codex"], { clone, workspace, defaulted: false });
