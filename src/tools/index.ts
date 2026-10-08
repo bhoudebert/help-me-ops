@@ -221,7 +221,17 @@ export function createToolDefinitions({
     run: async (input: unknown) => {
       // Strict mode: an addon's tools answer only when the addon is declared free of personal data.
       if (fromAddons.has(tool.name)) data?.require(tool.name.split(".")[0]!);
-      const answer = await tool.run(input);
+      // A placeholder the assistant gives back stands for the value it hides; the conclusion check never gets the real one.
+      const real = masker && tool.name !== "checkConclusion" ? masker.restore(input) : input;
+      let answer: string;
+      try {
+        answer = await tool.run(real);
+      } catch (error) {
+        // An error that echoes an input must not give the value away.
+        if (masker?.stable && error instanceof Error)
+          throw new Error(masker.hideKnown(error.message), { cause: error });
+        throw error;
+      }
       if (tool.name === "checkConclusion") return answer;
       // Hidden before anything leaves, and before the ledger: a quote must match what the assistant saw.
       const hidden = masker ? masker.answer(answer, tool.name).text : answer;

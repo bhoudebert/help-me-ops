@@ -4,6 +4,7 @@
 // place every tool answer passes (ADR 0010). It is a seat belt, not a promise of
 // anonymity: a name in free text is not a pattern. Fail closed: if masking cannot
 // run, the tool fails rather than answering unmasked.
+import { createHmac, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { Declaration } from "./data.ts";
 
@@ -21,7 +22,7 @@ interface Detector {
   /** What it finds, for a hint: "an email address". */
   label: string;
   /** Replaces every match, and counts them. */
-  replace(text: string, replacement: string): { text: string; count: number };
+  replace(text: string, replacement: string | ((match: string) => string)): { text: string; count: number };
 }
 
 const byRegex = (label: string, regex: RegExp, accept: (match: string) => boolean = () => true): Detector => ({
@@ -31,7 +32,7 @@ const byRegex = (label: string, regex: RegExp, accept: (match: string) => boolea
     const out = text.replace(regex, (match) => {
       if (!accept(match)) return match;
       count++;
-      return replacement;
+      return typeof replacement === "string" ? replacement : replacement(match);
     });
     return { text: out, count };
   },
@@ -176,10 +177,18 @@ const MaskShape = z.object({
     .default([]),
   /** What replaces a hidden value. It does not keep the length of what it hides. */
   replacement: z.string().default("***"),
+  /** Replace a value by a stable placeholder (`user-3f2a`) instead of the replacement, so one value can still be followed across sources. */
+  placeholders: z.boolean().default(false),
   /** Also hide the personal fields addons declare, in their own tools' answers: true, or the addons to take. */
   fromAddons: z.union([z.boolean(), z.array(z.string().min(1))]).default(false),
 });
-export const MaskConfig = MaskShape.default({ fields: [], patterns: [], replacement: "***", fromAddons: false });
+export const MaskConfig = MaskShape.default({
+  fields: [],
+  patterns: [],
+  replacement: "***",
+  placeholders: false,
+  fromAddons: false,
+});
 export type MaskConfig = z.infer<typeof MaskConfig>;
 
 export const PrivacyConfig = z.object({
@@ -203,6 +212,12 @@ export interface Masker {
   describe(): string;
   /** Masks the evidence of a tool's answer (`tool` is its name, `addon.tool` for an addon); an answer without evidence is returned as it is. */
   answer(text: string, tool?: string): Masked;
+  /** True when hidden values become stable placeholders (`user-3f2a`) rather than the replacement. */
+  stable: boolean;
+  /** The placeholders in a tool's input back to the values they stand for, so the assistant can follow one value across sources; the input as it is when there are none. */
+  restore<T>(input: T): T;
+  /** A text with the values seen so far replaced by their placeholders: for an error that echoes an input. */
+  hideKnown(text: string): string;
 }
 
 /** Case, underscores, hyphens and spaces do not tell two spellings of a key apart: firstName, first_name, FIRST-NAME. */
@@ -236,7 +251,31 @@ export function createMasker(
 ): Masker | null {
   const mask = config?.mask;
   if (!mask) return null;
-  const { replacement } = mask;
+  const { replacement, placeholders } = mask;
+  // Stable placeholders: a keyed hash, so the same value is the same placeholder for the whole session and nobody can compute one from a guess.
+  const secretKey = randomBytes(16);
+  const byValue = new Map<string, string>();
+  const byPlaceholder = new Map<string, string>();
+  const swap = (value: string, label: string): string => {
+    if (!placeholders || !value) return replacement;
+    const known = byValue.get(value);
+    if (known) return known;
+    const digest = createHmac("sha256", secretKey).update(value).digest("hex");
+    const name =
+      label
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "value";
+    for (let size = 4; size <= digest.length; size++) {
+      const candidate = `${name}-${digest.slice(0, size)}`;
+      if (byPlaceholder.has(candidate)) continue;
+      byValue.set(value, candidate);
+      byPlaceholder.set(candidate, value);
+      return candidate;
+    }
+    return replacement;
+  };
+  const isHidden = (value: unknown) => value === replacement || (typeof value === "string" && byPlaceholder.has(value));
   const taken = mask.fromAddons === true ? Object.keys(addons) : Array.isArray(mask.fromAddons) ? mask.fromAddons : [];
   for (const name of taken) {
     if (!addons[name]) {
@@ -249,9 +288,9 @@ export function createMasker(
   const used = [...addonMatchers.values()].some((m) => m.length);
   if (!mask.fields.length && !mask.patterns.length && !used) return null;
   const matchers = mask.fields.map(keyMatcher);
-  const detectors: Detector[] = mask.patterns.map((p) => {
-    if (typeof p !== "string") return byRegex(p.name, new RegExp(p.regex, "g"));
-    if (!p.includes(".")) return DETECTORS[p as DetectorName];
+  const detectors: { detector: Detector; label: string }[] = mask.patterns.map((p) => {
+    if (typeof p !== "string") return { detector: byRegex(p.name, new RegExp(p.regex, "g")), label: p.name };
+    if (!p.includes(".")) return { detector: DETECTORS[p as DetectorName], label: p };
     const [addon = "", name = ""] = p.split(".");
     const spec = addons[addon]?.detectors[name];
     if (!spec) {
@@ -260,13 +299,13 @@ export function createMasker(
         `privacy.mask.patterns: "${p}" is not a detector of a loaded addon (detectors: ${known.join(", ") || "none"})`,
       );
     }
-    return buildDetector(spec, p);
+    return { detector: buildDetector(spec, p), label: name };
   });
 
   const applyPatterns = (text: string): { text: string; count: number } => {
     let count = 0;
-    for (const detector of detectors) {
-      const done = detector.replace(text, replacement);
+    for (const { detector, label } of detectors) {
+      const done = detector.replace(text, placeholders ? (match) => swap(match, label) : replacement);
       text = done.text;
       count += done.count;
     }
@@ -277,7 +316,7 @@ export function createMasker(
   const walk = (
     value: unknown,
     path: string[],
-    hidden: Set<string>,
+    hidden: Map<string, string>,
     rules: ((path: string[]) => boolean)[],
   ): { value: unknown; count: number } => {
     if (Array.isArray(value)) {
@@ -295,10 +334,14 @@ export function createMasker(
       for (const [key, item] of Object.entries(value)) {
         const here = [...path, key];
         if (rules.some((m) => m(here))) {
-          const seen = collect(item);
-          seen.forEach((s) => hidden.add(s));
+          for (const seen of collect(item)) if (!hidden.has(seen)) hidden.set(seen, key);
           count += 1;
-          out[key] = replacement;
+          out[key] =
+            typeof item === "string"
+              ? swap(item, key)
+              : typeof item === "number"
+                ? swap(String(item), key)
+                : replacement;
         } else {
           const done = walk(item, here, hidden, rules);
           count += done.count;
@@ -320,20 +363,20 @@ export function createMasker(
   };
 
   /** Hides what was hidden under a key wherever else the record says it, then the patterns. */
-  const scrub = (text: string, hidden: string[]): { text: string; count: number } => {
+  const scrub = (text: string, hidden: [string, string][]): { text: string; count: number } => {
     let count = 0;
-    for (const secret of hidden) {
+    for (const [secret, label] of hidden) {
       const parts = text.split(secret);
       if (parts.length > 1) {
         count += parts.length - 1;
-        text = parts.join(replacement);
+        text = parts.join(swap(secret, label));
       }
     }
     const done = applyPatterns(text);
     return { text: done.text, count: count + done.count };
   };
 
-  const strings = (value: unknown, hidden: string[]): { value: unknown; count: number } => {
+  const strings = (value: unknown, hidden: [string, string][]): { value: unknown; count: number } => {
     if (typeof value === "string") {
       const done = scrub(value, hidden);
       return { value: done.text, count: done.count };
@@ -354,7 +397,7 @@ export function createMasker(
       const out: Record<string, unknown> = {};
       for (const [key, item] of Object.entries(value)) {
         // A value already replaced is left alone: it would be counted twice.
-        if (item === replacement) out[key] = item;
+        if (isHidden(item)) out[key] = item;
         else {
           const done = strings(item, hidden);
           count += done.count;
@@ -376,7 +419,28 @@ export function createMasker(
         .filter(([, m]) => m.length)
         .map(([name]) => `${name}(${addons[name]!.personalFields.join(", ")})`);
       const fromAddons = declared.length ? `fields declared by addons ${declared.join(", ")}` : "";
-      return `masking ${[fields, patterns, fromAddons].filter(Boolean).join("; ")} as ${replacement}`;
+      const as = placeholders ? "stable placeholders (like user-3f2a)" : replacement;
+      return `masking ${[fields, patterns, fromAddons].filter(Boolean).join("; ")} as ${as}`;
+    },
+    stable: placeholders,
+    restore<T>(input: T): T {
+      if (!placeholders || byPlaceholder.size === 0) return input;
+      const known = [...byPlaceholder].sort((a, b) => b[0].length - a[0].length);
+      const back = (value: unknown): unknown => {
+        if (typeof value === "string")
+          return known.reduce((t, [p, real]) => (t.includes(p) ? t.split(p).join(real) : t), value);
+        if (Array.isArray(value)) return value.map(back);
+        if (value && typeof value === "object")
+          return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, back(v)]));
+        return value;
+      };
+      return back(input) as T;
+    },
+    hideKnown(text) {
+      if (!placeholders) return text;
+      return [...byValue]
+        .sort((a, b) => b[0].length - a[0].length)
+        .reduce((t, [real, p]) => (t.includes(real) ? t.split(real).join(p) : t), text);
     },
     answer(text, tool = "") {
       let parsed: unknown;
@@ -391,9 +455,9 @@ export function createMasker(
       // The personal fields an addon declares apply to the answers of that addon's own tools.
       const rules = [...matchers, ...(addonMatchers.get(tool.split(".")[0] ?? "") ?? [])];
       const masked = evidence.map((item: Record<string, unknown>) => {
-        const hidden = new Set<string>();
+        const hidden = new Map<string, string>();
         const data = walk(item.data, [], hidden, rules);
-        const all = [...hidden].sort((a, b) => b.length - a.length);
+        const all = [...hidden].sort((a, b) => b[0].length - a[0].length);
         const rest = strings({ summary: item.summary, data: data.value }, all) as {
           value: { summary: unknown; data: unknown };
           count: number;
