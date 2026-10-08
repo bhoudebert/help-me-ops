@@ -1,5 +1,6 @@
 {
   "apiVersion": 1,
+  "personalData": "possible",
   "description": "The shop's orders. Demo: reads a JSON file. For real: replace tools.ts with a read-only database query.",
   "settings": {
     "path": {

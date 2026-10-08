@@ -1,5 +1,6 @@
 {
   "apiVersion": 1,
+  "personalData": "possible",
   "description": "EXPERIMENTAL: written from the documented search API of Elasticsearch and OpenSearch and tested against recorded and mock responses, not yet against a real cluster, so it may not work as is. Searches the logs or documents of the indices you list, read-only. Off until an environment sets it up.",
   "settings": {
     "baseUrl": {

@@ -5,6 +5,7 @@ import { readdir } from "node:fs/promises";
 import { delimiter, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { z } from "zod";
+import { Declaration } from "../data.ts";
 import { AddonPrivacy } from "../privacy.ts";
 import { loadManifestAddon } from "./manifest.ts";
 import { ADDON_API_VERSION, defineTool, type AddonDefinition, type AddonExport } from "./types.ts";
@@ -89,6 +90,7 @@ const Definition = z.object({
     .optional(),
   connectors: z.record(z.string(), z.object({ options: schemaLike, create: fn })).optional(),
   privacy: AddonPrivacy.optional(),
+  personalData: Declaration.optional(),
 });
 
 export async function loadDefinition(file: string): Promise<AddonDefinition> {

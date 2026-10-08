@@ -1,5 +1,6 @@
 {
   "apiVersion": 1,
+  "personalData": "possible",
   "description": "Read-only GETs of a REST API of your own (a status page, an internal service), restricted to the path prefixes you list. Off until an environment sets it up.",
   "settings": {
     "baseUrl": {

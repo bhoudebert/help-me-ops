@@ -1,5 +1,6 @@
 {
   "apiVersion": 1,
+  "personalData": "possible",
   "description": "What changed in a git repository on disk: commits, tags, diffs, files and code search, through a fixed set of read-only git commands. Off until an environment sets it up.",
   "settings": {
     "repo": {

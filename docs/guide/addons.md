@@ -196,6 +196,14 @@ You know your domain: which keys of your records are personal, and which formats
 It is data, not code, so it can only hide. `addon check` runs your `examples`.
 How a workspace uses it: [personal data](/privacy#let-an-addon-say-what-is-personal).
 
+### Say whether it can return personal data
+
+Add `"personalData": "none"` or `"possible"` to `addon.json`. It is your word
+about what the addon returns, a default that the workspace can override, and what
+the optional [strict mode](/privacy#declare-which-sources-hold-personal-data)
+reads. If your addon reads a person's records, say `possible`. `addon check` notes
+an addon that says nothing.
+
 ## Read-only: your part
 
 The tool is declared read-only, but your function is your code, and the core

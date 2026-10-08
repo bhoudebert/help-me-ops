@@ -1,5 +1,6 @@
 {
   "apiVersion": 1,
+  "personalData": "none",
   "description": "HTTP health checks of the shop's endpoints and of its payment provider. Demo: recorded checks in a JSON file. For real: one GET per target.",
   "settings": {
     "path": { "type": "string", "env": "HEALTH_PATH", "description": "JSON file with the recorded checks (demo only)" }

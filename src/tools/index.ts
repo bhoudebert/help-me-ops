@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { AddonReport } from "../addons/loader.ts";
 import type { SearchInput } from "../connectors/types.ts";
 import { CERTAINTIES, checkConclusion, Ledger, type Conclusion } from "../conclusion.ts";
+import { KNOWLEDGE, type DataPolicy } from "../data.ts";
 import { createMasker, type Masker, type PrivacyConfig } from "../privacy.ts";
 import { loadKnowledge, searchPassages, toEvidence, type KnowledgeSource } from "../knowledge.ts";
 import { matchPlaybooks, type Playbook } from "../playbooks.ts";
@@ -29,6 +30,8 @@ export interface Toolbox {
   workspace?: string;
   /** What to hide in what the tools return. */
   privacy?: PrivacyConfig;
+  /** Which sources may hold personal data, and whether strict mode withholds them. */
+  data?: DataPolicy;
   /** The mask built for the workspace and its addons; built from `privacy` when absent. */
   masker?: Masker | null;
   apps: AppSetup[];
@@ -60,6 +63,7 @@ export const envParam = z
 export function createToolDefinitions({
   workspace,
   privacy,
+  data,
   masker: given,
   apps,
   playbooks,
@@ -87,7 +91,13 @@ export function createToolDefinitions({
         return json({
           app: scope.app.name,
           env: scope.env.name,
-          sources: scope.env.sources.map(({ id, kind, description }) => ({ id, kind, description })),
+          sources: scope.env.sources
+            .filter((s) => data?.allowed(s.id) ?? true)
+            .map(({ id, kind, description }) => {
+              const state = data?.declared(id);
+              return { id, kind, description, ...(state && state !== "unknown" ? { personalData: state } : {}) };
+            }),
+          ...(data?.strict ? { withheld: scope.env.sources.filter((s) => !data.allowed(s.id)).map((s) => s.id) } : {}),
         });
       },
     },
@@ -114,6 +124,7 @@ export function createToolDefinitions({
           const known = env.sources.map((s) => s.id).join(", ") || "none";
           throw new Error(`No source "${args.source}" in ${app.name}/${env.name}. Known: ${known}.`);
         }
+        data?.require(found.id);
         const { query, from, to, limit } = args;
         const evidence = await found.search({ query, from, to, limit });
         return json({ app: app.name, env: env.name, source: found.id, evidence });
@@ -145,6 +156,7 @@ export function createToolDefinitions({
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       run: async (input) => {
         const { query, app, limit } = input as { query: string; app?: string; limit?: number };
+        data?.require(KNOWLEDGE);
         const names = apps.map((a) => a.name);
         if (app && !names.includes(app)) throw new Error(`Unknown app "${app}". Known: ${names.join(", ")}.`);
         const passages = await loadKnowledge(knowledge, names);
@@ -203,9 +215,12 @@ export function createToolDefinitions({
       );
     },
   };
+  const fromAddons = new Set(addonTools.map((t) => t.name));
   return [...core, ...addonTools, conclusion].map((tool) => ({
     ...tool,
     run: async (input: unknown) => {
+      // Strict mode: an addon's tools answer only when the addon is declared free of personal data.
+      if (fromAddons.has(tool.name)) data?.require(tool.name.split(".")[0]!);
       const answer = await tool.run(input);
       if (tool.name === "checkConclusion") return answer;
       // Hidden before anything leaves, and before the ledger: a quote must match what the assistant saw.

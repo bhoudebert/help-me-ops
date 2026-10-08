@@ -94,3 +94,37 @@ measure to rely on.
 
 - **WHEN** `doctor` runs on a workspace with `fields: ["email"]` and `patterns: ["card"]`
 - **THEN** it prints `Privacy: masking fields email; patterns card as ***`
+
+### Requirement: Sources declare whether they hold personal data
+
+A workspace SHALL be able to declare, in `privacy.data`, by source id, addon name
+or `knowledge`, that it holds no personal data (`none`) or may (`possible`). An
+addon SHALL be able to declare a default with `personalData`; the workspace's
+declaration SHALL win. Anything undeclared is `unknown`. A declaration for a key
+that is no source, addon or `knowledge` of the workspace SHALL be refused when the
+workspace opens. `doctor` SHALL print what is declared and what is not, and
+`listSources` SHALL show a declared value.
+
+#### Scenario: Doctor
+
+- **WHEN** `doctor` runs on a workspace where `health` is `none` and `app-logs` is `possible`
+- **THEN** it prints a `Data:` line naming `health` as free of personal data and `app-logs` as possibly holding some
+
+#### Scenario: A declaration for nothing
+
+- **WHEN** `privacy.data` names `orders` and the workspace has no source or addon of that name
+- **THEN** the workspace is refused with the names it knows
+
+### Requirement: An optional strict mode
+
+`privacy.strict` SHALL default to false, and then everything is served. When true,
+the tools SHALL serve only the sources, addons and knowledge declared `none`:
+`listSources` SHALL leave the others out and name them as `withheld`, and a call to
+one SHALL be refused with the declaration to add and SHALL NOT be recorded as
+evidence. An addon is served or withheld as a whole. Strict mode SHALL work
+without a `mask`.
+
+#### Scenario: A source declared possible
+
+- **WHEN** strict mode is on and `order` is declared `possible`
+- **THEN** `order.getOrder` is refused with `Strict mode: "order" is not declared free of personal data`

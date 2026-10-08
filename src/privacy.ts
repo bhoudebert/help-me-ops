@@ -5,6 +5,7 @@
 // anonymity: a name in free text is not a pattern. Fail closed: if masking cannot
 // run, the tool fails rather than answering unmasked.
 import { z } from "zod";
+import { Declaration } from "./data.ts";
 
 const luhn = (digits: string) => {
   let sum = 0;
@@ -144,45 +145,51 @@ export function selfTest(name: string, spec: DetectorSpec): string[] {
   return problems;
 }
 
-export const MaskConfig = z
-  .object({
-    /** Keys whose values are hidden, at any depth: `email`, `*phone*`, `customer.name`. Case ignored. */
-    fields: z.array(z.string().min(1)).default([]),
-    /** Patterns hidden wherever they appear in a text: the named detectors, or your own regex. */
-    patterns: z
-      .array(
-        z.union([
-          z.enum(names),
-          // `<addon>.<detector>`: a format an addon declares
-          z
+const MaskShape = z.object({
+  /** Keys whose values are hidden, at any depth: `email`, `*phone*`, `customer.name`. Case ignored. */
+  fields: z.array(z.string().min(1)).default([]),
+  /** Patterns hidden wherever they appear in a text: the named detectors, or your own regex. */
+  patterns: z
+    .array(
+      z.union([
+        z.enum(names),
+        // `<addon>.<detector>`: a format an addon declares
+        z
+          .string()
+          .regex(/^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*$/, "a built-in pattern, <addon>.<detector>, or { name, regex }"),
+        z.object({
+          name: z.string().min(1),
+          regex: z
             .string()
-            .regex(/^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*$/, "a built-in pattern, <addon>.<detector>, or { name, regex }"),
-          z.object({
-            name: z.string().min(1),
-            regex: z
-              .string()
-              .min(1)
-              .refine((r) => {
-                try {
-                  new RegExp(r);
-                  return true;
-                } catch {
-                  return false;
-                }
-              }, "not a valid regular expression"),
-          }),
-        ]),
-      )
-      .default([]),
-    /** What replaces a hidden value. It does not keep the length of what it hides. */
-    replacement: z.string().default("***"),
-    /** Also hide the personal fields addons declare, in their own tools' answers: true, or the addons to take. */
-    fromAddons: z.union([z.boolean(), z.array(z.string().min(1))]).default(false),
-  })
-  .default({ fields: [], patterns: [], replacement: "***", fromAddons: false });
+            .min(1)
+            .refine((r) => {
+              try {
+                new RegExp(r);
+                return true;
+              } catch {
+                return false;
+              }
+            }, "not a valid regular expression"),
+        }),
+      ]),
+    )
+    .default([]),
+  /** What replaces a hidden value. It does not keep the length of what it hides. */
+  replacement: z.string().default("***"),
+  /** Also hide the personal fields addons declare, in their own tools' answers: true, or the addons to take. */
+  fromAddons: z.union([z.boolean(), z.array(z.string().min(1))]).default(false),
+});
+export const MaskConfig = MaskShape.default({ fields: [], patterns: [], replacement: "***", fromAddons: false });
 export type MaskConfig = z.infer<typeof MaskConfig>;
 
-export const PrivacyConfig = z.object({ mask: MaskConfig });
+export const PrivacyConfig = z.object({
+  /** Absent: nothing is hidden. */
+  mask: MaskShape.optional(),
+  /** Which sources hold personal data, by source id, addon name or `knowledge` (ADR 0012). */
+  data: z.record(z.string().min(1), Declaration).default({}),
+  /** Serve only the sources declared free of personal data. Off by default. */
+  strict: z.boolean().default(false),
+});
 export type PrivacyConfig = z.infer<typeof PrivacyConfig>;
 
 export interface Masked {

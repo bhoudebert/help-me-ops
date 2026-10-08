@@ -1,5 +1,6 @@
 {
   "apiVersion": 1,
+  "personalData": "possible",
   "description": "EXPERIMENTAL: written from Loki's documented HTTP API and tested against recorded and mock responses, not yet against a real Loki, so it may not work as is. Searches logs with LogQL and lists the labels to build a query from, read-only (Grafana Loki, Grafana Cloud Logs). Off until an environment sets it up.",
   "settings": {
     "baseUrl": {

@@ -7,6 +7,7 @@ import { fileLogs } from "./fileLogs.ts";
 
 export default defineAddon({
   apiVersion: 1,
+  personalData: "possible",
   connectors: {
     "file-logs": {
       options: z.object({ path: z.string().min(1) }),

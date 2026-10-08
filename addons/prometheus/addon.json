@@ -1,5 +1,6 @@
 {
   "apiVersion": 1,
+  "personalData": "possible",
   "description": "EXPERIMENTAL: written from Prometheus' documented HTTP API and tested against recorded and mock responses, not yet against a real Prometheus, so it may not work as is. Reads metrics (range and instant PromQL queries) and the alerts that are firing, read-only. Works with Prometheus and with the long-term stores that speak its API (Mimir, Thanos, VictoriaMetrics). Off until an environment sets it up.",
   "settings": {
     "baseUrl": {

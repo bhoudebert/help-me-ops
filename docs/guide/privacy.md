@@ -143,16 +143,57 @@ to the demo config: the order's user is `***`, and so is `user=u-881` in the log
 Still do the first measure: [do not expose personal data in the first place](#what-to-do-strongest-first).
 :::
 
+## Declare which sources hold personal data
+
+Say it once, in `ops.config.json`, where a reviewer can read it. A key is a
+**source id**, an **addon name**, or `knowledge`; the value is `none` (holds no
+personal data) or `possible`:
+
+```json
+"privacy": {
+  "data": { "app-logs": "possible", "health": "none", "knowledge": "none" }
+}
+```
+
+An addon can say it for itself (`personalData` in its `addon.json`, a default your
+workspace overrides). The shipped addons declare `possible`: nothing external is
+assumed free of personal data until you say so. A key that names nothing in the
+workspace is an error when it opens. `doctor` prints the result:
+
+```
+Data: not strict; free of personal data: health, metrics; may hold some: app-logs, order; undeclared: knowledge
+```
+
+### Strict mode: serve only what is declared free of it
+
+Off by default. With `"strict": true`, the assistant is served **only** what is
+declared `none`:
+
+```json
+"privacy": { "strict": true, "data": { "app-logs": "none", "health": "none" } }
+```
+
+- `listSources` leaves the others out and lists them under `withheld`.
+- A call to one is refused, with the line to add: `Strict mode: "order" is not declared free of personal data (undeclared). If it holds none, say so in ops.config.json: "privacy": { "data": { "order": "none" } }.`
+- An addon is served or withheld **as a whole** (by its name), and so is `knowledge`. Tools that read no system (scope, playbooks, the conclusion check) are not concerned.
+- A source or addon added later is undeclared, so strict mode withholds it until someone declares it.
+
+::: warning It is your word, not a check
+help-me-ops does not look inside a source. Declaring `none` for logs that hold
+emails is a mistake strict mode cannot see; the [mask](#mask-it-a-safeguard-in-ops-config-json) is still the safeguard, and so is not exposing the data in the first place.
+:::
+
 ## What help-me-ops does and does not do today
 
-|                                                               | Today                                                              |
-| ------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Keeps secrets (tokens, passwords) out of messages             | yes: secret settings are never printed, errors included            |
-| Leaves files that usually hold secrets out of the `git` addon | yes (`.env`, keys), best effort                                    |
-| Stores evidence or conversations                              | no                                                                 |
-| Hides the fields and patterns you list in what tools return   | **yes, opt in** ([above](#mask-it-a-safeguard-in-ops-config-json)) |
-| Finds personal data you did not list                          | no: a name in free text stays                                      |
-| Knows which sources hold personal data                        | no: a source is not marked                                         |
+|                                                               | Today                                                                                |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Keeps secrets (tokens, passwords) out of messages             | yes: secret settings are never printed, errors included                              |
+| Leaves files that usually hold secrets out of the `git` addon | yes (`.env`, keys), best effort                                                      |
+| Stores evidence or conversations                              | no                                                                                   |
+| Hides the fields and patterns you list in what tools return   | **yes, opt in** ([above](#mask-it-a-safeguard-in-ops-config-json))                   |
+| Finds personal data you did not list                          | no: a name in free text stays                                                        |
+| Knows which sources hold personal data                        | **what you declare**, shown by `doctor`; it does not look inside                     |
+| Serves only sources declared free of it                       | **yes, opt in** ([strict mode](#strict-mode-serve-only-what-is-declared-free-of-it)) |
 
 ## Local models
 
@@ -171,9 +212,7 @@ there: whatever the model, it cannot cite a line no tool returned.
 
 On the [roadmap](https://github.com/bhoudebert/help-me-ops/blob/main/ROADMAP.md), in this order:
 
-1. **Declare the data**: each source says whether it can return personal data, and `doctor` shows it.
-2. **Stable placeholders** (`user-3f2a`) instead of stars, so the assistant can still follow one customer across sources, translated back when it gives them in a tool call.
-3. **A strict mode** that serves only the sources declared free of personal data.
-4. **Local models** through API mode.
+1. **Stable placeholders** (`user-3f2a`) instead of stars, so the assistant can still follow one customer across sources, translated back when it gives them in a tool call.
+2. **Local models** through API mode.
 
 The mask is a second line of defence, never a guarantee of anonymity: the first measure above is the one to rely on.

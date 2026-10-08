@@ -80,6 +80,7 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
       return [
         `Workspace: ${toolbox.workspace ?? "unknown"}`,
         `Privacy: ${privacy}`,
+        ...(toolbox.data ? [`Data: ${toolbox.data.describe()}`] : []),
         "Addons:",
         ...(lines.length ? lines : ["  none"]),
       ].join("\n");
