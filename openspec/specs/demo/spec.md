@@ -71,6 +71,22 @@ instance proves a real call.
 - **WHEN** the `datadog` addon searches the prod logs for `service:payments status:error`, queries `avg:payment_confirm_queue_depth{*}` and lists the monitors
 - **THEN** the 503 of 10:00:02, a queue depth of 1240 at 10:01 and the alerting monitors come back, and staging shows none of them
 
+### Requirement: A source repository, optional
+
+The demo workspace SHALL ship a script (`git-demo/build.mjs`) that builds, with
+fixed authors and dates, a real git repository of the shop's code with the
+changes before the incident: tags `v2.13.0`, `v2.13.2` and `v2.14.0` (09:30 on 7
+October), a batching-and-cache change to the worker on 5 October and a lowering
+of the worker's memory limit on 6 October. The configuration SHALL set the `git`
+addon up for it with `${SHOP_REPO}`, so it stays idle until the variable is set.
+The suite SHALL build the repository in a temporary folder and read it through
+the addon.
+
+#### Scenario: Two suspects
+
+- **WHEN** the repository is read for what changed before 09:31 on 7 October
+- **THEN** both the cache that is never emptied and the lowered memory limit appear, so the conclusion can name two candidates and keep what is unknown
+
 ### Requirement: The scenario is a test
 
 A scenario file (`examples/my-workspace/scenarios/`) SHALL hold the question, the

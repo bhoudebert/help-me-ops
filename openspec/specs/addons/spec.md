@@ -135,6 +135,31 @@ the documentation SHALL say it may not work as is.
 - **WHEN** `datadog.searchLogs` is called with `service:payments status:error` and a time range
 - **THEN** one POST of the documented search body is sent, and each returned log becomes evidence with its timestamp and a `status service: message` line
 
+### Requirement: A shipped `git` addon
+
+The repository SHALL ship a `git` addon reading a repository on disk, set by
+`repo` (a folder, relative to the workspace or absolute) and `ref` (default
+`HEAD`), with the tools `log`, `show`, `diff`, `grep`, `fileAt` and `tags`. It
+SHALL run only the read-only git subcommands `log`, `show`, `diff`, `grep`, `tag`
+and `cat-file` (and `rev-parse`), through an argument list and never a shell;
+SHALL accept a revision or a path from a question only when it cannot be read as
+an option (no leading `-`, no `..`), putting paths after `--`; SHALL disable
+external diff drivers, text conversion, pagers and prompts so that a repository's
+own configuration cannot run a program; SHALL refuse to read, or leave out, files
+that usually hold secrets (`.env`, keys); SHALL cap what it returns and time out;
+and SHALL leave the repository unchanged. Each commit, tag, patch, match or file
+excerpt SHALL become evidence with its time where it has one.
+
+#### Scenario: What changed before the incident
+
+- **WHEN** `git.log` is asked for the commits since the day before a release, and `git.diff` for a file between two tags
+- **THEN** the commits come back newest first with author, time and files, and the patch shows the lines added and removed
+
+#### Scenario: Not an option
+
+- **WHEN** a revision, a path or a pattern starts with `-` or goes up with `..`
+- **THEN** it is refused before git runs, and nothing is written anywhere
+
 ### Requirement: Plain data becomes evidence
 
 What a tool function returns, records, one record, a string or nothing, SHALL
