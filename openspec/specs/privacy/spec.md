@@ -18,12 +18,21 @@ every string of the data, what a pattern matches. The named patterns SHALL be
 `email`, `ip` (IPv4), `iban`, `card` (only numbers that pass the Luhn check),
 `phone` (international, starting with `+`) and `token` (bearer tokens, cloud and
 GitHub keys, JWTs); a pattern MAY also be a regular expression of the team's. The
-replacement SHALL NOT keep the length of what it hides.
+replacement SHALL NOT keep the length of what it hides. Case, underscores, hyphens and
+spaces SHALL NOT tell two spellings of a key apart (`firstName`, `first_name`,
+`FIRST-NAME`), in a field and in each part of a dotted path; a key that merely
+contains the name SHALL need a wildcard. The fields and patterns of the workspace
+SHALL apply to the answers of every tool, whether or not an addon declared them.
 
 #### Scenario: A field
 
 - **WHEN** `fields` lists `user` and `order.getOrder` returns a record whose `user` is `u-881`
 - **THEN** the data holds `***` for `user`, the summary no longer contains `u-881`, and the answer says how many values were hidden
+
+#### Scenario: Spellings, and an addon that declared nothing
+
+- **WHEN** `fields` lists `firstName` and an addon that declares no personal field returns `first_name`, `FIRST-NAME` and `FirstName`
+- **THEN** all three values are hidden, and a key `given_first_name` is hidden only if `*firstname*` is listed
 
 #### Scenario: A pattern in free text
 
