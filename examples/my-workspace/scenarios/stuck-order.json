@@ -158,5 +158,31 @@
       "Whether acme-pay retries the refused webhook by itself."
     ],
     "next": "Restart or scale shop-worker, then replay the payment webhook for orders 4512, 4513 and 4514, and tell u-881. Then look at the memory behaviour of 2.14.0 under load."
+  },
+  "expect": {
+    "facts": [
+      {
+        "name": "the webhook was refused (503)",
+        "any": ["503"],
+        "required": true
+      },
+      {
+        "name": "the payment queue was full",
+        "any": ["queue"],
+        "required": true
+      },
+      {
+        "name": "the worker was OOMKilled",
+        "any": ["OOMKilled", "OOM"]
+      },
+      {
+        "name": "since release 2.14.0",
+        "any": ["2.14.0"]
+      },
+      {
+        "name": "orders 4513 and 4514 too",
+        "any": ["4513", "4514"]
+      }
+    ]
   }
 }

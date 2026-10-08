@@ -119,6 +119,55 @@ It depends on the model, and a small one will investigate worse than a large hos
 
 **Does the model support tools?** Not every model does; Ollama lists those that do under a "tools" filter on [its model page](https://ollama.com/search?c=tools). A model that does not will answer in words and never call a tool.
 
-One anecdote, not a benchmark: on an RTX 5080 with `qwen3:8b` on Ollama, the stuck-order question took about 22 s with thinking on and about 6 s with `--reasoning none`, one run each, and the two did not name the same cause. Whether the answers stay good is not measured.
+## Measure it: `ops eval`
 
-This page states no benchmark, because none was measured yet. `ops eval`, which runs the demo's scenarios against your model and counts how often it reaches an accepted conclusion, is planned for this purpose.
+Instead of judging from one run, count. `ops eval` asks the scenario's question of your model several times, each in a fresh conversation, and reports what happened:
+
+```bash
+npm run ops -- eval --runs 5 --model qwen3:8b --reasoning none,default
+npm run ops -- eval --model qwen3:8b,llama3.1:8b --runs 5      # compare models
+npm run eval:local                                              # the same on a local Ollama, 3 runs
+```
+
+`--model` and `--reasoning` take a comma-separated list, and every combination is run. The columns:
+
+| Column                    | Meaning                                                                                                             |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `accepted`                | runs where the conclusion check accepted a conclusion (the model called `checkConclusion` and every quote was real) |
+| `cause`                   | runs whose answer names every **required** fact of the scenario's `expect`                                          |
+| `facts`                   | how many of the expected facts an answer names, on average                                                          |
+| `steps`, `tokens`, `time` | the median over the runs                                                                                            |
+
+Below the table it lists what a setting **never** named, and why runs did not conclude.
+
+A scenario says what a good answer contains in an `expect` block of its JSON file (the demo's `stuck-order.json` has one):
+
+```json
+"expect": { "facts": [
+  { "name": "the webhook was refused (503)", "any": ["503"], "required": true },
+  { "name": "the worker was OOMKilled", "any": ["OOMKilled", "OOM"] }
+] }
+```
+
+A fact counts when **any** of its words appears in the answer, case ignored. It is a **keyword check, not a judge of reasoning**: an answer can name the right words for the wrong reason, or the right cause in other words. Use it to compare settings, not as a verdict. A scenario without `expect` only counts the conclusion check.
+
+Writing your own scenario: copy `examples/my-workspace/scenarios/stuck-order.json` (a question, the steps of a good investigation for `ops demo`, a conclusion, an `expect`).
+
+`compose.llm.yml` starts an Ollama in a container if you have none (`docker compose -f compose.llm.yml up -d`, then `exec ollama ollama pull qwen3:8b`); the models stay in a volume. Nothing here costs money and nothing is part of the test suite: the tests use a scripted fake server, and a manual GitHub workflow (`Model smoke`) checks the wire against a real server with a tiny model.
+
+### What one setup measured
+
+The only numbers this project has, from the maintainer's machine on 2026-10-08: an RTX 5080 with 16 GB, Ollama 0.32.14 (CUDA), `qwen3:8b`, the demo's `stuck-order` scenario with its own question (_"Client u-881 paid but cannot find order 4512"_, no environment given), 5 runs per setting, temperature 0:
+
+```
+setting                       accepted  cause  facts  steps  tokens  time
+qwen3:8b · reasoning none     5/5       0/5    0.0/5  13     53,879  8 s
+qwen3:8b · reasoning default  1/5       0/5    0.0/5  1      6,200   7 s
+```
+
+What to read in it, and what not to:
+
+- **The conclusion check passed, the cause was missed.** With thinking off, all five runs ended in a conclusion the check accepted, and none named the refused webhook or the full queue: they quoted the order row and concluded it was awaiting payment. The check proves a quote is real, not that the cause is right. This is why `cause` and `facts` exist.
+- **With thinking on, four of five runs gave up after one tool call** and answered in words, which the check never sees. They were quick, and not an investigation.
+- **The question matters.** Asked with "in production" added, the same model found the 503 refusal and the full queue in five of five runs with thinking off (an earlier, hand-scored run, not `ops eval`). A model that is told where to look does better than one that has to work it out; give your assistant the app and the environment, or use `--env`.
+- Five runs of one model on one scenario: a snapshot of one setup, not a ranking. Run `ops eval` on yours.

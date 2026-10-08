@@ -1,6 +1,6 @@
 # API mode and local models
 
-Status: accepted by the maintainer on the points below; not built yet. Decision record: [ADR 0014](../../../docs/adr/0014-api-mode-and-local-models.md).
+Status: built (chat, ask, eval); archived. The requirements are in `openspec/specs/api-mode`. Decision record: [ADR 0014](../../../../docs/adr/0014-api-mode-and-local-models.md).
 
 ## Why
 

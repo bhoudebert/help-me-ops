@@ -6,9 +6,19 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createToolDefinitions, type Toolbox } from "./tools/index.ts";
 
-interface Scenario {
+/** What a good answer to the scenario names, for `ops eval`: keyword checks, not a judge of reasoning. */
+export interface Expect {
+  facts: {
+    name: string;
+    /** Any of these words in the answer counts (case ignored). */ any: string[];
+    /** A fact the cause cannot do without. */ required?: boolean;
+  }[];
+}
+
+export interface Scenario {
   id: string;
   question: string;
+  expect?: Expect;
   steps: { why: string; tool: string; input: Record<string, unknown> }[];
   conclusion: Record<string, unknown>;
 }
@@ -24,7 +34,7 @@ export interface DemoOptions {
 const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 const cut = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 
-function scenarios(workspace: string): Scenario[] {
+export function scenarios(workspace: string): Scenario[] {
   const dir = join(workspace, "scenarios");
   if (!existsSync(dir)) return [];
   return readdirSync(dir)

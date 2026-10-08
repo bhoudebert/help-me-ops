@@ -91,3 +91,21 @@ build on a model's answer.
 
 `doctor` SHALL print the configured model endpoint and whether it is this machine,
 a private network address or an outside host.
+
+### Requirement: Measuring a model
+
+`ops eval` SHALL run a scenario of the workspace against each combination of the
+given models and reasoning settings a given number of times, each run in a new
+conversation with a new ledger, and report per setting how many runs the
+conclusion check accepted, how many named every required fact of the scenario's
+`expect`, the average number of expected facts named, and the median steps, tokens
+and time, then list the facts a setting never named and why runs did not conclude.
+Facts are keywords found in the answer, case ignored. A failure on the first run
+SHALL stop the evaluation as a configuration error; a later failure SHALL be
+counted as a result. `privacy.modelHosts` SHALL apply. It SHALL make no claim
+beyond what it ran.
+
+#### Scenario: Two settings
+
+- **WHEN** `ops eval --runs 5 --reasoning none,default` runs
+- **THEN** it runs each setting five times and prints one line per setting with the counts and medians
