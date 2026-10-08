@@ -12,6 +12,9 @@ import { runCommand } from "../src/commands.ts";
 import { openToolbox } from "../src/toolbox.ts";
 import { createToolDefinitions } from "../src/tools/index.ts";
 
+// The machine's own variables must not decide these tests.
+for (const name of ["GITHUB_TOKEN", "GITHUB_REPOS", "GITHUB_API_URL"]) delete process.env[name];
+
 const recorded = (name: string) => readFileSync(join("test/fixtures/github", `${name}.json`), "utf8");
 const SETTINGS = { token: "ghp_s3cret", repos: "shop-co/shop" };
 
@@ -346,5 +349,32 @@ test("mock github: bad token, other repository, writes, unknown routes", async (
     assert.equal((await fetch(`${base}/repos/SHOP-CO/Shop/releases`, { headers: auth })).status, 200);
   } finally {
     Object.values(servers).forEach((s) => s.close());
+  }
+});
+
+test("github: a variable other tools export (GITHUB_API_URL, DD_SITE) does not set an addon up, a partial set says what is missing", async () => {
+  const keep = { ...process.env };
+  try {
+    Object.assign(process.env, { GITHUB_API_URL: "https://api.github.com", DD_SITE: "datadoghq.eu" });
+    delete process.env.GITHUB_TOKEN;
+    delete process.env.GITHUB_REPOS;
+    const shared = await openToolbox(workspace(null));
+    const names = createToolDefinitions(shared).map((t) => t.name);
+    assert.ok(!names.some((n) => n.startsWith("github.") || n.startsWith("datadog.")), "no tool");
+    assert.deepEqual(
+      shared.addons!.filter((a) => a.notes.length),
+      [],
+      "and no warning",
+    );
+
+    process.env.GITHUB_TOKEN = "t";
+    const partial = await openToolbox(workspace(null));
+    assert.ok(!createToolDefinitions(partial).some((t) => t.name.startsWith("github.")));
+    assert.match(await runCommand(partial, "doctor", []), /github\s+idle.*waiting for GITHUB_REPOS/);
+  } finally {
+    for (const name of ["GITHUB_API_URL", "DD_SITE", "GITHUB_TOKEN", "GITHUB_REPOS"]) {
+      if (keep[name] === undefined) delete process.env[name];
+      else process.env[name] = keep[name];
+    }
   }
 });

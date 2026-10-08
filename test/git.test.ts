@@ -11,6 +11,9 @@ import { runCommand } from "../src/commands.ts";
 import { openToolbox } from "../src/toolbox.ts";
 import { createToolDefinitions } from "../src/tools/index.ts";
 
+// The machine's own variables must not decide these tests.
+for (const name of ["GIT_REPO", "GIT_REF", "SHOP_REPO"]) delete process.env[name];
+
 const demo = (await import(resolve("examples/my-workspace/git-demo/build.mjs"))) as {
   buildDemoRepo(dir: string): string[];
 };

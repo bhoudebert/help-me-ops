@@ -10,6 +10,9 @@ import { runCommand, startupNotices } from "../src/commands.ts";
 import { openToolbox } from "../src/toolbox.ts";
 import { createToolDefinitions } from "../src/tools/index.ts";
 
+// The machine's own variables must not decide these tests.
+for (const name of ["REST_BASE_URL", "REST_ALLOW", "REST_TOKEN", "REST_TOKEN_HEADER"]) delete process.env[name];
+
 const recorded = (name: string) => readFileSync(join("test/fixtures/rest", name), "utf8");
 
 function workspace(rest: Record<string, unknown> | null) {

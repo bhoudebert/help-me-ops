@@ -7,6 +7,9 @@ import { runCommand } from "../src/commands.ts";
 import { openToolbox } from "../src/toolbox.ts";
 import { createToolDefinitions } from "../src/tools/index.ts";
 
+// The machine's own variables must not decide these tests.
+for (const name of ["SHOP_API_PROD_URL", "SHOP_API_STAGING_URL", "SHOP_API_TOKEN"]) delete process.env[name];
+
 const workspace = resolve("examples/my-workspace");
 const module = (await import(resolve(workspace, "docker/backend/server.mjs"))) as {
   start(workspace: string, ports: Record<string, number>): Promise<Record<string, import("node:http").Server>>;
