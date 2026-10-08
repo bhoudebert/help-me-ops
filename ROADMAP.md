@@ -43,9 +43,12 @@
   second door onto the same toolbox, playbooks and conclusion check. It would
   revisit "the client's model does the reasoning" (ADR 0007), so it starts with
   an ADR, and keeps the rule that tests never call a model.
-  Decided: [ADR 0014](docs/adr/0014-api-mode-and-local-models.md) and
-  [the proposal](openspec/changes/api-mode/proposal.md): `ops chat`,
-  `ops ask` and `ops eval`, not built yet.
+  [ADR 0014](docs/adr/0014-api-mode-and-local-models.md) and
+  [the proposal](openspec/changes/api-mode/proposal.md). Done: `ops chat` and
+  `ops ask` against any OpenAI-compatible endpoint, `privacy.modelHosts`, the
+  model line of `doctor`. Next: `ops eval` (measure a model on the scenarios,
+  with `npm run eval:local` and a compose file for Ollama), a manual smoke
+  workflow with a tiny model, and tuning from the first measured numbers.
 - **Case files**: an investigation saved with its question, steps, evidence
   and conclusion, so the next one starts from what is known.
 

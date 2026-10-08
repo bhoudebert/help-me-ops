@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { AddonReport } from "../addons/loader.ts";
 import type { SearchInput } from "../connectors/types.ts";
 import { CERTAINTIES, checkConclusion, Ledger, type Conclusion } from "../conclusion.ts";
+import type { ModelConfig } from "../agent/endpoint.ts";
 import { KNOWLEDGE, type DataPolicy } from "../data.ts";
 import { createMasker, type Masker, type PrivacyConfig } from "../privacy.ts";
 import { loadKnowledge, searchPassages, toEvidence, type KnowledgeSource } from "../knowledge.ts";
@@ -30,6 +31,8 @@ export interface Toolbox {
   workspace?: string;
   /** What to hide in what the tools return. */
   privacy?: PrivacyConfig;
+  /** The model of API mode, if the workspace configures one. */
+  model?: ModelConfig;
   /** Which sources may hold personal data, and whether strict mode withholds them. */
   data?: DataPolicy;
   /** The mask built for the workspace and its addons; built from `privacy` when absent. */

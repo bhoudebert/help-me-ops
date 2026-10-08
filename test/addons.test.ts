@@ -215,7 +215,7 @@ test("addons: doctor and the start-up notices say what was skipped, left out or 
   assert.doesNotMatch(notices, /logs\s+loaded/);
   assert.equal(
     await runCommand({ apps: [], playbooks: [] }, "doctor", []),
-    "Workspace: unknown\nPrivacy: no masking: what the tools return goes to your AI provider\nAddons:\n  none",
+    "Workspace: unknown\nPrivacy: no masking: what the tools return goes to your AI provider\nModel: none configured (only ops chat, ask and eval need one; the MCP clients bring their own)\nAddons:\n  none",
   );
   // The sources that do load are untouched by the one that did not.
   const sources = JSON.parse(await runCommand(toolbox, "sources", ["--env", "prod"]));

@@ -4,6 +4,7 @@
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { z } from "zod";
+import { ModelConfig } from "./agent/endpoint.ts";
 import { PrivacyConfig } from "./privacy.ts";
 
 // A source: its type (a connector type from an addon, or "module" for a file of
@@ -35,6 +36,8 @@ export const OpsConfig = z.object({
   playbooks: z.string().default("playbooks"),
   /** What to hide in what the tools return (ADR 0010). */
   privacy: PrivacyConfig.optional(),
+  /** The model that `ops chat`, `ops ask` and `ops eval` ask (ADR 0014). Nothing calls it unless one of them runs. */
+  model: ModelConfig.optional(),
 });
 export type OpsConfig = z.infer<typeof OpsConfig>;
 export type SourceConfig = z.infer<typeof source>;

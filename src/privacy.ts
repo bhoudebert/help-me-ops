@@ -196,6 +196,8 @@ export const PrivacyConfig = z.object({
   mask: MaskShape.optional(),
   /** Which sources hold personal data, by source id, addon name or `knowledge` (ADR 0012). */
   data: z.record(z.string().min(1), Declaration).default({}),
+  /** Where the model of API mode may be: `local` (this machine and private-network addresses) or host names. Absent: anywhere. */
+  modelHosts: z.array(z.string().min(1)).optional(),
   /** Serve only the sources declared free of personal data. Off by default. */
   strict: z.boolean().default(false),
 });

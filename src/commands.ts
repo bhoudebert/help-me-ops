@@ -1,5 +1,6 @@
 // What the terminal commands do, as functions returning text (testable).
 import { formatReport } from "./addons/loader.ts";
+import { describeEndpoint } from "./agent/endpoint.ts";
 import { createMasker } from "./privacy.ts";
 import { matchPlaybooks } from "./playbooks.ts";
 import { createToolDefinitions, type Toolbox } from "./tools/index.ts";
@@ -8,6 +9,9 @@ export const USAGE = `Usage: npm run ops -- <command>
 
   setup [claude|codex|copilot|all]      The configuration that connects an AI client, with your paths, checked
   demo [--scenario <id>] [--pace <ms>]  Watch an investigation of the demo shop in the terminal, no model needed
+  chat                                  A conversation in the terminal with a model you configure (a local one: Ollama, llama.cpp, LM Studio)
+  ask "<question>" [--json]             One question, one checked answer, for scripts; exit 0 only if the conclusion was accepted
+                                        both: --model <name> --base-url <url> --max-steps N, or "model" in ops.config.json
   scope [question]                      The apps and environments, and which ones a question points at
   sources                               The sources of an app and environment
   knowledge <words>                     Search your runbooks and notes (knowledge/ and playbooks/)
@@ -81,6 +85,11 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
         `Workspace: ${toolbox.workspace ?? "unknown"}`,
         `Privacy: ${privacy}`,
         ...(toolbox.data ? [`Data: ${toolbox.data.describe()}`] : []),
+        `Model: ${
+          toolbox.model?.baseUrl
+            ? `${describeEndpoint(toolbox.model.baseUrl)}, ${toolbox.model.model ?? "no model name yet"}${toolbox.privacy?.modelHosts ? `; allowed hosts: ${toolbox.privacy.modelHosts.join(", ")}` : ""}`
+            : "none configured (only ops chat, ask and eval need one; the MCP clients bring their own)"
+        }`,
         "Addons:",
         ...(lines.length ? lines : ["  none"]),
       ].join("\n");
