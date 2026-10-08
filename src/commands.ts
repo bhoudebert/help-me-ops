@@ -12,6 +12,7 @@ export const USAGE = `Usage: npm run ops -- <command>
                                         Search one source, read-only
   investigate "<question>"              The playbook to follow and where to look
   doctor                                The addons loaded or skipped, and why
+  addon check <folder>                  Is this addon ready to drop in? Manifest, functions, settings, samples
   init workspace <folder> [--app <name>] [--envs prod,staging]
                                         Create a workspace for your own system
   init addon <name> --template file|api|sql
@@ -90,6 +91,8 @@ export async function runCommand(toolbox: Toolbox, command: string | undefined, 
       ].join("\n");
     }
     default:
+      // A command that does not exist is an error, not a silent help: `addon check` once printed this page.
+      if (command) throw new Error(`Unknown command "${command}".\n\n${USAGE}`);
       return USAGE;
   }
 }

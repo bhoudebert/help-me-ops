@@ -89,7 +89,7 @@ const Definition = z.object({
   connectors: z.record(z.string(), z.object({ options: schemaLike, create: fn })).optional(),
 });
 
-async function loadDefinition(file: string): Promise<AddonDefinition> {
+export async function loadDefinition(file: string): Promise<AddonDefinition> {
   const module = (await import(pathToFileURL(file).href)) as { default?: AddonExport };
   if (module.default === undefined) throw new Error("addon.ts has no default export");
   const raw = typeof module.default === "function" ? await module.default({ z, defineTool }) : module.default;

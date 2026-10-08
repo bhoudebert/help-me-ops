@@ -83,5 +83,6 @@ test("commands: sources, playbooks, search with options, investigate, usage", as
   assert.match(await runCommand({ ...toolbox, playbooks: [] }, "investigate", ["cpu", "high"]), /No playbook matches/);
   await assert.rejects(runCommand(toolbox, "search", ["app-logs"]), /Usage: search/);
   await assert.rejects(runCommand(toolbox, "investigate", []), /Usage: investigate/);
-  assert.equal(await runCommand(toolbox, "what", []), USAGE);
+  assert.equal(await runCommand(toolbox, undefined, []), USAGE);
+  await assert.rejects(runCommand(toolbox, "what", []), /Unknown command "what"\.\n\nUsage: npm run ops/);
 });

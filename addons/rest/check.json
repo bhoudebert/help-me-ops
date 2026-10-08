@@ -1,0 +1,31 @@
+[
+  {
+    "name": "a list of orders",
+    "tool": "get",
+    "input": {
+      "path": "/orders",
+      "query": "status=awaiting_payment"
+    },
+    "settings": {
+      "baseUrl": "https://api.example.com/v1",
+      "allow": "/orders",
+      "token": "a-test-token"
+    },
+    "responses": {
+      "GET https://api.example.com/v1/orders?status=awaiting_payment": {
+        "body": [
+          {
+            "id": "4512",
+            "status": "awaiting_payment",
+            "updated_at": "2026-10-07T09:58:13Z"
+          }
+        ]
+      }
+    },
+    "expect": {
+      "minRecords": 1,
+      "summaryIncludes": "4512",
+      "withTime": true
+    }
+  }
+]

@@ -1,0 +1,39 @@
+[
+  {
+    "name": "search the logs",
+    "tool": "searchLogs",
+    "input": {
+      "query": "service:payments status:error",
+      "from": "2026-10-07T09:00:00Z",
+      "to": "2026-10-07T11:00:00Z"
+    },
+    "settings": {
+      "apiKey": "a-test-key",
+      "appKey": "a-test-app-key",
+      "site": "datadoghq.com"
+    },
+    "responses": {
+      "POST https://api.datadoghq.com/api/v2/logs/events/search": {
+        "body": {
+          "data": [
+            {
+              "id": "AQ1",
+              "type": "log",
+              "attributes": {
+                "timestamp": "2026-10-07T10:00:02Z",
+                "status": "error",
+                "service": "payments",
+                "message": "webhook returned 503 to provider"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "expect": {
+      "minRecords": 1,
+      "summaryIncludes": "503",
+      "withTime": true
+    }
+  }
+]
