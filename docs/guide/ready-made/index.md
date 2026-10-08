@@ -21,8 +21,9 @@ service's documented API and tested against recorded responses and a mock, but
 **not yet against a real account**: it may not work as is on yours.
 [More on that](/legal#experimental-integrations).
 
-Not in this list? An addon is two small files: [write one](/addons), or start
-from a template with `npm run ops -- init addon <name> --template file|api|sql`.
+Not in this list? An addon is two small files: [write one](/addons), start
+from a template with `npm run ops -- init addon <name> --template file|api|sql`,
+and [check it](/addons#check-it-before-you-drop-it-in) with `npm run ops -- addon check <folder>`.
 
 ## Which one for which question
 

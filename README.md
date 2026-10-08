@@ -80,6 +80,8 @@ npm run ops -- doctor
 | [datadog](docs/guide/ready-made/datadog.md)     | logs, metrics, monitors         | API key, application key (read scopes) | experimental      |
 | [github](docs/guide/ready-made/github.md)       | pull requests, releases, builds | a fine-grained read-only token         | experimental      |
 
+Write your own with `init addon` and verify it with `npm run ops -- addon check <folder>`.
+
 They stay idle until you turn one on (a block in `ops.config.json`, secrets in
 `.env`, then `npm run ops -- doctor`). The [catalog](docs/guide/ready-made/index.md)
 explains the four steps; each page lists what it needs, its settings and tools,
