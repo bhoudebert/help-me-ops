@@ -2,7 +2,8 @@
 
 Some addons ship with help-me-ops, so you configure them instead of writing
 them. They are always installed and **idle**: they serve no tool and print
-nothing until an environment of your `ops.config.json` sets them up.
+nothing until an environment of your `ops.config.json` sets them up (or, when
+the configuration refers to `${VARIABLES}`, until those are set).
 
 ```bash
 npm run ops -- doctor
@@ -43,6 +44,35 @@ Then ask: "what does `/orders/4512` say?" The assistant calls
 `rest.get {path: "/orders/4512"}`; a JSON list becomes one piece of evidence per
 item, an object becomes one, and a time field (`at`, `time`, `timestamp`,
 `updated_at`, `created_at`, `date`) becomes the evidence's time.
+
+### Try it live, with the demo backend
+
+The demo workspace ships a small backend: the shop's own REST API, serving the
+recorded data over HTTP (prod on port 8088, staging on 8089, behind a bearer
+token), as a service of the Docker compose file. `ops.config.json` already sets
+`rest` up for it with variables, so it stays idle until you set them.
+
+```bash
+# from the help-me-ops clone
+docker compose -f examples/my-workspace/docker/compose.yml up -d backend
+cat >> .env <<'EOF'
+SHOP_API_PROD_URL=http://127.0.0.1:8088
+SHOP_API_STAGING_URL=http://127.0.0.1:8089
+SHOP_API_TOKEN=demo-token
+EOF
+npm run ops -- --workspace examples/my-workspace doctor     # rest: loaded
+```
+
+Restart your client and ask: "which orders in prod are awaiting payment, read
+from the shop's API?" The assistant calls `rest.get` with `/orders` and
+`status=awaiting_payment`, and gets 4512, 4513 and 4514, each with its time.
+The same question for staging returns one order, so the environments stay
+apart. Try `/admin` (refused: not under an allowed prefix), then
+`curl -X POST localhost:8088/orders` (the backend itself answers 405). Clean up
+with `docker compose -f examples/my-workspace/docker/compose.yml down -v`.
+
+Variables not set? `doctor` shows `rest idle … waiting for SHOP_API_PROD_URL`:
+a configured addon whose credentials are absent stays quiet and serves nothing.
 
 ### Why it is safe to point at a real API
 

@@ -80,8 +80,11 @@ the `api` template SHALL only GET.
 
 An addon with settings that no environment sets up (no entry under `addons` in
 the configuration, none of its environment variables set, and settings that do
-not validate when empty) SHALL be reported as `idle`, serve no tool and print
-nothing at start. In an environment that does not set it up while another does,
+not validate when empty), or whose configured settings only wait for
+`${VARIABLE}`s this machine does not have, SHALL be reported as `idle` (naming
+the variables it waits for), serve no tool and print nothing at start. A
+variable missing in one environment while another is set up SHALL make that
+environment's tools refuse, naming the variable. In an environment that does not set it up while another does,
 its tools SHALL refuse with a message saying what to add. An addon set up with
 settings that do not validate SHALL stay noted as unavailable.
 
@@ -89,6 +92,11 @@ settings that do not validate SHALL stay noted as unavailable.
 
 - **WHEN** a workspace sets up no shipped addon
 - **THEN** `doctor` lists them as `idle` with what to add, the tool list holds none of their tools, and the start-up notices do not mention them
+
+#### Scenario: Configured, credentials absent
+
+- **WHEN** the configuration sets `rest` up with `${SHOP_API_TOKEN}` and that variable is not set
+- **THEN** `rest` is `idle`, `doctor` says it waits for `SHOP_API_TOKEN`, and nothing is printed at start
 
 ### Requirement: A shipped `rest` addon
 

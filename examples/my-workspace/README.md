@@ -117,7 +117,28 @@ docker compose -f examples/my-workspace/docker/compose.yml down -v
 mv examples/my-workspace/addons/shopdb examples/my-workspace/addons/_shopdb
 ```
 
-## 3. Make it yours
+## 3. The shop's REST API, live (optional, needs Docker)
+
+A small backend serves this workspace's recorded data over HTTP, and the `rest`
+addon reads it: the same shop, from a running server.
+
+```bash
+docker compose -f examples/my-workspace/docker/compose.yml up -d backend
+cat >> .env <<'EOF'
+SHOP_API_PROD_URL=http://127.0.0.1:8088
+SHOP_API_STAGING_URL=http://127.0.0.1:8089
+SHOP_API_TOKEN=demo-token
+EOF
+npm run ops -- --workspace examples/my-workspace doctor     # rest: loaded
+```
+
+`ops.config.json` already holds the `rest` settings (`baseUrl`, `allow`, `token`
+as `${VARIABLES}`), so there is nothing to edit; until the variables are set,
+`doctor` shows `rest idle … waiting for SHOP_API_PROD_URL`. Ask: "which orders in
+prod are awaiting payment, read from the shop's API?" Details and what to try:
+[ready-made addons](https://bhoudebert.github.io/help-me-ops/guide/shipped-addons).
+
+## 4. Make it yours
 
 Copy this folder into your own repository, rename the app and environments in
 `ops.config.json`, and replace what the addons read with your read-only systems.
