@@ -39,6 +39,21 @@ test the addon against a fake driver, never a real database.
 - **WHEN** the `readonly` user tries an `UPDATE`
 - **THEN** the database answers `permission denied`
 
+### Requirement: A live backend, optional
+
+The demo workspace SHALL ship a small backend (`docker/backend/server.mjs`, Node
+only, also a `backend` service of the compose file) serving the recorded data of
+each environment as the shop's REST API over HTTP, one port per environment
+(`/orders`, `/orders/<id>`, `/health`), behind a demo bearer token, answering
+`405` to anything but GET. The configuration SHALL set up the `rest` addon for
+it with `${VARIABLES}`, so it stays idle until they are set. The suite SHALL start
+the backend on free ports and read it through the `rest` addon.
+
+#### Scenario: The same order, live
+
+- **WHEN** the backend is running and the variables are set, and `rest.get` reads `/orders` with `status=awaiting_payment` in `prod`
+- **THEN** orders 4512, 4513 and 4514 come back with their times, and `staging` shows only its own order
+
 ### Requirement: The scenario is a test
 
 A scenario file (`examples/my-workspace/scenarios/`) SHALL hold the question, the
