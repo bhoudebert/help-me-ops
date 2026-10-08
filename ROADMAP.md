@@ -3,7 +3,7 @@
 ## Next
 
 - **The rest of the plug-in kit** (`openspec/changes/plug-in-kit/`):
-  searchable runbooks (`knowledge/`), a checked conclusion (cause, evidence,
+  a checked conclusion (cause, evidence,
   unknowns, every quote from a result), a scripted terminal demo (`ops demo`)
   and setup helpers (`ops init`, `ops doctor`, `ops addon check`).
 - **Writing an addon without MCP knowledge** (ADR 0009): a manifest and plain

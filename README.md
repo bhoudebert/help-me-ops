@@ -26,6 +26,7 @@ your system:
 - **Connectors**: where the evidence is. A log file works out of the box; a
   database, a metrics store or an API is a small module you write once.
 - **Playbooks**: how your team investigates each kind of problem, in Markdown.
+- **Knowledge**: runbooks and past incidents in Markdown, searched by words and quoted like any other evidence.
   The assistant follows them before improvising.
 
 Everything is **read-only**: it searches, quotes and concludes; a fix is

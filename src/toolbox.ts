@@ -1,6 +1,6 @@
 // The toolbox of a workspace: its apps with their environments' connectors,
 // its playbooks, and what its addons bring.
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { addonFolders, loadAddons } from "./addons/loader.ts";
 import { addonTools, connectorTypes } from "./addons/runtime.ts";
 import { loadConfig, resolveWorkspace } from "./config.ts";
@@ -43,10 +43,19 @@ export async function openToolbox(workspace = resolveWorkspace(), extraAddons: s
     const own = await loadPlaybooks(addon.playbooks);
     playbooks.push(...own.map((p) => ({ ...p, id: `${addon.name}/${p.id}` })));
   }
+  const knowledge = [
+    { dir: join(baseDir, "knowledge"), origin: "workspace" },
+    { dir: resolve(baseDir, config.playbooks), origin: "playbooks" },
+    ...addons.flatMap((addon) => [
+      ...(addon.knowledge ? [{ dir: addon.knowledge, origin: `addon:${addon.name}` }] : []),
+      ...(addon.playbooks ? [{ dir: addon.playbooks, origin: `addon:${addon.name}` }] : []),
+    ]),
+  ];
   return {
     workspace: baseDir,
     apps,
     playbooks,
+    knowledge,
     addonTools: addonTools(addons, apps, baseDir, note, process.env, globalThis.fetch, idle),
     addons: report,
     warnings,

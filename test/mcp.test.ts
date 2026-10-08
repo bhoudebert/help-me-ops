@@ -22,7 +22,7 @@ test("mcp: the server lists its tools with all four hints and answers a search",
     assert.match(client.getInstructions() ?? "", /scope with the problem/);
     assert.match(client.getInstructions() ?? "", /Workspace loaded: .*examples\/my-workspace/);
     const { tools } = await client.listTools();
-    assert.equal(tools.length, 10);
+    assert.equal(tools.length, 11);
     for (const tool of tools) {
       for (const hint of ["readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint"]) {
         assert.equal(typeof (tool.annotations as any)?.[hint], "boolean", `${tool.name} ${hint}`);
