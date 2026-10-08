@@ -148,6 +148,15 @@
   .scaffold { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 26px; padding: 16px 18px; border-radius: 12px; background: var(--ink); color: #e2e8f0; font-family: var(--mono); font-size: .86rem; }
   .scaffold .c { color: #94a3b8; font-style: normal; }
 
+
+  /* playbook */
+  .flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: f; }
+  .flow li { counter-increment: f; position: relative; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 12px 52px; font-size: .94rem; box-shadow: 0 1px 2px rgba(15,23,42,.05); }
+  .flow li::before { content: counter(f); position: absolute; left: 14px; top: 12px; width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 700; font-size: .82rem; display: grid; place-items: center; }
+  .flow b { display: block; font-size: .98rem; }
+  .flow code { white-space: nowrap; }
+  pre .m { color: #b45309; } pre .h { color: #0f172a; font-weight: 700; }
+
   /* trust */
   .trust { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
   .layers { display: grid; gap: 0; }
@@ -161,7 +170,7 @@
   .ticks svg { color: var(--ok); margin-top: 3px; }
   .ticks p { margin: 2px 0 0; color: var(--muted); font-size: .95rem; }
 
-  .finale { text-align: center; background: radial-gradient(800px 300px at 50% 0, var(--brand-soft), transparent 70%), var(--soft); }
+  .finale { text-align: center; background: radial-gradient(800px 300px at 50% 0, var(--brand-soft), transparent 70%), #fff; }
   .finale .sub { margin-inline: auto; }
   .finale .cta { justify-content: center; }
   footer { padding: 30px 0 44px; color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); }
@@ -176,7 +185,7 @@
   }
   @media (max-width: 640px) {
     section { padding: 56px 0; } .hero .wrap { padding-top: 40px; padding-bottom: 44px; }
-    .two, .grid4, .gallery { grid-template-columns: 1fr; }
+    .two, .grid4, .gallery { grid-template-columns: 1fr; } .flow li { padding-left: 48px; }
     nav .links a.hide-s { display: none; }
     .trail li { grid-template-columns: 50px 1fr; } .trail li .chip { grid-column: 2; justify-self: start; } .trail li span.t { grid-column: 2; }
   }
@@ -336,7 +345,52 @@
   </div>
 </section>
 
-<section class="soft" id="addons">
+<section class="soft" id="playbooks">
+  <div class="wrap">
+    <span class="kicker">Under the hood</span>
+    <h2>A playbook is a Markdown file. Nothing more.</h2>
+    <p class="sub">It is the page your team would hand to whoever is on call: when it applies, and what to check, in order. No schema, no code. The assistant reads it as written and follows it before it improvises. Grown after every incident, it is how your team's experience stays in the tool.</p>
+    <div class="two">
+<pre><span class="fn">playbooks/order-stuck.md</span><span class="m">---</span>
+<span class="k">name:</span> Order stuck or missing
+<span class="k">when:</span> a client cannot find their order,
+      paid but no order, order not confirmed
+<span class="m">---</span>
+
+<span class="h">1. The order itself.</span> <span class="s">order.getOrder</span>
+   Its status and when it last changed.
+   awaiting_payment -> confirmed -> shipped
+
+<span class="h">2. Its story in the logs.</span> <span class="s">searchSource</span>
+   Search app-logs for the number. The event that
+   moves an order is "webhook payment.succeeded".
+   If it never arrived, who refused it?
+
+<span class="h">3. What it waits for.</span>
+   <span class="s">health.checkHealth</span>: is it us or the provider?
+   <span class="s">metrics.queryMetric</span>: queue depth, memory.
+
+<span class="h">4. Others affected.</span> <span class="s">order.listOrders</span>
+   One order, or all of them?
+
+<span class="h">5. Conclude</span> with the cause, how sure you
+   are, the evidence, and what is unknown.
+   The fix is for a person.</pre>
+      <div>
+        <ol class="flow">
+          <li><b>A problem is reported</b>"Client u-881 paid but cannot find order 4512."</li>
+          <li><b>The playbook is found</b><code>listPlaybooks</code> matches the words of <code>when</code> (paid, order, find) with the question. It ranks, it does not guess.</li>
+          <li><b>It is read as written</b><code>getPlaybook</code> hands the text to the assistant. Your names, your order, your warnings.</li>
+          <li><b>Each step becomes a tool call</b>The steps name the addons and sources to use, so the assistant looks where your team looks, with the scope you set.</li>
+          <li><b>Gaps are said out loud</b>A step with no source behind it ends up under "unknown" in the conclusion, never as an invented fact.</li>
+        </ol>
+        <p class="section-note" style="margin-top:18px">No playbook fits? It investigates from the tools alone, with fewer guard rails. Addons can ship their own playbooks too. <a href="guide/playbooks">Write a playbook</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="addons">
   <div class="wrap">
     <span class="kicker">Plug in anything</span>
     <h2>Two files. No MCP. No AI knowledge.</h2>
@@ -384,7 +438,7 @@
   </div>
 </section>
 
-<section id="trust">
+<section class="soft" id="trust">
   <div class="wrap trust">
     <div>
       <span class="kicker">Trusted with production</span>
