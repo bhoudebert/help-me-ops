@@ -1,6 +1,7 @@
 {
   "id": "missing-emails",
   "question": "Customers say they stopped receiving their order confirmation emails since last night",
+  "now": "2026-10-09T07:30:00Z",
   "scope": {
     "app": "shop",
     "env": "prod"

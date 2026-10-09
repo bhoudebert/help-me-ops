@@ -17,6 +17,7 @@ test("the demo world has several incidents of different kinds, and ops demo keep
   assert.deepEqual(all.map((s) => s.id).sort(), ["missing-emails", "slow-checkout", "stuck-order"]);
   assert.equal(defaultScenario(all)!.id, "stuck-order");
   for (const s of all) {
+    assert.match(s.now ?? "", /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/, `${s.id}: when the person asks`);
     assert.ok(
       s.expect?.facts.some((f) => f.required),
       `${s.id}: at least one required fact`,

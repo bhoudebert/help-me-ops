@@ -22,6 +22,8 @@ export interface Scenario {
   scope?: { app?: string; env?: string };
   /** Wanted by `ops demo` when no scenario is named; else the first by name. */
   default?: boolean;
+  /** When the person asks, in the world of the scenario: a model has no other way to know what "last night" is. */
+  now?: string;
   playbook?: string;
   expect?: Expect;
   steps: { why: string; tool: string; input: Record<string, unknown> }[];

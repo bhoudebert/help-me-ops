@@ -1,6 +1,7 @@
 {
   "id": "slow-checkout",
   "question": "Checkout has been very slow since this afternoon and some customers get timeouts",
+  "now": "2026-10-08T14:40:00Z",
   "scope": {
     "app": "shop",
     "env": "prod"

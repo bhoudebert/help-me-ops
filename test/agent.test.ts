@@ -89,6 +89,21 @@ test("ask and chat: the person sees that the model is being asked, and how long 
   }
 });
 
+test("the assistant is told the date: the clock in ask and chat, the scenario's own time in eval", async () => {
+  const server = await fakeChat([{ content: "a" }]);
+  try {
+    const { io } = quiet();
+    await runAsk(await openToolbox(workspace), "q", io, flagsFor(server.url), noEnv);
+    const system = server.requests[0]!.messages[0]!.content!;
+    assert.match(
+      system,
+      /The current date and time is 20\d\d-\d\d-\d\dT[\d:.]+Z \(UTC\): work out words like "today" or "last night"/,
+    );
+  } finally {
+    await server.close();
+  }
+});
+
 test("ask: a bad call is answered with the error, not run, and the model may correct itself", async () => {
   const server = await fakeChat([
     calls({ name: "noSuchTool", arguments: {} }),

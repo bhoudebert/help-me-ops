@@ -100,6 +100,11 @@ test("eval: every setting is run the same number of times, each in a fresh sessi
     const bodies = server.requests as unknown as { reasoning_effort?: string }[];
     assert.equal(bodies[0]!.reasoning_effort, "none");
     assert.equal(bodies.at(-1)!.reasoning_effort, undefined);
+    // the assistant is told when the person asks, in the world of the scenario
+    assert.match(
+      server.requests[0]!.messages[0]!.content!,
+      /The current date and time is 2026-10-07T10:20:00Z \(UTC\)/,
+    );
     // a fresh conversation each run
     const firstOfSecondRun = server.requests[13]!;
     assert.deepEqual(
@@ -287,6 +292,23 @@ test("eval over several scenarios: one report each, then the settings added up; 
       {},
     );
     assert.equal(one.reports.length, 1);
+  } finally {
+    await server.close();
+  }
+});
+
+test("eval: a model that writes a tool call nobody can read is a result of the eval, not a mistake of the setup", async () => {
+  const broken = { status: 500, body: { error: { message: "error parsing tool call: raw='{" } } };
+  const server = await fakeChat([broken, broken, broken, broken]);
+  try {
+    const report = await runEval(
+      await openToolbox(workspace),
+      workspace,
+      { runs: 1, models: ["m"], reasoning: ["default"], baseUrl: server.url },
+      {},
+    );
+    assert.equal(report.settings[0]!.runs[0]!.status, "error");
+    assert.match(report.settings[0]!.runs[0]!.note!, /could not parse the arguments of the tool call/);
   } finally {
     await server.close();
   }

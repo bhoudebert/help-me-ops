@@ -5,6 +5,7 @@
 // machine, and the only basis to rely on one.
 import { defaultScenario, scenarios, type Scenario } from "../demo.ts";
 import type { Toolbox } from "../tools/index.ts";
+import { UnreadableToolCall } from "./client.ts";
 import { assertModelAllowed, displayUrl, resolveModel, type Model } from "./endpoint.ts";
 import { Session } from "./loop.ts";
 
@@ -151,7 +152,7 @@ async function evalScenario(
         const began = Date.now();
         try {
           // A new session each run: a new ledger, a new conversation.
-          const turn = await new Session(toolbox, model, fetchImpl).turn(questionFor(scenario));
+          const turn = await new Session(toolbox, model, fetchImpl, scenario.now).turn(questionFor(scenario));
           runs.push({
             status: turn.status,
             steps: turn.steps,
@@ -162,7 +163,8 @@ async function evalScenario(
           });
         } catch (error) {
           // A server that is not there on the first run is a configuration mistake, not a result.
-          if (!runs.length && i === 1) throw error;
+          // (a model that wrote a tool call nobody could read is a result, not a mistake of the setup)
+          if (!runs.length && i === 1 && !(error instanceof UnreadableToolCall)) throw error;
           runs.push({
             status: "error",
             steps: 0,
