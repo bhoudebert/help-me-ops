@@ -112,7 +112,12 @@ export function createToolDefinitions({
         app: appParam,
         env: envParam,
         source: z.string().describe("Source id, from listSources"),
-        query: z.string().min(1).describe("What to look for"),
+        query: z
+          .string()
+          .min(1)
+          .describe(
+            "What to look for: a few words, an id or a code. For log files every word must be in the line, in any order",
+          ),
         from: z.string().optional().describe("Start of the window, ISO 8601"),
         to: z.string().optional().describe("End of the window, ISO 8601"),
         limit: z.number().int().min(1).max(500).optional().describe("At most this many results (default 50)"),
@@ -130,7 +135,17 @@ export function createToolDefinitions({
         data?.require(found.id);
         const { query, from, to, limit } = args;
         const evidence = await found.search({ query, from, to, limit });
-        return json({ app: app.name, env: env.name, source: found.id, evidence });
+        return json({
+          app: app.name,
+          env: env.name,
+          source: found.id,
+          evidence,
+          ...(evidence.length
+            ? {}
+            : {
+                note: "No match. Matching is on the words as written in the source: try fewer or different words (an id, a code, a service name), or a wider time window.",
+              }),
+        });
       },
     },
     {

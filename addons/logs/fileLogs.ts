@@ -12,12 +12,14 @@ export function fileLogs(options: { id: string; description: string; path: strin
     description: options.description,
     async search(input: SearchInput): Promise<Evidence[]> {
       const text = await readFile(options.path, "utf8");
-      const wanted = input.query.toLowerCase();
+      // Every word must be in the line, in any order: "slow checkout" finds "checkout ... slow".
+      const words = input.query.toLowerCase().split(/\s+/).filter(Boolean);
       const from = input.from ? Date.parse(input.from) : -Infinity;
       const to = input.to ? Date.parse(input.to) : Infinity;
       const found: Evidence[] = [];
       for (const line of text.split("\n")) {
-        if (!line.toLowerCase().includes(wanted)) continue;
+        const lower = line.toLowerCase();
+        if (!words.length || !words.every((word) => lower.includes(word))) continue;
         const at = STAMP.exec(line)?.[1] ?? null;
         const ms = at ? Date.parse(at) : NaN;
         // A line without a time is kept only when no window was asked for.

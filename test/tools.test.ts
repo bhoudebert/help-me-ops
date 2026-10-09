@@ -44,6 +44,13 @@ test("tools: search a source, read a playbook, clear errors for unknown names", 
   const found = JSON.parse(await search.run({ env: "prod", source: "app-logs", query: "order=4512" }));
   assert.deepEqual([found.app, found.env, found.source], ["shop", "prod", "app-logs"]);
   assert.equal(found.evidence.length, 6);
+  assert.equal(found.note, undefined, "a note only when nothing matched");
+  const none = JSON.parse(await search.run({ env: "prod", source: "app-logs", query: "no such words here" }));
+  assert.deepEqual(none.evidence, []);
+  assert.match(
+    none.note,
+    /^No match\. Matching is on the words as written.*fewer or different words.*wider time window/,
+  );
   const row = JSON.parse(await order.run({ env: "prod", id: "4512" }));
   assert.equal(row.evidence[0].data.status, "awaiting_payment");
   assert.deepEqual(JSON.parse(await order.run({ env: "staging", id: "4512" })).evidence, []);
