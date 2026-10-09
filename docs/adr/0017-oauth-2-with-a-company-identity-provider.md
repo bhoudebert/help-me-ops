@@ -49,6 +49,11 @@ issues no token**: that is the provider's job.
   error at start, never a server that accepts anything.
 - **Static tokens keep working beside it** (service accounts, a pipeline), so
   turning OAuth on does not lock out what already runs.
+- **A Keycloak to try it with.** A `keycloak` profile in `compose.yml` and a realm
+  in `deploy/keycloak/`, with `npm run keycloak:check`, so the whole path (a client
+  registering itself, a login with PKCE, a token used on the server) runs against a
+  real provider and not only a fake one. For trying, never for production; not in
+  CI (a 700 MB image).
 - **The `jose` library does the cryptography.** A direct dependency (the MCP SDK
   already depends on it): verifying a JWT is a place to use a reviewed library, not
   to write one.

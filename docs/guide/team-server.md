@@ -191,6 +191,34 @@ Starting points, **written from the providers' documented formats and not tried 
 
 The server **refuses to start** if it cannot reach the provider's metadata (and no `--oauth-jwks-uri` is given), if that metadata names another issuer, or if the issuer, keys or public URL are not https (this machine excepted).
 
+### Try it with a Keycloak on your machine
+
+`compose.yml` has a **test identity provider** under the `keycloak` profile: a Keycloak with a ready realm (`ops`), two people (`alice` / `alice`, `bob` / `bob`), and a second help-me-ops that trusts it. It is for trying the sign-in, never for production (plain http, `admin` / `admin`, passwords equal to names, client registration open from this machine).
+
+```bash
+docker compose --profile keycloak up -d --build keycloak help-me-ops-oauth
+# Keycloak:    http://localhost:8080   (admin / admin)
+# help-me-ops: http://localhost:8809/mcp   (the one that trusts it)
+
+npm run keycloak:check
+# ✔ registered a client            ← what an MCP client does when the provider allows it
+# ✔ alice signed in                ← the login page, with PKCE
+# ✔ got a token: iss …/realms/ops, aud "http://localhost:8809/mcp", scope "openid help-me-ops profile email", user alice
+# ✔ the MCP server accepted it: 12 tools, 3 pieces of evidence
+# ✔ and refuses a request with no token (401), pointing at …/.well-known/oauth-protected-resource/mcp
+```
+
+`npm run keycloak:check` does headless, in a few seconds, what a client does for you in a browser. To use **Claude Code** itself, from a folder that is not this repository:
+
+```bash
+claude mcp add --transport http ops-oauth http://localhost:8809/mcp
+claude                      # then /mcp, choose ops-oauth, Authenticate: a browser opens on Keycloak
+```
+
+Sign in as `alice` / `alice` and accept the consent screen (it appears because the client registered itself). If your client wants a client id that is already registered instead of registering itself, the realm has one with a fixed callback: `claude mcp add --transport http ops-oauth http://localhost:8809/mcp --client-id claude-code --callback-port 8765`. In the log of the server (`docker compose --profile keycloak logs -f help-me-ops-oauth`) every call carries `"identity":"oauth:alice"`. Stop it with `docker compose --profile keycloak down`.
+
+A few things the demo shows about a real setup: the token's `aud` is the server's address (set by the `help-me-ops` scope in the realm, an audience mapper), the required scope is `help-me-ops` (`OPS_MCP_OAUTH_SCOPES`), and the server shares Keycloak's network only so that `localhost:8080` means the same Keycloak to the browser and to the server (a real provider has a name). The realm is in [`deploy/keycloak/ops-realm.json`](https://github.com/bhoudebert/help-me-ops/blob/main/deploy/keycloak/ops-realm.json): copy what you need.
+
 **Not supported yet:** providers that issue **opaque** access tokens (not JWTs), which would need a call to the provider per request (token introspection); a list of revoked tokens (keep lifetimes short); permissions per person from groups or roles in the token.
 
 ## What it does and does not do
