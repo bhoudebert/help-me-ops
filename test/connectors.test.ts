@@ -32,12 +32,19 @@ test("file logs: a time window, a limit, case ignored", async () => {
     ["2026-10-07T10:00:02Z", "2026-10-07T10:02:03Z"],
   );
   assert.equal((await logs.search({ query: "order", limit: 2 })).length, 2);
-  assert.deepEqual(await logs.search({ query: "nothing like this" }), []);
+  assert.deepEqual(await logs.search({ query: "zzz qqq" }), []);
   // every word, in any order, case ignored: a natural question finds the line
   const words = await logs.search({ query: "Queue FULL webhook" });
   assert.equal(words.length, 1);
   assert.match(words[0]!.summary, /webhook endpoint \/hooks\/acme-pay returned 503 to provider \(queue full\)/);
-  assert.deepEqual(await logs.search({ query: "queue unicorn" }), [], "one word that is not there is no match");
+  assert.deepEqual(await logs.search({ query: "unicorn" }), [], "a word that is not there is no match");
+  // no line has every word: the lines with the most of them, best first, marked as partial
+  const partial = await logs.search({ query: "queue unicorn" });
+  assert.ok(partial.length >= 2);
+  assert.ok(partial.every((e) => (e.data as { partial: string }).partial === "1 of 2 words"));
+  const ranked = await logs.search({ query: "refused unicorn webhook 503 gone" });
+  assert.match(ranked[0]!.summary, /503/, "the line with the most of the words comes first");
+  assert.ok((ranked[0]!.data as { partial: string }).partial.startsWith("2 of 5"));
   assert.deepEqual(await logs.search({ query: "   " }), [], "an empty search finds nothing");
 });
 

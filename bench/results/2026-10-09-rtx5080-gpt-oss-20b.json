@@ -1,9 +1,10 @@
 {
   "version": 1,
-  "recordedAt": "2026-10-09T10:20:00.000Z",
-  "commit": "4a9c2d4",
+  "recordedAt": "2026-10-09T16:42:04.715Z",
+  "commit": "458185c+dirty",
   "machine": "RTX 5080 16 GB, 60 GB RAM, Ollama 0.32.14 (CUDA), context 16384, NixOS",
-  "notes": "gpt-oss 20B (MXFP4), reasoning low, 3 runs per scenario; 13 GB on a 16 GB card shared with a desktop, so part of it ran on the CPU; run on the branch of #50 (commit 4a9c2d4), before it was squash-merged",
+  "temperature": 0.7,
+  "notes": "gpt-oss 20B (MXFP4), reasoning low, temperature 0.7; 13 GB on a 16 GB card shared with a desktop, so part of it ran on the CPU",
   "suite": {
     "baseUrl": "http://localhost:11434/v1",
     "reports": [
@@ -23,26 +24,90 @@
             "runs": [
               {
                 "status": "answered",
-                "steps": 6,
-                "tokens": 21761,
-                "seconds": 48.502,
-                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
+                "steps": 10,
+                "tokens": 40094,
+                "seconds": 110.898,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "answered",
+                "steps": 9,
+                "tokens": 35139,
+                "seconds": 45.478,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
-                "steps": 10,
-                "tokens": 35752,
-                "seconds": 20.599,
-                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
+                "steps": 8,
+                "tokens": 29472,
+                "seconds": 28.562,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
                 "cause": true
               },
               {
-                "status": "concluded",
-                "steps": 10,
-                "tokens": 35752,
-                "seconds": 32.259,
-                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
+                "status": "answered",
+                "steps": 14,
+                "tokens": 76437,
+                "seconds": 50.282,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
+              },
+              {
+                "status": "answered",
+                "steps": 1,
+                "tokens": 4814,
+                "seconds": 5.774,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "answered",
+                "steps": 7,
+                "tokens": 33050,
+                "seconds": 21.825,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
+              },
+              {
+                "status": "answered",
+                "steps": 11,
+                "tokens": 47100,
+                "seconds": 45.295,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
+              },
+              {
+                "status": "answered",
+                "steps": 9,
+                "tokens": 37523,
+                "seconds": 33.474,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
                 "cause": true
               }
             ]
@@ -65,25 +130,67 @@
             "runs": [
               {
                 "status": "concluded",
-                "steps": 7,
-                "tokens": 19717,
-                "seconds": 7.401,
+                "steps": 8,
+                "tokens": 23522,
+                "seconds": 22.534,
                 "facts": [],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 7,
-                "tokens": 19717,
-                "seconds": 7.495,
+                "steps": 10,
+                "tokens": 32441,
+                "seconds": 37.944,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "answered",
+                "steps": 12,
+                "tokens": 54295,
+                "seconds": 55.411,
+                "facts": [
+                  "the connection pool is exhausted"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 13,
+                "tokens": 49912,
+                "seconds": 69.33,
                 "facts": [],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 7,
-                "tokens": 19717,
-                "seconds": 7.391,
+                "steps": 11,
+                "tokens": 37432,
+                "seconds": 38.816,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "answered",
+                "steps": 9,
+                "tokens": 35903,
+                "seconds": 32.719,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 12,
+                "tokens": 43667,
+                "seconds": 42.135,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 8,
+                "tokens": 23565,
+                "seconds": 31.782,
                 "facts": [],
                 "cause": false
               }
@@ -107,28 +214,81 @@
             "reasoning": "low",
             "runs": [
               {
+                "status": "error",
+                "steps": 0,
+                "tokens": 0,
+                "seconds": 28.883,
+                "facts": [],
+                "cause": false,
+                "note": "The server could not parse the arguments of the tool call: they were not valid JSON."
+              },
+              {
                 "status": "concluded",
-                "steps": 17,
-                "tokens": 95935,
-                "seconds": 32.996,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "steps": 11,
+                "tokens": 47426,
+                "seconds": 24.39,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              },
+              {
+                "status": "answered",
+                "steps": 14,
+                "tokens": 75041,
+                "seconds": 55.875,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
-                "steps": 17,
-                "tokens": 95935,
-                "seconds": 29.773,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "steps": 11,
+                "tokens": 42543,
+                "seconds": 31.569,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 9,
+                "tokens": 32185,
+                "seconds": 20.178,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "answered",
+                "steps": 11,
+                "tokens": 55143,
+                "seconds": 38.279,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
-                "steps": 17,
-                "tokens": 95935,
-                "seconds": 37.06,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "steps": 11,
+                "tokens": 47166,
+                "seconds": 20.498,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
                 "cause": true
+              },
+              {
+                "status": "answered",
+                "steps": 8,
+                "tokens": 30264,
+                "seconds": 17.56,
+                "facts": [],
+                "cause": false
               }
             ]
           }

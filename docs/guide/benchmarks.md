@@ -8,23 +8,33 @@ Runs where the answer named the cause, out of the runs made, for each incident o
 
 <!-- bench:table:start -->
 
-| Setting                     | missing-emails | slow-checkout | stuck-order | Accepted | Median time |
-| --------------------------- | -------------: | ------------: | ----------: | -------: | ----------: |
-| gpt-oss:20b · reasoning low |            3/3 |           0/3 |         3/3 |      8/9 |        30 s |
-| qwen3:14b · reasoning none  |            5/5 |           0/5 |         5/5 |    15/15 |        13 s |
-| qwen3:8b · reasoning none   |            0/5 |           0/5 |         4/5 |    15/15 |         6 s |
+| Setting                     | Temp | missing-emails | slow-checkout | stuck-order | Accepted | Median time |
+| --------------------------- | ---: | -------------: | ------------: | ----------: | -------: | ----------: |
+| gpt-oss:20b · reasoning low |  0.7 |            6/8 |           0/8 |         4/8 |    11/24 |        33 s |
+| qwen3:14b · reasoning none  |  0.7 |            3/8 |           0/8 |         7/8 |    24/24 |        14 s |
+| qwen3:8b · reasoning none   |  0.7 |            3/8 |           0/8 |         2/8 |    24/24 |         8 s |
 
 <!-- bench:table:end -->
 
-Set up: an RTX 5080 with 16 GB, 60 GB of RAM, Ollama 0.32.14 (CUDA) with a context of 16,384 tokens, temperature 0. Qwen runs have thinking off (`--reasoning none`); gpt-oss runs at `low`. Five runs per scenario for Qwen, three for gpt-oss (a 13 GB model on a card shared with a desktop, so partly on the CPU, which is why it is slow). The table is generated from [`bench/results/`](https://github.com/bhoudebert/help-me-ops/tree/main/bench/results): each file holds every run, the commit of this repository, the machine and the date.
+Set up: an RTX 5080 with 16 GB, 60 GB of RAM, Ollama 0.32.14 (CUDA) with a context of 16,384 tokens. Qwen runs have thinking off (`--reasoning none`), gpt-oss runs at `low`; the temperature is in the table, eight runs per scenario. gpt-oss is a 13 GB model on a card shared with a desktop, so partly on the CPU, which is why it is slow. The table is generated from [`bench/results/`](https://github.com/bhoudebert/help-me-ops/tree/main/bench/results): each file holds every run, the commit of this repository, the machine and the date.
 
 ## How to read it
 
 - **"Found the cause"** means the answer names the facts the scenario requires, as keywords (see [`ops eval`](/local-models#measure-it-ops-eval)). It is **not a judge of reasoning**: a right answer in other words is missed, and the right words for the wrong reason are counted.
-- **"Accepted"** is the conclusion check accepting a conclusion. It proves every quote was returned by a tool, **not that the cause is right**, so on its own it says little: a model can conclude "the order is awaiting payment" and be accepted.
-- **The incidents differ on purpose.** `stuck-order` has a playbook and runbooks; `missing-emails` (an expired certificate) and `slow-checkout` (a missing index under load) have none, so they have to be found from the evidence. A model that only knows the first shows.
-- **Nobody found `slow-checkout`.** The best model reaches the symptom (the connection pool is full), then does not look in the logs for what changed, and says the cause of the exhaustion is unknown. That is honest, and the benchmark still has headroom.
-- **Two fixes came from this, not from tuning to a scenario.** The first measurement had a model searching 2023 for "last night" because it did not know the date, and a log search that needed the exact phrase. The assistant is now told the date, and a search needs every word in any order (and says when nothing matched). Nothing in either mentions a payment, a queue or a certificate.
+- **"Accepted"** is the conclusion check accepting a conclusion. It proves every quote was returned by a tool, **not that the cause is right**, so on its own it says little: a model can conclude "the order is awaiting payment" and be accepted. For gpt-oss it is low because it often writes a tool call the server cannot read, or answers without calling the check.
+- **The temperature matters.** At temperature 0 a model answers almost the same every time, so five runs were hardly five samples: an earlier table showed `qwen3:14b` at 5/5 on two incidents, and at 0.7 (independent samples, eight runs) it is 7/8 and 3/8. Those earlier records are kept (`temp0` in their names) and are not in the table. Treat any number here as a rough measure: eight runs cannot tell 5/8 from 7/8.
+- **The incidents differ on purpose.** `stuck-order` has a playbook and runbooks; `missing-emails` (an expired certificate) and `slow-checkout` (a missing index under load) have none, so they have to be found from the evidence. Size is not the whole story: the 14B finds the stuck order in 7 runs of 8 and the 8B in 2, but both find the expired certificate in 3 and gpt-oss, which is neither, in 6.
+- **Nobody found `slow-checkout`.** It needs two facts: the slow query that scans the whole table, and release 2.15.0 that introduced it. Both Qwen models now find the slow query in six runs of eight, and none connects it to the release. That is as far as a symptom-to-change search goes today, and the benchmark still has headroom.
+
+## What was tried
+
+Each of these came from reading what a model did in a failed run, and each was measured on all three incidents before it was kept:
+
+- **Kept: tell the assistant the date.** A model that does not know today's date searched 2023 for "last night". The assistant is now told the current date (the scenario's own in `ops eval`).
+- **Kept: a log search needs every word, in any order,** and when no line has every word it returns the lines with the most of them, best first, marked as partial. Before, "slow timeout" returned nothing and a model concluded from the metrics alone; with it the slow query is found.
+- **Rejected: a sentence in the method telling the model to look for what changed before a symptom began.** It made things worse (the 14B went from 5/5 to 0/5 on the certificate incident, the 8B from 4/5 to 0/5 on the stuck order, at temperature 0, five runs) and was reverted. A change to the prompt needs a measurement, and a plausible one is not enough.
+
+None of the kept changes mentions a payment, a queue, a certificate or a release.
 
 ## Not measured
 

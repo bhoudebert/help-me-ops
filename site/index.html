@@ -551,11 +551,11 @@ $ npm run ops -- eval --runs 5 --model qwen3:14b,qwen3:8b
         <div class="tablewrap"><table class="bench">
           <thead><tr><th>Model, on a GPU</th><th>Stuck order</th><th>Missing emails</th><th>Slow checkout</th></tr></thead>
           <tbody>
-            <tr class="best"><td>qwen3:14b</td><td class="n">5/5</td><td class="n">5/5</td><td class="n">0/5</td></tr>
-            <tr><td>gpt-oss:20b</td><td class="n">3/3</td><td class="n">3/3</td><td class="n">0/3</td></tr>
-            <tr><td>qwen3:8b</td><td class="n">4/5</td><td class="n">0/5</td><td class="n">0/5</td></tr>
+            <tr class="best"><td>qwen3:14b</td><td class="n">7/8</td><td class="n">3/8</td><td class="n">0/8</td></tr>
+            <tr><td>gpt-oss:20b</td><td class="n">4/8</td><td class="n">6/8</td><td class="n">0/8</td></tr>
+            <tr><td>qwen3:8b</td><td class="n">2/8</td><td class="n">3/8</td><td class="n">0/8</td></tr>
           </tbody></table></div>
-        <p class="caption">Runs where the model named the cause, out of the runs made, on three incidents of the demo shop (a stuck payment, an expired certificate, a missing index): an RTX 5080 with Ollama, 2026-10-09. <b>The check only proves a quote is real, not that the cause is right</b>, so the cause is counted separately. A few runs, one machine: a snapshot and not a ranking; nobody found the slow checkout. <a href="guide/benchmarks">The method and the details</a>.</p>
+        <p class="caption">Runs where the model named the cause, out of eight, on three incidents of the demo shop (a stuck payment, an expired certificate, a missing index): an RTX 5080 with Ollama, temperature 0.7, 2026-10-09. <b>The check only proves a quote is real, not that the cause is right</b>, so the cause is counted separately. Eight runs on one machine: a rough measure, not a ranking; nobody found the slow checkout. <a href="guide/benchmarks">The method and the details</a>.</p>
       </div>
     </div>
     <ul class="ticks" style="margin-top:28px">

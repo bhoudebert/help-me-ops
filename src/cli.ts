@@ -66,6 +66,7 @@ try {
         models: list(flag("--model"), [model]),
         reasoning: list(flag("--reasoning"), [toolbox.model?.reasoningEffort ?? "default"]),
         baseUrl: flag("--base-url"),
+        temperature: flag("--temperature") !== undefined ? Number(flag("--temperature")) : undefined,
       },
       process.env,
       globalThis.fetch,

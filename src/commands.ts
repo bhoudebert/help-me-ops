@@ -10,7 +10,7 @@ export const USAGE = `Usage: npm run ops -- <command>
   setup [claude|codex|copilot|all]      The configuration that connects an AI client, with your paths, checked
   demo [--scenario <id>] [--pace <ms>]  Watch an investigation of the demo shop in the terminal, no model needed
   chat                                  A conversation in the terminal with a model you configure (a local one: Ollama, llama.cpp, LM Studio)
-  eval [--scenario a,b] [--runs N] [--model a,b] [--reasoning none,default]
+  eval [--scenario a,b] [--runs N] [--temperature T] [--model a,b] [--reasoning none,default]
                                         Count how often a model reaches an accepted, expected conclusion on the scenarios
   ask "<question>" [--json]             One question, one checked answer, for scripts; exit 0 only if the conclusion was accepted
                                         both: --model <name> --base-url <url> --max-steps N --reasoning none|low|medium|high, or "model" in ops.config.json
