@@ -84,3 +84,30 @@ token itself instead of its hash.
 
 - **WHEN** the tokens file holds `alice:sha256:<hash>` and someone sends that hash as a bearer token
 - **THEN** the server answers 401
+
+### Requirement: OAuth 2 with a company identity provider
+
+When an issuer is configured (`--oauth-issuer` or `OPS_MCP_OAUTH_ISSUER`), the HTTP
+server SHALL accept access tokens that are JWTs signed by that provider, beside the
+static tokens, and SHALL check on every request the signature (against the keys at the
+declared JWKS address, or found by discovery of the issuer's metadata, which SHALL
+name the same issuer), the issuer, the audience (the public URL by default), the
+expiry (an `exp` is required), and the required scopes from `scope` or `scp`. It SHALL
+refuse the algorithms `none` and `HS*`. A refusal SHALL be 401 `invalid_token`, or 403
+`insufficient_scope`, with a `WWW-Authenticate` header carrying the address of the
+protected resource metadata (RFC 9728), which the server SHALL serve without
+authentication at `/.well-known/oauth-protected-resource` and with the resource's path.
+The identity SHALL be `oauth:` and the first of the configured claims, restricted to
+characters that cannot forge a log line. The server SHALL refuse to start when the
+provider's metadata cannot be found or names another issuer, or when the issuer, the
+keys address or the public URL is not https (a loopback address excepted).
+
+#### Scenario: A token for another audience
+
+- **WHEN** a client sends a token signed by the provider whose `aud` is another resource
+- **THEN** the server answers 401 with `error="invalid_token"` and runs nothing
+
+#### Scenario: The classic attacks
+
+- **WHEN** a client sends an unsigned token, or an HS256 token signed with the provider's public key as the secret
+- **THEN** the server answers 401

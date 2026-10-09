@@ -20,6 +20,10 @@ services:
       # The names the server is reached by: its Host header must be one of them.
       OPS_MCP_PUBLIC_HOSTS: ${OPS_PUBLIC_HOST:-localhost:8808}
       OPS_MCP_TOKENS_FILE: /run/secrets/ops_tokens
+    # To let people sign in with the company login instead of (or beside) tokens, add:
+    #   OPS_MCP_OAUTH_ISSUER: https://login.company.example/realms/ops
+    #   OPS_MCP_PUBLIC_URL: https://mcp.company.example/mcp
+    #   (and OPS_MCP_OAUTH_JWKS_URI, _AUDIENCE, _SCOPES: see the guide, "One server for the team")
     env_file:
       - path: ./server.env
         required: false

@@ -52,7 +52,7 @@
   `expect`, follow-up questions in `eval`, guided mode if the numbers call for it,
   an Anthropic Messages adapter.
 - **A benchmark page and stored results** (`bench/results/`), more scenarios with different causes (a bad deploy, an expired certificate, a database lock) so a model is measured on causes it has not seen, then a re-run of the models. Not a leaderboard: one scenario is a snapshot.
-- **MCP over HTTP for a team** (done, ADR 0015: tokens, one ledger per session, an audit line per call; a Docker image and compose file, ADR 0016). Next: publishing the image to a registry (the maintainer's call), OAuth in front of it for clients that need it, per-person permissions on sources, and rate limits.
+- **MCP over HTTP for a team** (done, ADR 0015: tokens, one ledger per session, an audit line per call; a Docker image and compose file, ADR 0016). OAuth 2 with a company identity provider (done, ADR 0017: discovery or a declared JWKS address, audience and scopes checked). Next: publishing the image to a registry (the maintainer's call), opaque tokens through introspection, per-person permissions on sources from the token's groups or roles, and rate limits.
 - **Case files**: an investigation saved with its question, steps, evidence
   and conclusion, so the next one starts from what is known.
 

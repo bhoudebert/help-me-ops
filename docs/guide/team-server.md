@@ -59,7 +59,7 @@ claude mcp add --transport http help-me-ops http://127.0.0.1:8808/mcp \
 
 :::
 
-How a client sends a header, and whether it can reach a remote server at all, depends on the client and its version: check its documentation. A client that only speaks OAuth for remote servers cannot connect yet (see the limits below).
+How a client sends a header, and whether it can reach a remote server at all, depends on the client and its version: check its documentation. A client that signs in through OAuth needs the [company login setup](#sign-in-with-the-company-login-oauth-2) instead of a token.
 
 For a quick look **on this machine only**, `--no-auth` serves without a token, and refuses to when the address is not a loopback one.
 
@@ -134,6 +134,65 @@ Things to know:
 - **Updating** is `docker compose up -d --build` after a `git pull`. No image is published to a registry yet.
 - **Logs** (`docker compose logs`) hold the audit lines, one JSON object per call.
 
+## Sign in with the company login (OAuth 2)
+
+Static tokens suit a few people. A company usually wants its people to sign in with the login it already has (Entra ID, Okta, Keycloak, Auth0...), with a second factor, and to lose access in one place when they leave. help-me-ops supports that as an **OAuth 2 resource server**: it does not log anyone in, it **checks the tokens your identity provider issues** and tells clients which provider to ask.
+
+```
+ person ──signs in──▶ identity provider ──access token──▶ client ──token──▶ help-me-ops
+                       (your company's)                                    checks signature, issuer,
+                                                                           audience, expiry, scopes
+```
+
+It is configuration only. Two things say where the provider is:
+
+```bash
+# discovery: the server reads the provider's published metadata and finds its keys
+OPS_MCP_OAUTH_ISSUER=https://login.company.example/realms/ops \
+OPS_MCP_PUBLIC_URL=https://mcp.company.example/mcp \
+OPS_MCP_PUBLIC_HOSTS=mcp.company.example \
+  npm run mcp:http -- --workspace /srv/ops
+
+# or declared by hand, when the server cannot reach the provider's metadata
+OPS_MCP_OAUTH_ISSUER=https://login.company.example/realms/ops \
+OPS_MCP_OAUTH_JWKS_URI=https://login.company.example/realms/ops/protocol/openid-connect/certs \
+  …
+```
+
+| Variable (or flag)                                         | What                                                                             | Default                               |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------- |
+| `OPS_MCP_OAUTH_ISSUER` (`--oauth-issuer`)                  | the provider's issuer URL, exactly as in the `iss` of its tokens; turns OAuth on | none                                  |
+| `OPS_MCP_PUBLIC_URL` (`--public-url`)                      | this server's address as clients reach it (https)                                | `https://<first public host><path>`   |
+| `OPS_MCP_OAUTH_JWKS_URI` (`--oauth-jwks-uri`)              | where the provider's public keys are, instead of discovery                       | found by discovery                    |
+| `OPS_MCP_OAUTH_AUDIENCE` (`--oauth-audience`)              | what a token must be issued for (`aud`)                                          | the public URL                        |
+| `OPS_MCP_OAUTH_SCOPES` (`--oauth-scope`)                   | scopes a token must carry, all of them                                           | none                                  |
+| `OPS_MCP_OAUTH_IDENTITY_CLAIMS` (`--oauth-identity-claim`) | claims naming the person, tried in order                                         | `preferred_username, email, upn, sub` |
+| `OPS_MCP_OAUTH_ALGORITHMS` (`--oauth-algorithm`)           | signature algorithms accepted                                                    | `RS256, PS256, ES256`                 |
+
+**What it checks, on every request:** the signature against the provider's keys (fetched once, refreshed when the provider rotates them), the issuer, the **audience**, that the token has not expired, and the scopes. `none` and shared-secret (`HS…`) algorithms are refused outright. Static tokens keep working beside it, for a pipeline or a service account.
+
+**What a client sees:** a request without a token gets `401` with a `WWW-Authenticate` header pointing at `/.well-known/oauth-protected-resource`, which says which provider to ask. A client that speaks MCP's OAuth flow (Claude Code does, through `/mcp` and a browser sign-in) takes it from there: it opens the provider's login, gets a token and sends it.
+
+**What you set up at the provider**, whatever its name for it:
+
+1. an application or API for this server, with an **identifier that becomes the `aud` of its tokens** (give the same to `--oauth-audience`, or use the public URL as the identifier);
+2. a way for MCP clients to be known to the provider: **dynamic client registration** if it offers it, or a registered client whose id you give people (what a client accepts depends on the client; check `claude mcp add --help` and your provider's documentation);
+3. optionally a scope such as `mcp:tools` that you require with `--oauth-scope`;
+4. short access-token lifetimes, since a token stays good until it expires.
+
+Starting points, **written from the providers' documented formats and not tried against a real one**:
+
+| Provider           | Issuer (`OPS_MCP_OAUTH_ISSUER`)                           | Audience                               | Scope claim |
+| ------------------ | --------------------------------------------------------- | -------------------------------------- | ----------- |
+| Keycloak           | `https://<host>/realms/<realm>`                           | an audience mapper on the client scope | `scope`     |
+| Microsoft Entra ID | `https://login.microsoftonline.com/<tenant-id>/v2.0`      | the application's id or `api://<id>`   | `scp`       |
+| Okta               | `https://<org>.okta.com/oauth2/<authorization-server-id>` | the authorization server's audience    | `scp`       |
+| Auth0              | `https://<tenant>.auth0.com/`                             | the API identifier                     | `scope`     |
+
+The server **refuses to start** if it cannot reach the provider's metadata (and no `--oauth-jwks-uri` is given), if that metadata names another issuer, or if the issuer, keys or public URL are not https (this machine excepted).
+
+**Not supported yet:** providers that issue **opaque** access tokens (not JWTs), which would need a call to the provider per request (token introspection); a list of revoked tokens (keep lifetimes short); permissions per person from groups or roles in the token.
+
 ## What it does and does not do
 
 **It does:**
@@ -148,7 +207,6 @@ Things to know:
 **It does not (yet):**
 
 - **Per-person permissions.** A token reads everything the workspace reads. What a person may see is decided by who gets a token, and by the read-only accounts behind the sources.
-- **OAuth.** Clients that only connect to remote servers through OAuth cannot use it; put an authenticating proxy in front, or wait.
 - **Rate limits** beyond the caps above, or **token rotation** (remove, add, restart).
 - **Hide anything from the AI provider.** What a tool returns still goes to the provider of the client the person uses: the [personal-data page](/privacy) applies as ever, and the mask and strict mode are enforced here, once, for everybody.
 
