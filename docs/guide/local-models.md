@@ -193,29 +193,20 @@ It is not intelligent (any question gets the scenario's investigation); it shows
 
 ### What one setup measured
 
-The only numbers this project has, from the maintainer's machine on 2026-10-08, **on the `stuck-order` scenario alone and before the two other incidents were added to the demo world** (they will be re-measured on all three): an RTX 5080 with 16 GB, Ollama 0.32.14 (CUDA), the demo's `stuck-order` scenario (the question, then "It is the shop app, in the prod environment", since nobody is there to answer when the model asks), 5 runs per setting, temperature 0:
+The only numbers this project has, from the maintainer's machine on 2026-10-09: an RTX 5080 with 16 GB, Ollama 0.32.14 (CUDA), the three incidents of the demo world (each question followed by "It is the shop app, in the prod environment", since nobody is there to answer when the model asks), temperature 0, thinking off (`--reasoning none`) for Qwen and `low` for gpt-oss. Runs where the cause was found, out of the runs made:
 
 ```
-setting                          accepted  cause  facts  steps  tokens  time
-qwen3:8b · reasoning none        5/5       0/5    1.0/5  13     54,064  8 s
-qwen3:8b · reasoning default     5/5       0/5    0.0/5  5      17,838  18 s
-qwen3:14b · reasoning none       5/5       5/5    2.0/5  11     51,595  16 s
-qwen3:14b · reasoning default    5/5       0/5    0.0/5  6      21,239  40 s
-llama3.1:8b · reasoning none     0/5       0/5    0.0/5  1      3,410   1 s
-llama3.1:8b · reasoning default  0/5       0/5    0.0/5  1      3,410   1 s
-gpt-oss:20b · reasoning low      5/5       0/5    1.0/5  16     74,962  58 s
-gpt-oss:20b · reasoning default  1/5       1/5    0.4/5  0      0       56 s
-deepseek-r1:7b · either          0/5       0/5    0.0/5  0      1,248   5 s
-deepseek-r1:14b · either         0/5       0/5    0.0/5  0      1,377   20 s
+setting                        stuck-order  missing-emails  slow-checkout  median time
+qwen3:14b · reasoning none     5/5          5/5             0/5            13 s
+qwen3:8b · reasoning none      4/5          0/5             0/5            7 s
+gpt-oss:20b · reasoning low    3/3          3/3             0/3            32 s
 ```
+
+"Found the cause" means the answer names the facts the scenario requires (a keyword check, see above). The conclusion check accepted 15 of 15 runs for each Qwen and 8 of 9 for gpt-oss, which is why acceptance alone says little.
 
 What to read in it, and what not to:
 
-- **The conclusion check passed far more often than the cause was found.** Four of the six settings were accepted 5 times out of 5, and in three of them no run named the refused webhook or the full queue: they quoted the order row and concluded it was awaiting payment. The check proves a quote is real, not that the cause is right. This is why `cause` and `facts` exist.
-- **The best setting here is the larger model with thinking off**: `qwen3:14b` found the direct cause (the 503 refusal and the full queue) in 5 of 5 runs in 16 s. It never found the deeper one (the worker killed for lack of memory after release 2.14.0, and the two other orders).
-- **Thinking was slower and no better**: with it on, both Qwen models were accepted but named none of the expected facts, in two to five times the time. A guess is that the thinking makes them settle on the first plausible reading of the order row; this was not tested.
-- **`llama3.1:8b` called one tool and then answered in words**, never reaching a conclusion. It supports tools in Ollama; it did not follow this method.
-- **`gpt-oss:20b`** was accepted 5 of 5 with reasoning `low` but did not name the refused webhook; with its default reasoning, four of five runs ended in an error because the server could not parse the JSON of a tool call the model wrote (the loop asks the model to try again three times, then gives up). It is a 13 GB model on a 16 GB card shared with a desktop, so part of it ran on the CPU (`ollama ps` showed 19% CPU), which is why it was slow.
-- **`deepseek-r1:7b` and `:14b` never called a tool**, though Ollama lists the 7b with the `tools` capability: they answer in words. Whatever the cause (these are distilled, text-only reasoning models), they are of no use for this loop in the Ollama builds tested.
-- **Kimi** was not tested: Ollama offers it only as a cloud model (the prompts go to Moonshot's servers), and the open weights are far too large for a normal machine.
-- Five runs per setting of six models on one scenario with temperature 0: a snapshot of one setup, not a ranking. Run `ops eval` on yours.
+- **The bigger models found two of the three causes, the smaller one one**, and **none found the slow-checkout one**. The 14B model gets to the symptom (the database connection pool is full, checkout times out) and then stops: it does not look in the logs for what changed, so it never names the missing index or release 2.15.0, and says the cause of the exhaustion is unknown. That is an honest answer, not the root cause.
+- **Two generic fixes came from measuring, not from tuning to a scenario.** The first measurement (stuck-order alone) had `qwen3:8b` at 0 of 5. The model did not know today's date, so "last night" or "this afternoon" became searches in 2023: the assistant is now told the date (the scenario's own in `ops eval`). And a log search needed the exact phrase, so natural words returned nothing: it now needs every word, in any order, and says when nothing matched. With both, the same model went to 4 of 5 on stuck-order. Nothing in either mentions a payment, a queue or a certificate.
+- **An earlier measurement**, on stuck-order alone and before those two fixes, found `llama3.1:8b` calling one tool and then answering in words, and `deepseek-r1` 7B and 14B never calling a tool at all (Ollama lists the 7B with the `tools` capability). They were not re-measured. Kimi was not tested: Ollama offers it only as a cloud model, and the open weights are far too large for a normal machine.
+- Five runs per setting (three for gpt-oss, a 13 GB model on a 16 GB card shared with a desktop, so partly on the CPU), a few scenarios, one machine: a snapshot of one setup, not a ranking. Run `ops eval` on yours.
