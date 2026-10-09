@@ -69,3 +69,18 @@ its health and that a request without a token is refused.
 
 - **WHEN** the image runs with `OPS_MCP_TOKENS`, `OPS_MCP_PUBLIC_HOSTS` and a mounted workspace
 - **THEN** it listens on 8808, answers `/healthz`, and refuses `/mcp` without a token
+
+### Requirement: The server keeps hashes of tokens, not tokens
+
+`ops token <name>` SHALL print, on the standard output, a line for the server of the
+form `name:sha256:<hash>`, and on the error output the secret, once. The server SHALL
+accept `name:sha256:<64 hex digits>` entries and compare the SHA-256 of a presented
+token with them in constant time; a presented hash SHALL NOT be accepted as a token.
+It SHALL still accept `name:<token>` (at least 24 characters) and SHALL log a warning
+at start that such a token is readable in its configuration. `--plain` SHALL print the
+token itself instead of its hash.
+
+#### Scenario: A leaked tokens file
+
+- **WHEN** the tokens file holds `alice:sha256:<hash>` and someone sends that hash as a bearer token
+- **THEN** the server answers 401

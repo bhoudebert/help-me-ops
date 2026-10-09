@@ -4,7 +4,7 @@
 #
 #   docker build -t help-me-ops .
 #   docker run --rm -p 127.0.0.1:8808:8808 -v ./my-workspace:/workspace:ro \
-#     -e OPS_MCP_TOKENS=alice:<token> -e OPS_MCP_PUBLIC_HOSTS=localhost:8808 help-me-ops
+#     -e OPS_MCP_TOKENS=alice:sha256:<hash> -e OPS_MCP_PUBLIC_HOSTS=localhost:8808 help-me-ops
 FROM node:24-slim
 ENV NODE_ENV=production
 WORKDIR /app

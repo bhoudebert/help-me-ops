@@ -14,9 +14,10 @@ The tools are the same, read-only like everywhere, with the same mask, strict mo
 ```bash
 # a token for yourself
 npm run ops -- token alice
-#   alice:Xk3...   <- the line to give the server; the part after "alice:" is the secret
+#   stdout:  alice:sha256:9f2c…   <- the line for the server: only a hash
+#   terminal: the secret itself, shown once   <- what you give to alice (here, yourself)
 
-OPS_MCP_TOKENS="alice:Xk3..." npm run mcp:http -- --workspace examples/my-workspace
+OPS_MCP_TOKENS="alice:sha256:9f2c…" npm run mcp:http -- --workspace examples/my-workspace
 # help-me-ops MCP server on http://127.0.0.1:8808/mcp: workspace …
 ```
 
@@ -65,11 +66,11 @@ For a quick look **on this machine only**, `--no-auth` serves without a token, a
 ## Put it on a server
 
 1. **The workspace and the credentials on the server**, like for a local run: the folder (in its own repository), and the variables the addons read (`SHOPDB_PROD_URL`, `DD_API_KEY`...) in a `.env` the server can read and nobody else. Read-only accounts, as ever.
-2. **A token per person**: `npm run ops -- token <name>` for each, joined with commas in `OPS_MCP_TOKENS`. The name is the person's identity in the logs. To revoke someone, remove their entry and restart.
+2. **A token per person**: `npm run ops -- token <name>` for each. It prints two things: the **line for the server** (`name:sha256:<hash>`, on the standard output, to add to `OPS_MCP_TOKENS`, comma-separated, or to a tokens file) and the **secret**, once, on the terminal, to hand to that person. The server keeps **only the hash**, like a password file: someone who reads its configuration can check a token but cannot use it, and nothing anywhere stores the secret, so a lost one is replaced, not recovered. The name is the person's identity in the logs. To revoke someone, remove their line and restart. (`--plain` prints `name:<token>` instead, which works and leaves the token readable in the file; the server says so at start.)
 3. **Start it behind TLS.** The server speaks plain HTTP on the address you give it; put a reverse proxy in front for HTTPS, and tell the server the name people use:
 
 ```bash
-OPS_MCP_TOKENS="alice:…,bob:…" npm run mcp:http -- --workspace /srv/ops \
+OPS_MCP_TOKENS="alice:sha256:…,bob:sha256:…" npm run mcp:http -- --workspace /srv/ops \
   --host 127.0.0.1 --port 8808 --public-host mcp.company.example
 ```
 
@@ -102,8 +103,9 @@ Restart=on-failure
 The repository has a `Dockerfile` and a `compose.yml`. The image holds the server and the shipped addons; **your workspace is mounted, not baked in**, so config, playbooks, knowledge and your own addons stay with you, and the image is the same for everyone.
 
 ```bash
-# 1. a token per person, as a secret file (one name:token per line)
-npm run ops -- token alice 2>/dev/null >> ops-tokens.txt
+# 1. a token per person: the line for the server goes to the secret file, the secret is shown
+#    on the terminal, once, for you to hand to alice
+npm run ops -- token alice >> ops-tokens.txt
 
 # 2. the credentials your sources read (the ${VAR} of ops.config.json), not committed
 printf 'SHOPDB_PROD_URL=postgres://readonly:…@db.internal/shop\n' > server.env
@@ -122,8 +124,8 @@ The container is configured by environment (the flags still win):
 | `OPS_WORKSPACE`                                | the workspace folder inside the container                          | `/workspace`              |
 | `OPS_MCP_HOST`, `OPS_MCP_PORT`, `OPS_MCP_PATH` | where it listens                                                   | `0.0.0.0`, `8808`, `/mcp` |
 | `OPS_MCP_PUBLIC_HOSTS`                         | the names it is reached by, comma-separated; required off loopback | none                      |
-| `OPS_MCP_TOKENS`                               | `name:token` entries, comma-separated                              | none                      |
-| `OPS_MCP_TOKENS_FILE`                          | a file of `name:token` lines (a container secret)                  | none                      |
+| `OPS_MCP_TOKENS`                               | `name:sha256:<hash>` entries (or `name:<token>`), comma-separated  | none                      |
+| `OPS_MCP_TOKENS_FILE`                          | a file of such lines (a container secret)                          | none                      |
 
 Things to know:
 
