@@ -18,6 +18,8 @@ const argv = process.argv.slice(2);
 // Options may come before the command; commands.ts reads --app and --env from the rest.
 const optionAt = new Set(argv.flatMap((a, i) => (a === "--workspace" || a === "--addons" ? [i, i + 1] : [])));
 const [command, ...args] = argv.filter((_, i) => !optionAt.has(i));
+// The settings and errors this prints are the operator's own and hold no secret (never the client secret or a token).
+const show = (text: string) => process.stdout.write(`${text}\n`);
 try {
   if (!command || command === "help" || command === "--help") console.log(USAGE);
   else if (command === "setup") {
@@ -53,29 +55,29 @@ try {
     const options = optionsFromArgs(argv, process.env, () => undefined);
     const config = oauthConfigFrom(argv, process.env, { path: options.path, publicHosts: options.publicHosts });
     if (!config) throw new Error("No issuer to check: set OPS_MCP_OAUTH_ISSUER (or --oauth-issuer).");
-    console.log(
+    show(
       `issuer     ${config.issuer}\naudience   ${config.audience}\nresource   ${config.resource}\nscopes     ${config.scopes.join(" ") || "none required"}\nperson     first of ${config.identityClaims.join(", ")}\nalgorithms ${config.algorithms.join(", ")}`,
     );
     const verifier = await createOAuthVerifier(config);
     const keys = (verifier.jwksUri ? await (await fetch(verifier.jwksUri)).json().catch(() => ({})) : {}) as {
       keys?: { kid?: string; alg?: string; kty?: string }[];
     };
-    console.log(
+    show(
       `✔ the provider is found and its keys are at ${verifier.jwksUri}: ${keys.keys?.length ?? "?"} key(s) ${(keys.keys ?? []).map((k) => `${k.kid ?? "-"}/${k.alg ?? k.kty}`).join(", ")}`,
     );
-    console.log(`✔ clients are told to ask it, from ${verifier.metadataUrl}`);
+    show(`✔ clients are told to ask it, from ${verifier.metadataUrl}`);
     const token = flag("--token") ?? process.env.OPS_CHECK_TOKEN;
     if (token) {
       // a JWT is read from the token itself; any other token is asked about, as the server would
       const asked = token.split(".").length === 3 ? undefined : await verifier.inspect(token).catch((e: Error) => e);
-      if (asked instanceof Error) console.log(`✘ the provider could not be asked: ${asked.message}`);
+      if (asked instanceof Error) show(`✘ the provider could not be asked: ${asked.message}`);
       const why = explainToken(config, asked && !(asked instanceof Error) ? { claims: asked } : token);
-      console.log(why.lines.join("\n"));
+      show(why.lines.join("\n"));
       try {
         const who = await verifier.verify(token);
-        console.log(`✔ the server would accept this token, as ${who.identity}`);
+        show(`✔ the server would accept this token, as ${who.identity}`);
       } catch (error) {
-        console.log(`✘ the server would refuse this token (${(error as Error).message})`);
+        show(`✘ the server would refuse this token (${(error as Error).message})`);
         process.exitCode = 1;
       }
     } else
@@ -182,6 +184,6 @@ try {
     console.log(await runCommand(toolbox, command, args));
   }
 } catch (error) {
-  console.error(error instanceof Error ? error.message : String(error));
+  process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;
 }

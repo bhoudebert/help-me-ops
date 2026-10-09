@@ -24,7 +24,7 @@ async function call(url: string, init: RequestInit = {}) {
   }
   return { status: response.status, location: response.headers.get("location") ?? "", body: await response.text() };
 }
-const decode = (text: string) => text.replaceAll("&amp;", "&").replaceAll("&quot;", '"').replaceAll("&#x2F;", "/");
+const decode = (text: string) => text.replaceAll("&quot;", '"').replaceAll("&#x2F;", "/").replaceAll("&amp;", "&");
 const step = (text: string) => console.log(`✔ ${text}`);
 
 // 1. a client registers itself, as an MCP client does when the provider allows it
