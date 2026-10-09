@@ -41,6 +41,53 @@ services:
       - no-new-privileges:true
     restart: unless-stopped
 
+  # --- A test identity provider, to try "sign in with the company login" ----------------
+  #
+  #   docker compose --profile keycloak up -d --build keycloak help-me-ops-oauth
+  #
+  # Keycloak (admin / admin on http://localhost:8080, realm "ops", users alice/alice and
+  # bob/bob, for tests only) and a second help-me-ops that trusts it, on http://localhost:8809/mcp.
+  # It shares Keycloak's network so that "localhost:8080" is the same Keycloak for the browser
+  # and for the server: the issuer in a token and the address the server fetches the keys from
+  # are then one. Real setups have a name for the provider and do not need this.
+  keycloak:
+    profiles: ["keycloak"]
+    image: quay.io/keycloak/keycloak:26.2
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://localhost:8080
+    ports:
+      - "127.0.0.1:8080:8080"
+      # the second help-me-ops, which lives in this network
+      - "127.0.0.1:8809:8808"
+    volumes:
+      - ./deploy/keycloak:/opt/keycloak/data/import:ro
+
+  help-me-ops-oauth:
+    profiles: ["keycloak"]
+    build: .
+    network_mode: "service:keycloak"
+    depends_on:
+      - keycloak
+    environment:
+      OPS_MCP_OAUTH_ISSUER: http://localhost:8080/realms/ops
+      OPS_MCP_PUBLIC_URL: http://localhost:8809/mcp
+      OPS_MCP_PUBLIC_HOSTS: localhost:8809
+      OPS_MCP_OAUTH_SCOPES: help-me-ops
+    volumes:
+      - ${OPS_WORKSPACE_DIR:-./examples/my-workspace}:/workspace:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # Keycloak takes a while to start: the server refuses to start without its provider, and tries again.
+    restart: on-failure
+
 secrets:
   ops_tokens:
     file: ./ops-tokens.txt

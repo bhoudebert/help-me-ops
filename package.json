@@ -12,6 +12,7 @@
     "mcp": "node --env-file-if-exists=.env src/mcp.ts",
     "bench": "node --env-file-if-exists=.env scripts/bench.ts",
     "bench:table": "node scripts/bench.ts --table",
+    "keycloak:check": "node scripts/keycloak-check.ts",
     "mock:model": "node scripts/mock-model.ts",
     "eval:local": "node --env-file-if-exists=.env src/cli.ts eval --base-url ${OLLAMA_URL:-http://localhost:11434/v1} --model ${OPS_EVAL_MODELS:-qwen3:8b} --reasoning none,default --runs 3",
     "mcp:http": "node --env-file-if-exists=.env src/mcp-http.ts",
