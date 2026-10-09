@@ -1,6 +1,7 @@
 // OAuth 2 for the MCP server over HTTP (ADR 0017), against a fake identity
 // provider on a local port: its metadata, its keys, and tokens it signs.
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { createServer, type Server } from "node:http";
 import { resolve } from "node:path";
 import { test } from "node:test";
@@ -8,13 +9,20 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { exportJWK, generateKeyPair, SignJWT, type JWK, type CryptoKey } from "jose";
 import { HTTP_DEFAULTS, hashToken, newToken, startHttpServer, type HttpOptions } from "../src/http-server.ts";
-import { createOAuthVerifier, discoveryUrls, OAUTH_DEFAULTS, oauthConfigFrom, type OAuthConfig } from "../src/oauth.ts";
+import {
+  createOAuthVerifier,
+  discoveryUrls,
+  explainToken,
+  OAUTH_DEFAULTS,
+  oauthConfigFrom,
+  type OAuthConfig,
+} from "../src/oauth.ts";
 import { openToolbox } from "../src/toolbox.ts";
 
 const workspace = resolve("examples/my-workspace");
 
 /** A provider: metadata at the usual places, a set of keys we can change, and tokens signed with them. */
-async function provider(options: { discovery?: boolean } = {}) {
+async function provider(options: { discovery?: boolean; trailingSlash?: boolean } = {}) {
   const pair = await generateKeyPair("RS256");
   const jwk: JWK = { ...(await exportJWK(pair.publicKey)), kid: "k1", alg: "RS256", use: "sig" };
   const keys: JWK[] = [jwk];
@@ -23,12 +31,12 @@ async function provider(options: { discovery?: boolean } = {}) {
     const json = (body: unknown) =>
       res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(body));
     if (options.discovery !== false && req.url === "/realm/.well-known/openid-configuration")
-      return json({ issuer, jwks_uri: `${issuer}/keys` });
+      return json({ issuer, jwks_uri: `http://127.0.0.1:${(server.address() as { port: number }).port}/realm/keys` });
     if (req.url === "/realm/keys") return json({ keys });
     res.writeHead(404).end();
   });
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
-  issuer = `http://127.0.0.1:${(server.address() as { port: number }).port}/realm`;
+  issuer = `http://127.0.0.1:${(server.address() as { port: number }).port}/realm${options.trailingSlash ? "/" : ""}`;
   const sign = async (
     claims: Record<string, unknown>,
     extra: {
@@ -409,5 +417,145 @@ test("oauth: the settings from flags and the environment; off without an issuer;
   assert.throws(
     () => oauthConfigFrom([], { OPS_MCP_OAUTH_ISSUER: "https://idp.example", OPS_MCP_OAUTH_ALGORITHMS: "none" }, where),
     /not accepted/,
+  );
+});
+
+test("oauth: an Auth0-shaped provider works: an issuer with a trailing slash, an audience list, a namespaced claim, a sub like auth0|id", async () => {
+  const idp = await provider({ trailingSlash: true });
+  assert.ok(idp.issuer.endsWith("/"), "the issuer ends with a slash, as Auth0's does");
+  // written as the provider writes it: its metadata names it, and its tokens carry it
+  const { running } = await serve(config(idp.issuer, { identityClaims: ["https://company.example/email", "sub"] }));
+  try {
+    const claims = {
+      "https://company.example/email": "carol@company.example",
+      scope: "openid profile",
+      sub: "auth0|abc123",
+    };
+    const plain = await idp.sign(claims);
+    const withUserinfo = await new SignJWT(claims)
+      .setProtectedHeader({ alg: "RS256", kid: "k1" })
+      .setIssuer(idp.issuer)
+      .setAudience(["https://mcp.company.example/mcp", "https://tenant.auth0.com/userinfo"])
+      .setExpirationTime("5m")
+      .sign(idp.pair.privateKey);
+    for (const token of [plain, withUserinfo]) assert.equal((await call(running.url, token)).status, 200);
+    // no claim for the person beyond the subject: the subject, made safe for a log
+    const { running: second, events } = await serve(config(idp.issuer));
+    try {
+      await call(second.url, await idp.sign({ sub: "auth0|abc123" }));
+      assert.ok(events.some((e) => e.event === "session" && e.identity === "oauth:auth0_abc123"));
+    } finally {
+      await second.close();
+    }
+    const metadata = (await (await fetch(new URL("/.well-known/oauth-protected-resource", running.url))).json()) as {
+      authorization_servers: string[];
+    };
+    assert.deepEqual(metadata.authorization_servers, [idp.issuer], "clients are told the issuer exactly as written");
+    // and the same provider written without the slash is refused, with the reason
+    await assert.rejects(
+      createOAuthVerifier(config(idp.issuer.replace(/\/$/, ""))),
+      /differs only by a trailing slash: write the issuer exactly as the provider does/,
+    );
+  } finally {
+    await running.close();
+    await idp.close();
+  }
+});
+
+test("oauth: an empty variable is not set, and an empty issuer is no OAuth", () => {
+  const where = { path: "/mcp", publicHosts: [] };
+  const cfg = oauthConfigFrom(
+    [],
+    {
+      OPS_MCP_OAUTH_ISSUER: "https://idp.example",
+      OPS_MCP_PUBLIC_URL: "https://mcp.company.example/mcp",
+      OPS_MCP_OAUTH_AUDIENCE: "",
+      OPS_MCP_OAUTH_JWKS_URI: "",
+      OPS_MCP_OAUTH_SCOPES: "",
+      OPS_MCP_OAUTH_IDENTITY_CLAIMS: "  ",
+      OPS_MCP_OAUTH_ALGORITHMS: "",
+    },
+    where,
+  )!;
+  assert.equal(
+    cfg.audience,
+    "https://mcp.company.example/mcp",
+    "an empty audience is the public URL, not an audience of nothing",
+  );
+  assert.equal(cfg.jwksUri, undefined);
+  assert.deepEqual(cfg.scopes, []);
+  assert.deepEqual(cfg.identityClaims, [...OAUTH_DEFAULTS.identityClaims]);
+  assert.equal(oauthConfigFrom([], { OPS_MCP_OAUTH_ISSUER: "" }, where), undefined);
+});
+
+test("oauth: the server derives the name it is reached by from the public URL, and refuses off loopback without one", async () => {
+  const idp = await provider();
+  const run = (env: Record<string, string>) =>
+    new Promise<{ code: number | null; err: string }>((done) => {
+      const child = spawn("node", ["src/mcp-http.ts"], {
+        env: { PATH: process.env.PATH!, OPS_WORKSPACE: workspace, OPS_MCP_HOST: "0.0.0.0", OPS_MCP_PORT: "0", ...env },
+        stdio: ["ignore", "ignore", "pipe"],
+      });
+      let err = "";
+      child.stderr.on("data", (d) => {
+        err += d;
+        if (/MCP server on/.test(err)) child.kill();
+      });
+      child.on("close", (code) => done({ code, err }));
+    });
+  try {
+    const started = await run({ OPS_MCP_OAUTH_ISSUER: idp.issuer, OPS_MCP_PUBLIC_URL: "http://localhost:8809/mcp" });
+    assert.match(started.err, /help-me-ops MCP server on http:\/\/0\.0\.0\.0:\d+\/mcp/);
+    const refused = await run({ OPS_MCP_TOKENS: `a:sha256:${"0".repeat(64)}` });
+    assert.equal(refused.code, 1);
+    assert.match(refused.err, /say which name it is reached by \(--public-host/);
+  } finally {
+    await idp.close();
+  }
+});
+
+test("oauth check: a token is explained check by check, so a misconfiguration is told, not guessed", () => {
+  const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
+  const token = (claims: object) => `${b64({ alg: "RS256", kid: "k" })}.${b64(claims)}.sig`;
+  const cfg = config("https://tenant.auth0.com/", { scopes: ["mcp:tools"] });
+  const now = Date.now();
+  const good = explainToken(
+    cfg,
+    token({
+      iss: "https://tenant.auth0.com/",
+      aud: ["https://mcp.company.example/mcp", "x"],
+      exp: now / 1000 + 300,
+      scope: "mcp:tools",
+      sub: "auth0|1",
+    }),
+    now,
+  );
+  assert.equal(good.ok, true);
+  assert.ok(good.lines.every((l) => l.startsWith("✔")));
+  const bad = explainToken(
+    cfg,
+    token({ iss: "https://tenant.auth0.com", aud: "api://other", exp: now / 1000 - 60 }),
+    now,
+  );
+  assert.equal(bad.ok, false);
+  const text = bad.lines.join("\n");
+  assert.match(
+    text,
+    /issuer: the token says "https:\/\/tenant\.auth0\.com", the server expects "https:\/\/tenant\.auth0\.com\/" \(they differ only by a trailing slash/,
+  );
+  assert.match(
+    text,
+    /audience: the token is for \["api:\/\/other"\], the server expects "https:\/\/mcp\.company\.example\/mcp"/,
+  );
+  assert.match(text, /expired 60 s ago/);
+  assert.match(text, /scopes: missing mcp:tools \(the token has none\)/);
+  assert.match(
+    text,
+    /no claim names the person: tried preferred_username, email, upn, sub; the token has iss, aud, exp/,
+  );
+  assert.match(explainToken(cfg, "opaque-token", now).lines[0]!, /not a JWT/);
+  assert.match(
+    explainToken(cfg, `${b64({ alg: "HS256" })}.${b64({})}.x`, now).lines[0]!,
+    /algorithm HS256 is not accepted/,
   );
 });

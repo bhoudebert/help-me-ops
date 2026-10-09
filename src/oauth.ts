@@ -8,7 +8,11 @@ import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
 import { isIP } from "node:net";
 
 export interface OAuthConfig {
-  /** The identity provider's issuer URL, exactly as it appears in the `iss` claim of its tokens. */
+  /**
+   * The identity provider's issuer, character for character as it appears in the `iss` claim of its
+   * tokens. It is not tidied: Auth0 and Microsoft's v1 tokens end with a slash, Keycloak, Okta and
+   * Microsoft's v2 tokens do not, and a token for another spelling is another issuer.
+   */
   issuer: string;
   /** Where its public keys are, when they are not to be found by discovery (declared by hand). */
   jwksUri?: string;
@@ -50,6 +54,8 @@ export interface OAuthVerifier {
   config: OAuthConfig;
   /** Where a client learns which provider to ask: sent in the 401 and served by the server. */
   metadataUrl: string;
+  /** Where the keys are, found by discovery or declared. */
+  jwksUri: string;
   /** The body of that document (RFC 9728). */
   metadata(): Record<string, unknown>;
   /** The person behind a token, or an OAuthError. */
@@ -110,7 +116,8 @@ export async function createOAuthVerifier(
   config: OAuthConfig,
   fetchImpl: typeof fetch = globalThis.fetch,
 ): Promise<OAuthVerifier> {
-  const issuer = requireHttps(config.issuer, "The OAuth issuer").href.replace(/\/+$/, "");
+  requireHttps(config.issuer, "The OAuth issuer");
+  const issuer = config.issuer;
   requireHttps(config.resource, "The public URL of this server");
   let jwksUri = config.jwksUri;
   if (jwksUri) {
@@ -127,8 +134,14 @@ export async function createOAuthVerifier(
       );
     }
     // The metadata must say it is the issuer asked for: otherwise a document fetched from one place could name another provider's keys.
-    if (typeof found.issuer !== "string" || found.issuer.replace(/\/+$/, "") !== issuer) {
-      throw new Error(`The metadata found for ${issuer} names another issuer (${String(found.issuer)}): refusing it.`);
+    if (found.issuer !== issuer) {
+      const slash =
+        typeof found.issuer === "string" && found.issuer.replace(/\/+$/, "") === issuer.replace(/\/+$/, "")
+          ? ` It differs only by a trailing slash: write the issuer exactly as the provider does, ${found.issuer}, because that is what its tokens carry.`
+          : "";
+      throw new Error(
+        `The metadata found for ${issuer} names another issuer (${String(found.issuer)}): refusing it.${slash}`,
+      );
     }
     if (typeof found.jwks_uri !== "string")
       throw new Error(`The metadata of ${issuer} has no jwks_uri: declare where its keys are (--oauth-jwks-uri).`);
@@ -146,6 +159,7 @@ export async function createOAuthVerifier(
 
   return {
     config,
+    jwksUri,
     metadataUrl,
     metadata: () => ({
       resource: config.resource,
@@ -196,6 +210,9 @@ function identityOf(payload: JWTPayload, claims: string[]): string {
   throw new OAuthError(401, "invalid_token", "no claim names the person");
 }
 
+/** The first value that is set: an empty variable (a compose file passes them empty) is not set. */
+const first = (...values: (string | undefined)[]) => values.find((v) => v !== undefined && v.trim() !== "");
+
 const list = (text: string | undefined) =>
   (text ?? "")
     .split(/[\s,]+/)
@@ -216,12 +233,13 @@ export function oauthConfigFrom(
 ): OAuthConfig | undefined {
   const all = (name: string) => argv.flatMap((a, i) => (a === name && argv[i + 1] ? [argv[i + 1]!] : []));
   const one = (name: string) => all(name).at(-1);
-  const issuer = one("--oauth-issuer") ?? env.OPS_MCP_OAUTH_ISSUER;
+  const issuer = first(one("--oauth-issuer"), env.OPS_MCP_OAUTH_ISSUER);
   if (!issuer) return undefined;
-  const resource =
-    one("--public-url") ??
-    env.OPS_MCP_PUBLIC_URL ??
-    (where.publicHosts[0] ? `https://${where.publicHosts[0]}${where.path}` : undefined);
+  const resource = first(
+    one("--public-url"),
+    env.OPS_MCP_PUBLIC_URL,
+    where.publicHosts[0] ? `https://${where.publicHosts[0]}${where.path}` : undefined,
+  );
   if (!resource) {
     throw new Error(
       "OAuth needs this server's public URL (--public-url https://mcp.company.example/mcp), or a --public-host to derive it from.",
@@ -239,8 +257,8 @@ export function oauthConfigFrom(
     );
   return {
     issuer,
-    jwksUri: one("--oauth-jwks-uri") ?? env.OPS_MCP_OAUTH_JWKS_URI,
-    audience: one("--oauth-audience") ?? env.OPS_MCP_OAUTH_AUDIENCE ?? resource,
+    jwksUri: first(one("--oauth-jwks-uri"), env.OPS_MCP_OAUTH_JWKS_URI),
+    audience: first(one("--oauth-audience"), env.OPS_MCP_OAUTH_AUDIENCE) ?? resource,
     resource,
     scopes,
     identityClaims: claims.length ? claims : [...OAUTH_DEFAULTS.identityClaims],
@@ -248,4 +266,89 @@ export function oauthConfigFrom(
     clockToleranceSec: OAUTH_DEFAULTS.clockToleranceSec,
     jwksCooldownMs: OAUTH_DEFAULTS.jwksCooldownMs,
   };
+}
+
+/** What a token says, read without trusting it (no signature check): for `ops oauth check`. */
+export function readToken(token: string): { header: Record<string, unknown>; claims: Record<string, unknown> } | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    const part = (s: string) => JSON.parse(Buffer.from(s, "base64url").toString("utf8")) as Record<string, unknown>;
+    return { header: part(parts[0]!), claims: part(parts[1]!) };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Why a token would be refused, in words, from what it says and what is configured: which of the checks the
+ * server makes fail, and what to change. The server's own answer to a bad token is only `invalid_token`, on purpose.
+ */
+export function explainToken(config: OAuthConfig, token: string, now = Date.now()): { ok: boolean; lines: string[] } {
+  const read = readToken(token);
+  if (!read)
+    return {
+      ok: false,
+      lines: ["✘ this is not a JWT (three parts, base64): an opaque token cannot be checked here (see ADR 0017)"],
+    };
+  const { header, claims } = read;
+  const lines: string[] = [];
+  let ok = true;
+  const say = (good: boolean, text: string) => {
+    if (!good) ok = false;
+    lines.push(`${good ? "✔" : "✘"} ${text}`);
+  };
+  const alg = String(header.alg);
+  say(
+    config.algorithms.includes(alg),
+    config.algorithms.includes(alg)
+      ? `signature algorithm ${alg}`
+      : `signature algorithm ${alg} is not accepted (accepted: ${config.algorithms.join(", ")})`,
+  );
+  const iss = claims.iss;
+  if (iss === config.issuer) say(true, `issuer ${String(iss)}`);
+  else {
+    const slash = typeof iss === "string" && iss.replace(/\/+$/, "") === config.issuer.replace(/\/+$/, "");
+    say(
+      false,
+      `issuer: the token says ${JSON.stringify(iss)}, the server expects ${JSON.stringify(config.issuer)}${slash ? " (they differ only by a trailing slash: write it as the token does)" : ""}`,
+    );
+  }
+  const aud = Array.isArray(claims.aud)
+    ? (claims.aud as string[])
+    : claims.aud === undefined
+      ? []
+      : [String(claims.aud)];
+  say(
+    aud.includes(config.audience),
+    aud.includes(config.audience)
+      ? `audience ${config.audience}`
+      : `audience: the token is for ${JSON.stringify(aud)}, the server expects ${JSON.stringify(config.audience)} (set the API identifier at the provider, or --oauth-audience)`,
+  );
+  const exp = typeof claims.exp === "number" ? claims.exp * 1000 : undefined;
+  if (exp === undefined) say(false, "no exp claim: a token that never expires is refused");
+  else
+    say(
+      exp + config.clockToleranceSec * 1000 > now,
+      exp > now ? `expires in ${Math.round((exp - now) / 1000)} s` : `expired ${Math.round((now - exp) / 1000)} s ago`,
+    );
+  const have = scopesOf(claims as JWTPayload);
+  const missing = config.scopes.filter((s) => !have.includes(s));
+  say(
+    !missing.length,
+    config.scopes.length
+      ? missing.length
+        ? `scopes: missing ${missing.join(" ")} (the token has ${have.join(" ") || "none"})`
+        : `scopes ${config.scopes.join(" ")}`
+      : `no scope required (the token has ${have.join(" ") || "none"})`,
+  );
+  try {
+    say(true, `the person is ${identityOf(claims as JWTPayload, config.identityClaims)}`);
+  } catch {
+    say(
+      false,
+      `no claim names the person: tried ${config.identityClaims.join(", ")}; the token has ${Object.keys(claims).join(", ")} (add one at the provider, or name one with --oauth-identity-claim)`,
+    );
+  }
+  return { ok, lines };
 }

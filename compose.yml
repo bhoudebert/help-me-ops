@@ -9,6 +9,17 @@
 # Keycloak: http://localhost:8080 (admin / admin; users alice/alice and bob/bob, tests only)
 # help-me-ops: http://localhost:8809/mcp
 #
+# To use YOUR identity provider (Auth0, Okta, Entra ID, Keycloak, anything that issues JWT access
+# tokens), the "oauth" profile: put its settings in .env next to this file (or export them) and
+#
+#   docker compose --profile oauth up -d --build help-me-ops-oauth
+#   npm run ops -- oauth check             # does it find your provider, and would it accept a token?
+#
+#   OPS_MCP_OAUTH_ISSUER=https://tenant.auth0.com/        # exactly as the "iss" of its tokens
+#   OPS_MCP_PUBLIC_URL=https://mcp.company.example/mcp    # how people reach this server (a TLS proxy)
+#   OPS_MCP_OAUTH_AUDIENCE=https://mcp.company.example/mcp   # if the provider's "aud" is not the URL
+#   (and OPS_MCP_OAUTH_SCOPES, _IDENTITY_CLAIMS, _JWKS_URI: see the guide, "One server for the team")
+#
 # For a server with static tokens instead (no identity provider), use the "tokens" profile:
 #
 #   OPS_MCP_TOKENS="$(npm run -s ops -- token alice)" \
@@ -52,7 +63,7 @@ services:
     volumes:
       - ./deploy/keycloak:/opt/keycloak/data/import:ro
 
-  help-me-ops-oauth:
+  help-me-ops-demo:
     build: .
     network_mode: "service:keycloak"
     depends_on:
@@ -70,6 +81,34 @@ services:
     <<: *hardening
     # Keycloak takes a while to start: the server refuses to start without its provider, and tries again.
     restart: on-failure
+
+  # --- A server that trusts YOUR identity provider ----------------------------------------
+  # Nothing here is specific to a provider: it is the OPS_MCP_OAUTH_* settings, from .env or the
+  # environment. Keycloak, Auth0, Okta, Entra ID: the same service, other values.
+  help-me-ops-oauth:
+    profiles: ["oauth"]
+    build: .
+    ports:
+      # Loopback only: put a proxy with TLS in front and publish that.
+      - "127.0.0.1:8808:8808"
+    environment:
+      # both are needed: without them the server says so and stops
+      OPS_MCP_OAUTH_ISSUER: ${OPS_MCP_OAUTH_ISSUER:-}
+      OPS_MCP_PUBLIC_URL: ${OPS_MCP_PUBLIC_URL:-}
+      OPS_MCP_OAUTH_AUDIENCE: ${OPS_MCP_OAUTH_AUDIENCE:-}
+      OPS_MCP_OAUTH_JWKS_URI: ${OPS_MCP_OAUTH_JWKS_URI:-}
+      OPS_MCP_OAUTH_SCOPES: ${OPS_MCP_OAUTH_SCOPES:-}
+      OPS_MCP_OAUTH_IDENTITY_CLAIMS: ${OPS_MCP_OAUTH_IDENTITY_CLAIMS:-}
+      OPS_MCP_OAUTH_ALGORITHMS: ${OPS_MCP_OAUTH_ALGORITHMS:-}
+      # static tokens beside it (a pipeline, a service account), if you want them
+      OPS_MCP_TOKENS: ${OPS_MCP_TOKENS:-}
+    env_file:
+      - path: ./server.env
+        required: false
+    volumes:
+      - ${OPS_WORKSPACE_DIR:-./examples/my-workspace}:/workspace:ro
+    <<: *hardening
+    restart: unless-stopped
 
   # --- A server with static tokens, no identity provider --------------------------------
   help-me-ops:

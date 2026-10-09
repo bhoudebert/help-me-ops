@@ -8,7 +8,8 @@ import { resolve } from "node:path";
 import { resolveWorkspace } from "./config.ts";
 import { runAsk, runChat } from "./agent/commands.ts";
 import { formatSuite, runSuite } from "./agent/eval.ts";
-import { hashToken, newToken } from "./http-server.ts";
+import { hashToken, newToken, optionsFromArgs } from "./http-server.ts";
+import { createOAuthVerifier, explainToken, oauthConfigFrom } from "./oauth.ts";
 import { runInit } from "./init.ts";
 import { createInterface } from "node:readline/promises";
 import { openToolbox } from "./toolbox.ts";
@@ -43,6 +44,41 @@ try {
       (line) => console.log(line),
     );
     if (!result.ok) process.exitCode = 1;
+  } else if (command === "oauth") {
+    if (args[0] !== "check")
+      throw new Error(
+        "Usage: oauth check [--token <jwt>]   (the same flags and OPS_MCP_OAUTH_* variables as the server)",
+      );
+    const flag = (name: string) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : undefined);
+    const options = optionsFromArgs(argv, process.env, () => undefined);
+    const config = oauthConfigFrom(argv, process.env, { path: options.path, publicHosts: options.publicHosts });
+    if (!config) throw new Error("No issuer to check: set OPS_MCP_OAUTH_ISSUER (or --oauth-issuer).");
+    console.log(
+      `issuer     ${config.issuer}\naudience   ${config.audience}\nresource   ${config.resource}\nscopes     ${config.scopes.join(" ") || "none required"}\nperson     first of ${config.identityClaims.join(", ")}\nalgorithms ${config.algorithms.join(", ")}`,
+    );
+    const verifier = await createOAuthVerifier(config);
+    const keys = (await (await fetch(verifier.jwksUri)).json().catch(() => ({}))) as {
+      keys?: { kid?: string; alg?: string; kty?: string }[];
+    };
+    console.log(
+      `✔ the provider is found and its keys are at ${verifier.jwksUri}: ${keys.keys?.length ?? "?"} key(s) ${(keys.keys ?? []).map((k) => `${k.kid ?? "-"}/${k.alg ?? k.kty}`).join(", ")}`,
+    );
+    console.log(`✔ clients are told to ask it, from ${verifier.metadataUrl}`);
+    const token = flag("--token") ?? process.env.OPS_CHECK_TOKEN;
+    if (token) {
+      const why = explainToken(config, token);
+      console.log(why.lines.join("\n"));
+      try {
+        const who = await verifier.verify(token);
+        console.log(`✔ the server would accept this token, as ${who.identity}`);
+      } catch (error) {
+        console.log(`✘ the server would refuse this token (${(error as Error).message})`);
+        process.exitCode = 1;
+      }
+    } else
+      console.log(
+        "Give a token to see why the server accepts or refuses it: OPS_CHECK_TOKEN=<access token> npm run ops -- oauth check",
+      );
   } else if (command === "token") {
     const [name] = args.filter((a) => !a.startsWith("--"));
     if (!name || !/^[a-z][a-z0-9_-]{0,31}$/.test(name))

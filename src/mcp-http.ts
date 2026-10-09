@@ -19,7 +19,11 @@ try {
   const argv = process.argv.slice(2);
   const options = optionsFromArgs(argv, process.env, (event) => process.stderr.write(`${JSON.stringify(event)}\n`));
   const oauth = oauthConfigFrom(argv, process.env, { path: options.path, publicHosts: options.publicHosts });
-  if (oauth) options.oauth = await createOAuthVerifier(oauth);
+  if (oauth) {
+    options.oauth = await createOAuthVerifier(oauth);
+    // The name people reach the server by is in its public URL: no need to say it twice.
+    if (!options.publicHosts.length) options.publicHosts.push(new URL(oauth.resource).host);
+  }
   const toolbox = await openToolbox(resolveWorkspace(argv), resolveAddonDirs(argv));
   for (const notice of startupNotices(toolbox)) process.stderr.write(`${notice}\n`);
   const running = await startHttpServer(toolbox, options);
