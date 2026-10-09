@@ -54,3 +54,18 @@ tool call with the identity, never the input or the evidence.
 
 - **WHEN** a request reaches `/mcp` without a valid `Authorization: Bearer` header
 - **THEN** the server answers 401 and runs nothing
+
+### Requirement: A container for the HTTP server
+
+The repository SHALL ship a `Dockerfile` and a `compose.yml` that run the HTTP
+server with the workspace mounted at `/workspace` (never inside the image), as an
+unprivileged user, with a health check. The server SHALL be configurable by
+`OPS_MCP_HOST`, `OPS_MCP_PORT`, `OPS_MCP_PATH`, `OPS_MCP_PUBLIC_HOSTS`,
+`OPS_MCP_TOKENS` and `OPS_MCP_TOKENS_FILE`, with command-line flags taking
+precedence. The continuous integration SHALL build the image and start it, and check
+its health and that a request without a token is refused.
+
+#### Scenario: A container with no flag
+
+- **WHEN** the image runs with `OPS_MCP_TOKENS`, `OPS_MCP_PUBLIC_HOSTS` and a mounted workspace
+- **THEN** it listens on 8808, answers `/healthz`, and refuses `/mcp` without a token

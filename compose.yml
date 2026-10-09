@@ -1,0 +1,40 @@
+# The MCP server over HTTP for a team (ADR 0016).
+#
+#   1. a token per person:   npm run ops -- token alice   >> ops-tokens.txt
+#   2. your workspace:       OPS_WORKSPACE_DIR=./my-workspace (default: the demo)
+#   3. the credentials your sources read (${VAR} in ops.config.json): server.env
+#   4. docker compose up -d --build
+#
+# Clients connect to http://localhost:8808/mcp with "Authorization: Bearer <token>".
+# For a team, put a proxy with TLS in front, set OPS_PUBLIC_HOST to the name people
+# use (mcp.company.example) and publish the port only to the proxy.
+services:
+  help-me-ops:
+    build: .
+    ports:
+      # Loopback only, until you have TLS in front and tokens you trust.
+      - "127.0.0.1:8808:8808"
+    environment:
+      # The names the server is reached by: its Host header must be one of them.
+      OPS_MCP_PUBLIC_HOSTS: ${OPS_PUBLIC_HOST:-localhost:8808}
+      OPS_MCP_TOKENS_FILE: /run/secrets/ops_tokens
+    env_file:
+      - path: ./server.env
+        required: false
+    volumes:
+      # Config, playbooks, knowledge and your own addons live outside the image.
+      - ${OPS_WORKSPACE_DIR:-./examples/my-workspace}:/workspace:ro
+    secrets:
+      - ops_tokens
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+secrets:
+  ops_tokens:
+    file: ./ops-tokens.txt
