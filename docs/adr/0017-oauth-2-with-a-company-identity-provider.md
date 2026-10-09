@@ -49,7 +49,7 @@ issues no token**: that is the provider's job.
   error at start, never a server that accepts anything.
 - **Static tokens keep working beside it** (service accounts, a pipeline), so
   turning OAuth on does not lock out what already runs.
-- **A Keycloak to try it with.** A `keycloak` profile in `compose.yml` and a realm
+- **A Keycloak to try it with.** The default services of `compose.yml` (the static-token server is the `tokens` profile) and a realm
   in `deploy/keycloak/`, with `npm run keycloak:check`, so the whole path (a client
   registering itself, a login with PKCE, a token used on the server) runs against a
   real provider and not only a fake one. For trying, never for production; not in

@@ -26,8 +26,8 @@ and a few variables (the credentials), and listens on a port.
   tokens in `OPS_MCP_TOKENS` or, as a container secret, `OPS_MCP_TOKENS_FILE`.
   The command-line flags still win.
 - **Safe defaults in `compose.yml`**: the port published on loopback only, a
-  read-only root filesystem, no capabilities, `no-new-privileges`, the tokens as a
-  secret, the credentials of the sources in an `env_file` that is not committed
+  read-only root filesystem, no capabilities, `no-new-privileges`, the tokens from the
+  environment (or a secret file, left commented out so that nothing needs it), the credentials of the sources in an `env_file` that is not committed
   (`server.env`, `ops-tokens.txt` are ignored by git).
 - **The rules of 0015 still hold in the container**: no tokens, no start; it
   listens on 0.0.0.0 inside, so a public host name must be given.

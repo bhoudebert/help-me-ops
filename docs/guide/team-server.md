@@ -103,19 +103,23 @@ Restart=on-failure
 The repository has a `Dockerfile` and a `compose.yml`. The image holds the server and the shipped addons; **your workspace is mounted, not baked in**, so config, playbooks, knowledge and your own addons stay with you, and the image is the same for everyone.
 
 ```bash
-# 1. a token per person: the line for the server goes to the secret file, the secret is shown
-#    on the terminal, once, for you to hand to alice
-npm run ops -- token alice >> ops-tokens.txt
-
-# 2. the credentials your sources read (the ${VAR} of ops.config.json), not committed
+# 1. the credentials your sources read (the ${VAR} of ops.config.json), not committed
 printf 'SHOPDB_PROD_URL=postgres://readonly:…@db.internal/shop\n' > server.env
 
-# 3. start it, on your workspace (the demo workspace by default)
-OPS_WORKSPACE_DIR=./my-ops OPS_PUBLIC_HOST=localhost:8808 docker compose up -d --build
+# 2. a token per person: the line for the server (a hash) is printed on the standard output,
+#    the secret on the terminal, once, for you to hand to alice. Several people: join with commas.
+export OPS_MCP_TOKENS="$(npm run -s ops -- token alice)"
+
+# 3. start the server with static tokens, on your workspace (the demo workspace by default)
+OPS_WORKSPACE_DIR=./my-ops OPS_PUBLIC_HOST=localhost:8808 \
+  docker compose --profile tokens up -d --build help-me-ops
 curl http://localhost:8808/healthz        # {"ok":true}
+
+# or, to try the company login instead, with a test Keycloak and nothing else to set up:
+docker compose up -d --build              # see "Try it with a Keycloak" below
 ```
 
-`compose.yml` publishes the port on **127.0.0.1 only**, mounts the workspace **read-only** at `/workspace`, gives the tokens as a secret, runs with a read-only filesystem, no capabilities and `no-new-privileges`, and has a health check. For a team, change the published address only when a proxy with TLS is in front, and set `OPS_PUBLIC_HOST` to the name people use (`mcp.company.example`).
+`compose.yml` publishes the port on **127.0.0.1 only**, mounts the workspace **read-only** at `/workspace`, takes the tokens from the environment (or, if you uncomment the lines, from a secret file: `OPS_MCP_TOKENS_FILE`), runs with a read-only filesystem, no capabilities and `no-new-privileges`, and has a health check. For a team, change the published address only when a proxy with TLS is in front, and set `OPS_PUBLIC_HOST` to the name people use (`mcp.company.example`).
 
 The container is configured by environment (the flags still win):
 
@@ -193,10 +197,10 @@ The server **refuses to start** if it cannot reach the provider's metadata (and 
 
 ### Try it with a Keycloak on your machine
 
-`compose.yml` has a **test identity provider** under the `keycloak` profile: a Keycloak with a ready realm (`ops`), two people (`alice` / `alice`, `bob` / `bob`), and a second help-me-ops that trusts it. It is for trying the sign-in, never for production (plain http, `admin` / `admin`, passwords equal to names, client registration open from this machine).
+`compose.yml` starts, **by default**, a **test identity provider**: a Keycloak with a ready realm (`ops`), two people (`alice` / `alice`, `bob` / `bob`), and a second help-me-ops that trusts it. It is for trying the sign-in, never for production (plain http, `admin` / `admin`, passwords equal to names, client registration open from this machine).
 
 ```bash
-docker compose --profile keycloak up -d --build keycloak help-me-ops-oauth
+docker compose up -d --build           # no token and no secret file needed
 # Keycloak:    http://localhost:8080   (admin / admin)
 # help-me-ops: http://localhost:8809/mcp   (the one that trusts it)
 
@@ -215,7 +219,7 @@ claude mcp add --transport http ops-oauth http://localhost:8809/mcp
 claude                      # then /mcp, choose ops-oauth, Authenticate: a browser opens on Keycloak
 ```
 
-Sign in as `alice` / `alice` and accept the consent screen (it appears because the client registered itself). If your client wants a client id that is already registered instead of registering itself, the realm has one with a fixed callback: `claude mcp add --transport http ops-oauth http://localhost:8809/mcp --client-id claude-code --callback-port 8765`. In the log of the server (`docker compose --profile keycloak logs -f help-me-ops-oauth`) every call carries `"identity":"oauth:alice"`. Stop it with `docker compose --profile keycloak down`.
+Sign in as `alice` / `alice` and accept the consent screen (it appears because the client registered itself). If your client wants a client id that is already registered instead of registering itself, the realm has one with a fixed callback: `claude mcp add --transport http ops-oauth http://localhost:8809/mcp --client-id claude-code --callback-port 8765`. In the log of the server (`docker compose logs -f help-me-ops-oauth`) every call carries `"identity":"oauth:alice"`. Stop it with `docker compose down`.
 
 A few things the demo shows about a real setup: the token's `aud` is the server's address (set by the `help-me-ops` scope in the realm, an audience mapper), the required scope is `help-me-ops` (`OPS_MCP_OAUTH_SCOPES`), and the server shares Keycloak's network only so that `localhost:8080` means the same Keycloak to the browser and to the server (a real provider has a name). The realm is in [`deploy/keycloak/ops-realm.json`](https://github.com/bhoudebert/help-me-ops/blob/main/deploy/keycloak/ops-realm.json): copy what you need.
 

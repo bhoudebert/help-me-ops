@@ -1,5 +1,5 @@
 // Checks the whole "sign in with the company login" path against the demo Keycloak of compose.yml
-// (docker compose --profile keycloak up -d --build keycloak help-me-ops-oauth): a client registers
+// (docker compose up -d --build): a client registers
 // itself, the person signs in (alice/alice) with PKCE, and the token is used on the MCP server.
 // It is what an MCP client does for you in a browser, headless.
 //   npm run keycloak:check
