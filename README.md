@@ -153,7 +153,7 @@ one question for scripts, against a model **you** point at: Ollama, llama.cpp,
 LM Studio, a company server, any OpenAI-compatible endpoint. The same tools, mask
 and checked conclusion; nothing is called until you configure a model, and
 `privacy.modelHosts` can restrict where it may be. A small model investigates
-worse than a large one: `ops eval` counts how often a model reaches an accepted, expected conclusion on your scenarios, and [the guide](docs/guide/local-models.md) says what to expect. On one RTX 5080 and the demo scenario, `qwen3:14b` found the direct cause 5 times out of 5 and the smaller models did not: a snapshot, with the numbers and the method in the guide. [The site](https://bhoudebert.github.io/help-me-ops/#models) shows it.
+worse than a large one: `ops eval` counts how often a model reaches an accepted, expected conclusion on your scenarios, and [the guide](docs/guide/local-models.md) says what to expect. On one RTX 5080, `qwen3:14b` found the cause on two of the three demo incidents in every run and nobody found the third: a snapshot, with the numbers, the machine and how to measure yours in [the guide](docs/guide/benchmarks.md). [The site](https://bhoudebert.github.io/help-me-ops/#models) shows it.
 
 ## Personal data
 

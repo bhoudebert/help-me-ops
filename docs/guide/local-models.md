@@ -193,20 +193,4 @@ It is not intelligent (any question gets the scenario's investigation); it shows
 
 ### What one setup measured
 
-The only numbers this project has, from the maintainer's machine on 2026-10-09: an RTX 5080 with 16 GB, Ollama 0.32.14 (CUDA), the three incidents of the demo world (each question followed by "It is the shop app, in the prod environment", since nobody is there to answer when the model asks), temperature 0, thinking off (`--reasoning none`) for Qwen and `low` for gpt-oss. Runs where the cause was found, out of the runs made:
-
-```
-setting                        stuck-order  missing-emails  slow-checkout  median time
-qwen3:14b · reasoning none     5/5          5/5             0/5            13 s
-qwen3:8b · reasoning none      4/5          0/5             0/5            7 s
-gpt-oss:20b · reasoning low    3/3          3/3             0/3            32 s
-```
-
-"Found the cause" means the answer names the facts the scenario requires (a keyword check, see above). The conclusion check accepted 15 of 15 runs for each Qwen and 8 of 9 for gpt-oss, which is why acceptance alone says little.
-
-What to read in it, and what not to:
-
-- **The bigger models found two of the three causes, the smaller one one**, and **none found the slow-checkout one**. The 14B model gets to the symptom (the database connection pool is full, checkout times out) and then stops: it does not look in the logs for what changed, so it never names the missing index or release 2.15.0, and says the cause of the exhaustion is unknown. That is an honest answer, not the root cause.
-- **Two generic fixes came from measuring, not from tuning to a scenario.** The first measurement (stuck-order alone) had `qwen3:8b` at 0 of 5. The model did not know today's date, so "last night" or "this afternoon" became searches in 2023: the assistant is now told the date (the scenario's own in `ops eval`). And a log search needed the exact phrase, so natural words returned nothing: it now needs every word, in any order, and says when nothing matched. With both, the same model went to 4 of 5 on stuck-order. Nothing in either mentions a payment, a queue or a certificate.
-- **An earlier measurement**, on stuck-order alone and before those two fixes, found `llama3.1:8b` calling one tool and then answering in words, and `deepseek-r1` 7B and 14B never calling a tool at all (Ollama lists the 7B with the `tools` capability). They were not re-measured. Kimi was not tested: Ollama offers it only as a cloud model, and the open weights are far too large for a normal machine.
-- Five runs per setting (three for gpt-oss, a 13 GB model on a 16 GB card shared with a desktop, so partly on the CPU), a few scenarios, one machine: a snapshot of one setup, not a ranking. Run `ops eval` on yours.
+The numbers, the machine they come from and how to add yours are on [Which model? What was measured](/benchmarks). In short, on one RTX 5080 `qwen3:14b` with thinking off found the cause on two of the three demo incidents in every run, `gpt-oss:20b` on two of three, `qwen3:8b` on one at four runs of five, and nobody on the third. A snapshot, not a ranking.
