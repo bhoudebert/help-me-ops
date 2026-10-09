@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "recordedAt": "2026-10-09T10:20:00.000Z",
+  "commit": "4a9c2d4",
+  "machine": "RTX 5080 16 GB, 60 GB RAM, Ollama 0.32.14 (CUDA), context 16384, NixOS",
+  "notes": "gpt-oss 20B (MXFP4), reasoning low, 3 runs per scenario; 13 GB on a 16 GB card shared with a desktop, so part of it ran on the CPU; run on the branch of #50 (commit 4a9c2d4), before it was squash-merged",
+  "suite": {
+    "baseUrl": "http://localhost:11434/v1",
+    "reports": [
+      {
+        "scenario": "missing-emails",
+        "expected": [
+          "a TLS certificate (required)",
+          "that has expired (required)",
+          "the mail provider smtp.mailprov.example",
+          "confirmation emails are waiting in a queue"
+        ],
+        "baseUrl": "http://localhost:11434/v1",
+        "settings": [
+          {
+            "model": "gpt-oss:20b",
+            "reasoning": "low",
+            "runs": [
+              {
+                "status": "answered",
+                "steps": 6,
+                "tokens": 21761,
+                "seconds": 48.502,
+                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 10,
+                "tokens": 35752,
+                "seconds": 20.599,
+                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 10,
+                "tokens": 35752,
+                "seconds": 32.259,
+                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
+                "cause": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scenario": "slow-checkout",
+        "expected": [
+          "a slow query that scans the whole table (no index) (required)",
+          "since release 2.15.0 (required)",
+          "the new order search for the back office",
+          "the connection pool is exhausted"
+        ],
+        "baseUrl": "http://localhost:11434/v1",
+        "settings": [
+          {
+            "model": "gpt-oss:20b",
+            "reasoning": "low",
+            "runs": [
+              {
+                "status": "concluded",
+                "steps": 7,
+                "tokens": 19717,
+                "seconds": 7.401,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 7,
+                "tokens": 19717,
+                "seconds": 7.495,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 7,
+                "tokens": 19717,
+                "seconds": 7.391,
+                "facts": [],
+                "cause": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scenario": "stuck-order",
+        "expected": [
+          "the webhook was refused (503) (required)",
+          "the payment queue was full (required)",
+          "the worker was OOMKilled",
+          "since release 2.14.0",
+          "orders 4513 and 4514 too"
+        ],
+        "baseUrl": "http://localhost:11434/v1",
+        "settings": [
+          {
+            "model": "gpt-oss:20b",
+            "reasoning": "low",
+            "runs": [
+              {
+                "status": "concluded",
+                "steps": 17,
+                "tokens": 95935,
+                "seconds": 32.996,
+                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 17,
+                "tokens": 95935,
+                "seconds": 29.773,
+                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 17,
+                "tokens": 95935,
+                "seconds": 37.06,
+                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "cause": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -38,6 +38,7 @@ export default defineConfig({
           { text: "…with a real database", link: "/database" },
           { text: "Investigate a problem", link: "/investigate" },
           { text: "Without an AI client: your own model", link: "/local-models" },
+          { text: "Which model? What was measured", link: "/benchmarks" },
           { text: "Personal data", link: "/privacy" },
           { text: "Independence and no warranty", link: "/legal" },
         ],

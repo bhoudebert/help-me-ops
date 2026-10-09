@@ -141,3 +141,17 @@ string in the address SHALL be kept on the chat endpoint and SHALL NOT be shown 
 
 - **WHEN** `ops eval` runs on a workspace with three scenarios
 - **THEN** it prints one report per scenario and then the settings added up over all of them
+
+### Requirement: Measurements are kept as records and the table is made from them
+
+A benchmark run SHALL be stored as a file with its date, the commit of the repository,
+the description of the machine given by the person, and every run of every
+scenario. The comparison table of the guide SHALL be generated from the stored files,
+taking for each model and reasoning setting its latest record whole, and a test SHALL
+fail when the page differs from what the files produce. The page SHALL state that it
+is a snapshot of one setup and how a person adds their own.
+
+#### Scenario: A new record
+
+- **WHEN** a person runs `npm run bench` and then `npm run bench:table`
+- **THEN** a record appears in `bench/results/` and the table of the page shows its setting
