@@ -1,0 +1,393 @@
+{
+  "version": 1,
+  "recordedAt": "2026-10-09T09:30:00.000Z",
+  "commit": "4a9c2d4",
+  "machine": "RTX 5080 16 GB, 60 GB RAM, Ollama 0.32.14 (CUDA), context 16384, NixOS",
+  "notes": "qwen3 14B and 8B, Q4_K_M, thinking off (--reasoning none), 5 runs per scenario; run on the branch of #50 (commit 4a9c2d4), before it was squash-merged",
+  "suite": {
+    "baseUrl": "http://localhost:11434/v1",
+    "reports": [
+      {
+        "scenario": "missing-emails",
+        "expected": [
+          "a TLS certificate (required)",
+          "that has expired (required)",
+          "the mail provider smtp.mailprov.example",
+          "confirmation emails are waiting in a queue"
+        ],
+        "baseUrl": "http://localhost:11434/v1",
+        "settings": [
+          {
+            "model": "qwen3:14b",
+            "reasoning": "none",
+            "runs": [
+              {
+                "status": "concluded",
+                "steps": 7,
+                "tokens": 25577,
+                "seconds": 8.054,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 7,
+                "tokens": 25577,
+                "seconds": 7.469,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 7,
+                "tokens": 25577,
+                "seconds": 7.486,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 7,
+                "tokens": 25577,
+                "seconds": 7.349,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 7,
+                "tokens": 25577,
+                "seconds": 7.331,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
+              }
+            ]
+          },
+          {
+            "model": "qwen3:8b",
+            "reasoning": "none",
+            "runs": [
+              {
+                "status": "concluded",
+                "steps": 9,
+                "tokens": 34153,
+                "seconds": 22.758,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 9,
+                "tokens": 34153,
+                "seconds": 6.72,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 9,
+                "tokens": 34153,
+                "seconds": 6.466,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 9,
+                "tokens": 34153,
+                "seconds": 6.339,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 9,
+                "tokens": 34153,
+                "seconds": 6.418,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
+                "cause": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scenario": "slow-checkout",
+        "expected": [
+          "a slow query that scans the whole table (no index) (required)",
+          "since release 2.15.0 (required)",
+          "the new order search for the back office",
+          "the connection pool is exhausted"
+        ],
+        "baseUrl": "http://localhost:11434/v1",
+        "settings": [
+          {
+            "model": "qwen3:14b",
+            "reasoning": "none",
+            "runs": [
+              {
+                "status": "concluded",
+                "steps": 12,
+                "tokens": 52940,
+                "seconds": 33.589,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 12,
+                "tokens": 52940,
+                "seconds": 13.432,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 12,
+                "tokens": 52940,
+                "seconds": 13.315,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 12,
+                "tokens": 52940,
+                "seconds": 13.306,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 12,
+                "tokens": 52940,
+                "seconds": 13.24,
+                "facts": [],
+                "cause": false
+              }
+            ]
+          },
+          {
+            "model": "qwen3:8b",
+            "reasoning": "none",
+            "runs": [
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 48421,
+                "seconds": 11.106,
+                "facts": [
+                  "the connection pool is exhausted"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 48421,
+                "seconds": 9.011,
+                "facts": [
+                  "the connection pool is exhausted"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 48421,
+                "seconds": 8.695,
+                "facts": [
+                  "the connection pool is exhausted"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 48421,
+                "seconds": 8.87,
+                "facts": [
+                  "the connection pool is exhausted"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 48421,
+                "seconds": 8.785,
+                "facts": [
+                  "the connection pool is exhausted"
+                ],
+                "cause": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scenario": "stuck-order",
+        "expected": [
+          "the webhook was refused (503) (required)",
+          "the payment queue was full (required)",
+          "the worker was OOMKilled",
+          "since release 2.14.0",
+          "orders 4513 and 4514 too"
+        ],
+        "baseUrl": "http://localhost:11434/v1",
+        "settings": [
+          {
+            "model": "qwen3:14b",
+            "reasoning": "none",
+            "runs": [
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 56499,
+                "seconds": 15.958,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 56499,
+                "seconds": 12.732,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 56499,
+                "seconds": 12.491,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 56499,
+                "seconds": 12.669,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 56499,
+                "seconds": 12.59,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              }
+            ]
+          },
+          {
+            "model": "qwen3:8b",
+            "reasoning": "none",
+            "runs": [
+              {
+                "status": "concluded",
+                "steps": 6,
+                "tokens": 20179,
+                "seconds": 6.341,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 8,
+                "tokens": 32655,
+                "seconds": 5.816,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 8,
+                "tokens": 32655,
+                "seconds": 5.977,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 8,
+                "tokens": 32655,
+                "seconds": 5.825,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 8,
+                "tokens": 32655,
+                "seconds": 5.796,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "temperature": 0
+}

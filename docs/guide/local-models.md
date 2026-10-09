@@ -193,4 +193,4 @@ It is not intelligent (any question gets the scenario's investigation); it shows
 
 ### What one setup measured
 
-The numbers, the machine they come from and how to add yours are on [Which model? What was measured](/benchmarks). In short, on one RTX 5080 `qwen3:14b` with thinking off found the cause on two of the three demo incidents in every run, `gpt-oss:20b` on two of three, `qwen3:8b` on one at four runs of five, and nobody on the third. A snapshot, not a ranking.
+The numbers, the machine they come from and how to add yours are on [Which model? What was measured](/benchmarks). In short, on one RTX 5080 with eight runs per scenario at temperature 0.7, `qwen3:14b` found the stuck order's cause in 7 runs of 8 and an expired certificate's in 3, `gpt-oss:20b` the certificate in 6 of 8, and nobody the missing index of the third incident. A rough measure of one setup, not a ranking.

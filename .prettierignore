@@ -6,3 +6,4 @@ cases
 docs/guide/.vitepress/dist
 docs/guide/.vitepress/cache
 .claude
+bench/results/

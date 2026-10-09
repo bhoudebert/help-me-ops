@@ -34,7 +34,7 @@ if (process.argv.includes("--table")) {
   const models = list(arg("--model"), []);
   if (!machine || !label || !models.length) {
     throw new Error(
-      'Usage: npm run bench -- --machine "<hardware and server>" --label <short> --model a[,b] [--runs 5] [--reasoning none,default] [--scenario a,b] [--base-url url] [--notes "..."]',
+      'Usage: npm run bench -- --machine "<hardware and server>" --label <short> --model a[,b] [--runs 5] [--reasoning none,default] [--scenario a,b] [--base-url url] [--temperature T] [--notes "..."]',
     );
   }
   const workspace = resolve(arg("--workspace") ?? "examples/my-workspace");
@@ -50,12 +50,18 @@ if (process.argv.includes("--table")) {
       models,
       reasoning: list(arg("--reasoning"), ["default"]),
       baseUrl: arg("--base-url"),
+      temperature: arg("--temperature") !== undefined ? Number(arg("--temperature")) : undefined,
     },
     process.env,
     globalThis.fetch,
     (line) => console.error(line),
   );
-  const record = recordOf(suite, { commit, machine, notes: arg("--notes") });
+  const record = recordOf(suite, {
+    commit,
+    machine,
+    notes: arg("--notes"),
+    temperature: arg("--temperature") !== undefined ? Number(arg("--temperature")) : undefined,
+  });
   mkdirSync(resultsDir, { recursive: true });
   const file = join(resultsDir, fileNameOf(record, label));
   writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`);

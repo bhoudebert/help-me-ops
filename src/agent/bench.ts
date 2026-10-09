@@ -31,6 +31,8 @@ export const BenchRecord = z.object({
   commit: z.string(),
   /** Hardware and server, as the person who ran it describes them. */
   machine: z.string(),
+  /** Sampling temperature of the runs, when it was set for them. */
+  temperature: z.number().optional(),
   /** Anything a reader needs: how the model was served, what differs from a plain run. */
   notes: z.string().optional(),
   suite: z.object({ baseUrl: z.string(), reports: z.array(Report).min(1) }),
@@ -39,13 +41,14 @@ export type BenchRecord = z.infer<typeof BenchRecord>;
 
 export function recordOf(
   suite: EvalSuite,
-  meta: { commit: string; machine: string; notes?: string; now?: Date },
+  meta: { commit: string; machine: string; notes?: string; temperature?: number; now?: Date },
 ): BenchRecord {
   return BenchRecord.parse({
     version: 1,
     recordedAt: (meta.now ?? new Date()).toISOString(),
     commit: meta.commit,
     machine: meta.machine,
+    ...(meta.temperature !== undefined ? { temperature: meta.temperature } : {}),
     ...(meta.notes ? { notes: meta.notes } : {}),
     suite,
   });
@@ -77,27 +80,32 @@ export function renderTable(records: BenchRecord[]): string {
   const ordered = [...records].sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
   const scenarios = [...new Set(ordered.flatMap((r) => r.suite.reports.map((x) => x.scenario)))].sort();
   type Runs = z.infer<typeof Run>[];
-  const rows = new Map<string, { at: string; byScenario: Map<string, Runs> }>();
+  const rows = new Map<string, { at: string; temperature?: number; byScenario: Map<string, Runs> }>();
   for (const record of ordered) {
     for (const report of record.suite.reports) {
       for (const setting of report.settings) {
         const key = `${setting.model} · reasoning ${setting.reasoning}`;
         // The latest record of a setting wins, whole: its scenarios are not mixed with an older run's.
-        const row = rows.get(key) ?? { at: record.recordedAt, byScenario: new Map<string, Runs>() };
+        const row = rows.get(key) ?? {
+          at: record.recordedAt,
+          temperature: record.temperature,
+          byScenario: new Map<string, Runs>(),
+        };
         if (row.at !== record.recordedAt) continue;
         row.byScenario.set(report.scenario, setting.runs);
         rows.set(key, row);
       }
     }
   }
-  const header = ["Setting", ...scenarios, "Accepted", "Median time"];
+  const header = ["Setting", "Temp", ...scenarios, "Accepted", "Median time"];
   const found = (runs: Runs) => `${runs.filter((r) => r.cause).length}/${runs.length}`;
   const body = [...rows]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, { byScenario }]) => {
+    .map(([key, { byScenario, temperature }]) => {
       const all = [...byScenario.values()].flat();
       return [
         key,
+        temperature === undefined ? "-" : String(temperature),
         ...scenarios.map((s) => (byScenario.has(s) ? found(byScenario.get(s)!) : "-")),
         `${all.filter((r) => r.status === "concluded").length}/${all.length}`,
         `${Math.round(median(all.map((r) => r.seconds)))} s`,

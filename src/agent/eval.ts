@@ -18,6 +18,8 @@ export interface EvalOptions {
   /** `none`, `low`, `medium`, `high`, or `default` (nothing sent). */
   reasoning: string[];
   baseUrl?: string;
+  /** Sampling temperature for every run; the model's own setting when absent. At 0 a model answers almost the same every time, so runs are hardly independent. */
+  temperature?: number;
 }
 
 export interface RunResult {
@@ -143,6 +145,7 @@ async function evalScenario(
   for (const name of options.models) {
     for (const reasoning of options.reasoning) {
       const model: Model = resolveModel(toolbox.model, { baseUrl: options.baseUrl, model: name }, env);
+      if (options.temperature !== undefined) model.temperature = options.temperature;
       model.reasoningEffort = reasoning === "default" ? undefined : (reasoning as Model["reasoningEffort"]);
       assertModelAllowed(model.baseUrl, toolbox.privacy?.modelHosts);
       baseUrl = displayUrl(model.baseUrl);

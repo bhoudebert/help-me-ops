@@ -1,9 +1,10 @@
 {
   "version": 1,
-  "recordedAt": "2026-10-09T09:30:00.000Z",
-  "commit": "4a9c2d4",
+  "recordedAt": "2026-10-09T16:26:26.059Z",
+  "commit": "458185c+dirty",
   "machine": "RTX 5080 16 GB, 60 GB RAM, Ollama 0.32.14 (CUDA), context 16384, NixOS",
-  "notes": "qwen3 14B and 8B, Q4_K_M, thinking off (--reasoning none), 5 runs per scenario; run on the branch of #50 (commit 4a9c2d4), before it was squash-merged",
+  "temperature": 0.7,
+  "notes": "qwen3 14B and 8B (Q4_K_M), thinking off, temperature 0.7 so that runs are independent samples; a log search with no line holding every word returns the lines with the most of them",
   "suite": {
     "baseUrl": "http://localhost:11434/v1",
     "reports": [
@@ -23,43 +24,81 @@
             "runs": [
               {
                 "status": "concluded",
+                "steps": 8,
+                "tokens": 29298,
+                "seconds": 13.238,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 9,
+                "tokens": 35128,
+                "seconds": 11.724,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 6,
+                "tokens": 20083,
+                "seconds": 6.767,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
                 "steps": 7,
-                "tokens": 25577,
-                "seconds": 8.054,
-                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
+                "tokens": 25553,
+                "seconds": 7.926,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
                 "steps": 7,
-                "tokens": 25577,
-                "seconds": 7.469,
-                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
+                "tokens": 25555,
+                "seconds": 8.257,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
                 "steps": 7,
-                "tokens": 25577,
-                "seconds": 7.486,
-                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
-                "cause": true
+                "tokens": 23624,
+                "seconds": 8.679,
+                "facts": [],
+                "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 7,
-                "tokens": 25577,
-                "seconds": 7.349,
-                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
-                "cause": true
+                "steps": 11,
+                "tokens": 50442,
+                "seconds": 14.255,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
+                "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 7,
-                "tokens": 25577,
-                "seconds": 7.331,
-                "facts": ["a TLS certificate", "that has expired", "the mail provider smtp.mailprov.example"],
-                "cause": true
+                "steps": 6,
+                "tokens": 20118,
+                "seconds": 7.358,
+                "facts": [],
+                "cause": false
               }
             ]
           },
@@ -70,42 +109,88 @@
               {
                 "status": "concluded",
                 "steps": 9,
-                "tokens": 34153,
-                "seconds": 22.758,
-                "facts": ["confirmation emails are waiting in a queue"],
+                "tokens": 34214,
+                "seconds": 13.873,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
                 "cause": false
               },
               {
                 "status": "concluded",
                 "steps": 9,
-                "tokens": 34153,
-                "seconds": 6.72,
-                "facts": ["confirmation emails are waiting in a queue"],
+                "tokens": 34154,
+                "seconds": 7.446,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 9,
-                "tokens": 34153,
-                "seconds": 6.466,
-                "facts": ["confirmation emails are waiting in a queue"],
+                "steps": 15,
+                "tokens": 67910,
+                "seconds": 10.808,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 10,
+                "tokens": 41072,
+                "seconds": 11.361,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 9,
-                "tokens": 34153,
-                "seconds": 6.339,
-                "facts": ["confirmation emails are waiting in a queue"],
-                "cause": false
+                "steps": 13,
+                "tokens": 74849,
+                "seconds": 10.287,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
               },
               {
                 "status": "concluded",
                 "steps": 9,
-                "tokens": 34153,
-                "seconds": 6.418,
-                "facts": ["confirmation emails are waiting in a queue"],
+                "tokens": 34197,
+                "seconds": 7.719,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
                 "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 14,
+                "tokens": 75885,
+                "seconds": 10.245,
+                "facts": [
+                  "confirmation emails are waiting in a queue"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 15,
+                "tokens": 68823,
+                "seconds": 13.006,
+                "facts": [
+                  "a TLS certificate",
+                  "that has expired",
+                  "the mail provider smtp.mailprov.example"
+                ],
+                "cause": true
               }
             ]
           }
@@ -128,41 +213,77 @@
               {
                 "status": "concluded",
                 "steps": 12,
-                "tokens": 52940,
-                "seconds": 33.589,
+                "tokens": 75187,
+                "seconds": 55.297,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 68845,
+                "seconds": 25.242,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 8,
+                "tokens": 32884,
+                "seconds": 11.915,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 9,
+                "tokens": 38947,
+                "seconds": 13.942,
                 "facts": [],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 12,
-                "tokens": 52940,
-                "seconds": 13.432,
+                "steps": 10,
+                "tokens": 46615,
+                "seconds": 23.026,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 6,
+                "tokens": 20524,
+                "seconds": 8.414,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 10,
+                "tokens": 47350,
+                "seconds": 13.982,
                 "facts": [],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 12,
-                "tokens": 52940,
-                "seconds": 13.315,
-                "facts": [],
-                "cause": false
-              },
-              {
-                "status": "concluded",
-                "steps": 12,
-                "tokens": 52940,
-                "seconds": 13.306,
-                "facts": [],
-                "cause": false
-              },
-              {
-                "status": "concluded",
-                "steps": 12,
-                "tokens": 52940,
-                "seconds": 13.24,
-                "facts": [],
+                "steps": 11,
+                "tokens": 62156,
+                "seconds": 27.555,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
                 "cause": false
               }
             ]
@@ -173,42 +294,78 @@
             "runs": [
               {
                 "status": "concluded",
-                "steps": 11,
-                "tokens": 48421,
-                "seconds": 11.106,
-                "facts": ["the connection pool is exhausted"],
+                "steps": 7,
+                "tokens": 26566,
+                "seconds": 26.149,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 11,
-                "tokens": 48421,
-                "seconds": 9.011,
-                "facts": ["the connection pool is exhausted"],
+                "steps": 10,
+                "tokens": 41766,
+                "seconds": 6.674,
+                "facts": [],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 11,
-                "tokens": 48421,
-                "seconds": 8.695,
-                "facts": ["the connection pool is exhausted"],
+                "steps": 10,
+                "tokens": 48207,
+                "seconds": 9.525,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 11,
-                "tokens": 48421,
-                "seconds": 8.87,
-                "facts": ["the connection pool is exhausted"],
+                "steps": 10,
+                "tokens": 40466,
+                "seconds": 7.056,
+                "facts": [],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 11,
-                "tokens": 48421,
-                "seconds": 8.785,
-                "facts": ["the connection pool is exhausted"],
+                "steps": 7,
+                "tokens": 26578,
+                "seconds": 7.308,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 10,
+                "tokens": 44356,
+                "seconds": 8.511,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 9,
+                "tokens": 38890,
+                "seconds": 7.811,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 8,
+                "tokens": 31590,
+                "seconds": 6.254,
+                "facts": [
+                  "a slow query that scans the whole table (no index)"
+                ],
                 "cause": false
               }
             ]
@@ -233,41 +390,86 @@
               {
                 "status": "concluded",
                 "steps": 11,
-                "tokens": 56499,
-                "seconds": 15.958,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "tokens": 50098,
+                "seconds": 29.539,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 10,
+                "tokens": 47593,
+                "seconds": 13.225,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
                 "steps": 11,
-                "tokens": 56499,
-                "seconds": 12.732,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "tokens": 56500,
+                "seconds": 14.205,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
+                "cause": true
+              },
+              {
+                "status": "concluded",
+                "steps": 10,
+                "tokens": 47693,
+                "seconds": 14.65,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
                 "steps": 11,
-                "tokens": 56499,
-                "seconds": 12.491,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "tokens": 56487,
+                "seconds": 14.131,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
                 "steps": 11,
-                "tokens": 56499,
-                "seconds": 12.669,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "tokens": 50081,
+                "seconds": 18.289,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
+                "steps": 5,
+                "tokens": 17485,
+                "seconds": 6.362,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
                 "steps": 11,
-                "tokens": 56499,
-                "seconds": 12.59,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "tokens": 56489,
+                "seconds": 13.789,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
                 "cause": true
               }
             ]
@@ -278,43 +480,75 @@
             "runs": [
               {
                 "status": "concluded",
-                "steps": 6,
-                "tokens": 20179,
-                "seconds": 6.341,
+                "steps": 8,
+                "tokens": 28028,
+                "seconds": 23.112,
                 "facts": [],
                 "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 8,
-                "tokens": 32655,
-                "seconds": 5.816,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "steps": 6,
+                "tokens": 20164,
+                "seconds": 4.434,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 6,
+                "tokens": 20187,
+                "seconds": 4.732,
+                "facts": [],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 9,
+                "tokens": 36949,
+                "seconds": 7.016,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
                 "steps": 8,
-                "tokens": 32655,
-                "seconds": 5.977,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
+                "tokens": 32098,
+                "seconds": 8.965,
+                "facts": [
+                  "the payment queue was full"
+                ],
+                "cause": false
+              },
+              {
+                "status": "concluded",
+                "steps": 11,
+                "tokens": 53238,
+                "seconds": 9.883,
+                "facts": [
+                  "the webhook was refused (503)",
+                  "the payment queue was full"
+                ],
                 "cause": true
               },
               {
                 "status": "concluded",
-                "steps": 8,
-                "tokens": 32655,
-                "seconds": 5.825,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
-                "cause": true
+                "steps": 7,
+                "tokens": 24610,
+                "seconds": 6.5,
+                "facts": [],
+                "cause": false
               },
               {
                 "status": "concluded",
-                "steps": 8,
-                "tokens": 32655,
-                "seconds": 5.796,
-                "facts": ["the webhook was refused (503)", "the payment queue was full"],
-                "cause": true
+                "steps": 6,
+                "tokens": 20195,
+                "seconds": 4.804,
+                "facts": [],
+                "cause": false
               }
             ]
           }

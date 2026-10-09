@@ -36,9 +36,9 @@ test("table: one row per setting, one column per scenario with the runs that fou
   assert.equal(
     table,
     [
-      "| Setting             | a-one | b-two | Accepted | Median time |",
-      "| ------------------- | ----: | ----: | -------: | ----------: |",
-      "| m1 · reasoning none |   2/3 |   0/3 |      6/6 |        10 s |",
+      "| Setting             | Temp | a-one | b-two | Accepted | Median time |",
+      "| ------------------- | ---: | ----: | ----: | -------: | ----------: |",
+      "| m1 · reasoning none |    - |   2/3 |   0/3 |      6/6 |        10 s |",
     ].join("\n"),
   );
 });
@@ -49,8 +49,8 @@ test("table: the latest record of a setting wins, whole, and settings of other r
   const other = record("2026-10-05T10:00:00Z", suite("m2", "default", { a: [true], b: [true] }));
   const table = renderTable([old, fresh, other]);
   // m1 comes from the fresh record only (no `b` from the old one); m2 from its own
-  assert.match(table, /\| m1 · reasoning none\s+\|\s+1\/1 \|\s+- \|\s+1\/1 \|/);
-  assert.match(table, /\| m2 · reasoning default \|\s+1\/1 \|\s+1\/1 \|\s+2\/2 \|/);
+  assert.match(table, /\| m1 · reasoning none\s+\|\s+-\s+\|\s+1\/1 \|\s+- \|\s+1\/1 \|/);
+  assert.match(table, /\| m2 · reasoning default \|\s+-\s+\|\s+1\/1 \|\s+1\/1 \|\s+2\/2 \|/);
   // the order of the records given does not matter
   assert.equal(renderTable([other, fresh, old]), table);
 });
