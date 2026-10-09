@@ -11,6 +11,7 @@ import { isIP } from "node:net";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { createMcpServer } from "./mcp-server.ts";
+import { OAuthError, type OAuthVerifier } from "./oauth.ts";
 import type { Toolbox } from "./tools/index.ts";
 
 export interface HttpOptions {
@@ -23,6 +24,8 @@ export interface HttpOptions {
     name: string;
     /** SHA-256 of the token, in hex: the server never needs the token itself. */ hash: string;
   }[];
+  /** A company identity provider that logs people in (ADR 0017): its access tokens are accepted beside the static ones. */
+  oauth?: OAuthVerifier;
   /** Serve without a token: only on a loopback address, and only when asked for in so many words. */
   noAuth: boolean;
   /** Names the server is reached by, behind a proxy (`mcp.company.example`); the Host header must be one of them. */
@@ -176,9 +179,9 @@ export async function startHttpServer(toolbox: Toolbox, options: HttpOptions): P
       `--no-auth is only for a loopback address, and the server would listen on ${host}. Give it tokens (OPS_MCP_TOKENS).`,
     );
   }
-  if (!options.noAuth && !options.tokens.length) {
+  if (!options.noAuth && !options.tokens.length && !options.oauth) {
     throw new Error(
-      "No token: a server on a URL reads your systems for whoever reaches it. Set OPS_MCP_TOKENS (make a token with: npm run ops -- token <name>), or, on this machine only, --no-auth.",
+      "No token: a server on a URL reads your systems for whoever reaches it. Set OPS_MCP_TOKENS (make a token with: npm run ops -- token <name>), or an OAuth issuer (OPS_MCP_OAUTH_ISSUER), or, on this machine only, --no-auth.",
     );
   }
   if (!loopback(host) && !options.publicHosts.length) {
@@ -193,16 +196,39 @@ export async function startHttpServer(toolbox: Toolbox, options: HttpOptions): P
     res.writeHead(status, { "content-type": "application/json", ...headers }).end(JSON.stringify(body));
   };
 
-  /** The name of the person behind a request, or null. Compared in constant time. */
-  const identify = (req: IncomingMessage): string | null => {
-    if (options.noAuth) return "local";
+  /**
+   * Who is asking. A static token is looked up by its hash (constant time); anything shaped like a JWT is
+   * given to the identity provider's rules; the rest is refused. `challenge` is what a refusal tells the client.
+   */
+  const authenticate = async (
+    req: IncomingMessage,
+  ): Promise<{ identity: string } | { status: 401 | 403; error?: string; code?: string; reason: string }> => {
+    if (options.noAuth) return { identity: "local" };
     const given = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? "")?.[1];
-    if (!given) return null;
+    if (!given) return { status: 401, reason: "no token" };
     const hash = digest(given);
-    let found: string | null = null;
-    for (const t of accepted) if (timingSafeEqual(t.hash, hash)) found = t.name;
-    return found;
+    for (const t of accepted) if (timingSafeEqual(t.hash, hash)) return { identity: t.name };
+    if (options.oauth && given.split(".").length === 3) {
+      try {
+        return { identity: (await options.oauth.verify(given)).identity };
+      } catch (error) {
+        if (error instanceof OAuthError) return { status: error.status, code: error.code, reason: error.message };
+        throw error;
+      }
+    }
+    return { status: 401, code: "invalid_token", reason: "unknown token" };
   };
+
+  /** RFC 6750 and RFC 9728: say how to authenticate, and where a client learns which provider to ask. */
+  const challenge = (failure: { status: number; code?: string }) =>
+    [
+      'Bearer realm="help-me-ops"',
+      ...(options.oauth ? [`resource_metadata="${options.oauth.metadataUrl}"`] : []),
+      ...(failure.code ? [`error="${failure.code}"`] : []),
+      ...(failure.code === "insufficient_scope" && options.oauth
+        ? [`scope="${options.oauth.config.scopes.join(" ")}"`]
+        : []),
+    ].join(", ");
 
   const readBody = (req: IncomingMessage) =>
     new Promise<unknown>((done, fail) => {
@@ -236,17 +262,33 @@ export async function startHttpServer(toolbox: Toolbox, options: HttpOptions): P
       return reply(res, 403, { error: "Host not allowed" });
     if (req.headers.origin) return reply(res, 403, { error: "Origin not allowed" });
     if (url.pathname === "/healthz" && req.method === "GET") return reply(res, 200, { ok: true });
+    // Where a client learns which provider to ask (RFC 9728), at the root and with the path of this resource.
+    if (
+      options.oauth &&
+      req.method === "GET" &&
+      (url.pathname === "/.well-known/oauth-protected-resource" ||
+        url.pathname === new URL(options.oauth.metadataUrl).pathname)
+    ) {
+      return reply(res, 200, options.oauth.metadata(), { "cache-control": "max-age=300" });
+    }
     if (url.pathname !== path) return reply(res, 404, { error: "Not found" });
 
-    const identity = identify(req);
-    if (!identity) {
+    const who = await authenticate(req);
+    if (!("identity" in who)) {
+      log({ at: new Date().toISOString(), event: "auth", ok: false, reason: who.reason });
       return reply(
         res,
-        401,
-        { error: "A token is needed: Authorization: Bearer <token>" },
-        { "www-authenticate": 'Bearer realm="help-me-ops"' },
+        who.status,
+        {
+          error:
+            who.status === 403
+              ? "This token may not use this server"
+              : "A token is needed: Authorization: Bearer <token>",
+        },
+        { "www-authenticate": challenge(who) },
       );
     }
+    const identity = who.identity;
     try {
       const sessionId = req.headers["mcp-session-id"];
       const body = req.method === "POST" ? await readBody(req) : undefined;
