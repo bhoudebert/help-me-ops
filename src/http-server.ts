@@ -4,6 +4,7 @@
 // not: authentication, a Host and Origin check, size and session limits, and an
 // audit line per tool call.
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { createServer as createHttpServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { createServer as createHttpsServer } from "node:https";
 import { isIP } from "node:net";
@@ -74,6 +75,58 @@ export function parseTokens(text: string | undefined): { name: string; token: st
   const twice = names.find((n, i) => names.indexOf(n) !== i);
   if (twice) throw new Error(`OPS_MCP_TOKENS: "${twice}" appears twice.`);
   return tokens;
+}
+
+/**
+ * The options of the HTTP server from the command line and the environment, flags first:
+ * `--host`/OPS_MCP_HOST, `--port`/OPS_MCP_PORT, `--path`/OPS_MCP_PATH, `--public-host`/OPS_MCP_PUBLIC_HOSTS
+ * (comma-separated), the tokens in OPS_MCP_TOKENS and/or a file named by OPS_MCP_TOKENS_FILE (a container
+ * secret: `name:token` entries separated by commas or new lines), `--tls-cert` and `--tls-key`, `--no-auth`.
+ */
+export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv, log: HttpOptions["log"]): HttpOptions {
+  const all = (name: string) => argv.flatMap((a, i) => (a === name && argv[i + 1] ? [argv[i + 1]!] : []));
+  const one = (name: string) => all(name).at(-1);
+  const cert = one("--tls-cert");
+  const key = one("--tls-key");
+  if (Boolean(cert) !== Boolean(key)) throw new Error("--tls-cert and --tls-key go together.");
+  const port = Number(one("--port") ?? env.OPS_MCP_PORT ?? HTTP_DEFAULTS.port);
+  if (!Number.isInteger(port) || port < 0 || port > 65535)
+    throw new Error(`The port "${one("--port") ?? env.OPS_MCP_PORT}" is not a port number.`);
+  const fromFile = env.OPS_MCP_TOKENS_FILE ? readTokensFile(env.OPS_MCP_TOKENS_FILE) : "";
+  const publicHosts = all("--public-host");
+  return {
+    host: one("--host") ?? env.OPS_MCP_HOST ?? HTTP_DEFAULTS.host,
+    port,
+    path: one("--path") ?? env.OPS_MCP_PATH ?? HTTP_DEFAULTS.path,
+    tokens: parseTokens([env.OPS_MCP_TOKENS, fromFile].filter(Boolean).join(",")),
+    noAuth: argv.includes("--no-auth"),
+    publicHosts: publicHosts.length
+      ? publicHosts
+      : (env.OPS_MCP_PUBLIC_HOSTS ?? "")
+          .split(",")
+          .map((h) => h.trim())
+          .filter(Boolean),
+    tls: cert && key ? { cert: readFileSync(cert, "utf8"), key: readFileSync(key, "utf8") } : undefined,
+    maxSessions: HTTP_DEFAULTS.maxSessions,
+    idleMs: HTTP_DEFAULTS.idleMs,
+    maxBodyBytes: HTTP_DEFAULTS.maxBodyBytes,
+    log,
+  };
+}
+
+function readTokensFile(path: string): string {
+  try {
+    return readFileSync(path, "utf8")
+      .split(/[\n,]/)
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("#"))
+      .join(",");
+  } catch (error) {
+    throw new Error(
+      `OPS_MCP_TOKENS_FILE: cannot read ${path}: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
 }
 
 const loopback = (host: string) =>

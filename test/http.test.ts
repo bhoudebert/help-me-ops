@@ -3,11 +3,20 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { request } from "node:http";
-import { resolve } from "node:path";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { HTTP_DEFAULTS, newToken, parseTokens, startHttpServer, type HttpOptions } from "../src/http-server.ts";
+import {
+  HTTP_DEFAULTS,
+  newToken,
+  optionsFromArgs,
+  parseTokens,
+  startHttpServer,
+  type HttpOptions,
+} from "../src/http-server.ts";
 import { openToolbox } from "../src/toolbox.ts";
 
 const workspace = resolve("examples/my-workspace");
@@ -259,4 +268,44 @@ test("tokens: named, long enough, once each; and `ops token` makes one", () => {
       }
     });
   });
+});
+
+test("options: flags beat the environment, tokens come from the variable and from a file, a container needs no flag", () => {
+  const dir = mkdtempSync(join(tmpdir(), "ops-http-"));
+  const file = join(dir, "tokens.txt");
+  writeFileSync(file, `# the team\nbob:${bob}\n\ncarol:${newToken()}\n`);
+  const log = () => undefined;
+  const fromEnv = optionsFromArgs(
+    [],
+    {
+      OPS_MCP_HOST: "0.0.0.0",
+      OPS_MCP_PORT: "9000",
+      OPS_MCP_PATH: "/x",
+      OPS_MCP_PUBLIC_HOSTS: "a.example, b.example:9000",
+      OPS_MCP_TOKENS: `alice:${alice}`,
+      OPS_MCP_TOKENS_FILE: file,
+    },
+    log,
+  );
+  assert.deepEqual([fromEnv.host, fromEnv.port, fromEnv.path], ["0.0.0.0", 9000, "/x"]);
+  assert.deepEqual(fromEnv.publicHosts, ["a.example", "b.example:9000"]);
+  assert.deepEqual(
+    fromEnv.tokens.map((t) => t.name),
+    ["alice", "bob", "carol"],
+  );
+  assert.equal(fromEnv.noAuth, false);
+  const flags = optionsFromArgs(
+    ["--host", "127.0.0.1", "--port", "1234", "--public-host", "c.example", "--no-auth"],
+    { OPS_MCP_HOST: "0.0.0.0", OPS_MCP_PORT: "9000", OPS_MCP_PUBLIC_HOSTS: "a.example" },
+    log,
+  );
+  assert.deepEqual([flags.host, flags.port, flags.publicHosts, flags.noAuth], ["127.0.0.1", 1234, ["c.example"], true]);
+  const plain = optionsFromArgs([], {}, log);
+  assert.deepEqual([plain.host, plain.port, plain.path, plain.tokens], ["127.0.0.1", 8808, "/mcp", []]);
+  assert.throws(() => optionsFromArgs([], { OPS_MCP_PORT: "eighty" }, log), /not a port number/);
+  assert.throws(
+    () => optionsFromArgs([], { OPS_MCP_TOKENS_FILE: join(dir, "missing") }, log),
+    /OPS_MCP_TOKENS_FILE: cannot read/,
+  );
+  assert.throws(() => optionsFromArgs(["--tls-cert", "c.pem"], {}, log), /go together/);
 });

@@ -1,0 +1,16 @@
+.git
+.github
+.claude
+.env
+.env.*
+node_modules
+docs
+site
+test
+bench
+openspec
+scripts
+examples
+coverage
+*.md
+!README.md

@@ -97,6 +97,41 @@ Restart=on-failure
 
 `GET /healthz` answers `{"ok":true}` with no token, for a load balancer's check.
 
+## With Docker
+
+The repository has a `Dockerfile` and a `compose.yml`. The image holds the server and the shipped addons; **your workspace is mounted, not baked in**, so config, playbooks, knowledge and your own addons stay with you, and the image is the same for everyone.
+
+```bash
+# 1. a token per person, as a secret file (one name:token per line)
+npm run ops -- token alice 2>/dev/null >> ops-tokens.txt
+
+# 2. the credentials your sources read (the ${VAR} of ops.config.json), not committed
+printf 'SHOPDB_PROD_URL=postgres://readonly:…@db.internal/shop\n' > server.env
+
+# 3. start it, on your workspace (the demo workspace by default)
+OPS_WORKSPACE_DIR=./my-ops OPS_PUBLIC_HOST=localhost:8808 docker compose up -d --build
+curl http://localhost:8808/healthz        # {"ok":true}
+```
+
+`compose.yml` publishes the port on **127.0.0.1 only**, mounts the workspace **read-only** at `/workspace`, gives the tokens as a secret, runs with a read-only filesystem, no capabilities and `no-new-privileges`, and has a health check. For a team, change the published address only when a proxy with TLS is in front, and set `OPS_PUBLIC_HOST` to the name people use (`mcp.company.example`).
+
+The container is configured by environment (the flags still win):
+
+| Variable                                       | What                                                               | Default                   |
+| ---------------------------------------------- | ------------------------------------------------------------------ | ------------------------- |
+| `OPS_WORKSPACE`                                | the workspace folder inside the container                          | `/workspace`              |
+| `OPS_MCP_HOST`, `OPS_MCP_PORT`, `OPS_MCP_PATH` | where it listens                                                   | `0.0.0.0`, `8808`, `/mcp` |
+| `OPS_MCP_PUBLIC_HOSTS`                         | the names it is reached by, comma-separated; required off loopback | none                      |
+| `OPS_MCP_TOKENS`                               | `name:token` entries, comma-separated                              | none                      |
+| `OPS_MCP_TOKENS_FILE`                          | a file of `name:token` lines (a container secret)                  | none                      |
+
+Things to know:
+
+- **Your own addons** go in the workspace's `addons/` folder, like anywhere. An addon that needs a package (a database driver such as `pg`) finds it in the workspace's own `node_modules`: run `npm install` where the workspace lives, and it is mounted with the rest.
+- **The `git` addon** needs the `git` program, which the slim image does not have: build your own image `FROM help-me-ops` with `git` installed, if you use it.
+- **Updating** is `docker compose up -d --build` after a `git pull`. No image is published to a registry yet.
+- **Logs** (`docker compose logs`) hold the audit lines, one JSON object per call.
+
 ## What it does and does not do
 
 **It does:**

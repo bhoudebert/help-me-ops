@@ -37,3 +37,24 @@ jobs:
       - name: Commit messages follow Conventional Commits
         if: github.event_name == 'pull_request'
         run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+  image:
+    name: The Docker image builds and answers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the image
+        run: docker build -t help-me-ops:ci .
+      - name: Start it on the demo workspace, with a token, read-only
+        run: |
+          TOKEN="ci:$(head -c 32 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=\n')"
+          docker run -d --name hmo -p 127.0.0.1:8808:8808 \
+            -v "$PWD/examples/my-workspace:/workspace:ro" \
+            -e OPS_MCP_TOKENS="$TOKEN" -e OPS_MCP_PUBLIC_HOSTS=localhost:8808 \
+            --read-only --cap-drop ALL --security-opt no-new-privileges:true --tmpfs /tmp help-me-ops:ci
+          for i in $(seq 1 20); do curl -sf http://localhost:8808/healthz && break; sleep 1; done
+          curl -sf http://localhost:8808/healthz
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8808/mcp -d '{}')" = 401
+      - name: Show the log if it failed
+        if: failure()
+        run: docker logs hmo

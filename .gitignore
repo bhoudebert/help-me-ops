@@ -8,3 +8,5 @@ docs/guide/.vitepress/cache
 .vitepress/
 /ops.config.json
 examples/my-workspace/.demo-repo
+server.env
+ops-tokens.txt
