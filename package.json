@@ -43,6 +43,7 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
     "lint-staged": "^17.6.0",
+    "oidc-provider": "^9.12.2",
     "prettier": "^3.9.9",
     "simple-git-hooks": "^2.14.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",

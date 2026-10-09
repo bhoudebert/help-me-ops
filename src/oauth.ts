@@ -5,6 +5,8 @@
 // (signature against the provider's keys, issuer, audience, expiry, scopes) and
 // publishes the metadata a client needs to find that provider (RFC 9728).
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { isIP } from "node:net";
 
 export interface OAuthConfig {
@@ -30,10 +32,26 @@ export interface OAuthConfig {
   clockToleranceSec: number;
   /** Milliseconds an unknown key id will not trigger a new fetch of the keys. */
   jwksCooldownMs: number;
+  /**
+   * For tokens that are not JWTs (RFC 7662): the provider is asked whether a token is good. This
+   * server authenticates to the provider with its own client id and secret. Without it, only JWTs.
+   */
+  introspection?: {
+    /** Where to ask; the provider's metadata says, when it is left out. */
+    url?: string;
+    clientId: string;
+    clientSecret: string;
+    /** `auto`: JWTs are checked here and other tokens are asked about; `always`: every token is asked about (a revoked token stops at once). */
+    mode: "auto" | "always";
+  };
+  /** Milliseconds a good answer of the provider about a token is kept (never beyond its expiry); a bad one is kept 5 s. */
+  introspectionCacheMs?: number;
+  /** Accept a token that does not say who it is for. Only when the provider issues tokens for one resource only. */
+  allowNoAudience: boolean;
 }
 
 export const OAUTH_DEFAULTS = {
-  identityClaims: ["preferred_username", "email", "upn", "sub"],
+  identityClaims: ["preferred_username", "email", "upn", "username", "sub", "client_id"],
   algorithms: ["RS256", "PS256", "ES256"],
   clockToleranceSec: 30,
   jwksCooldownMs: 30_000,
@@ -41,9 +59,13 @@ export const OAUTH_DEFAULTS = {
 
 /** A token that cannot be accepted, in the words of RFC 6750. */
 export class OAuthError extends Error {
-  status: 401 | 403;
-  code: "invalid_token" | "insufficient_scope";
-  constructor(status: 401 | 403, code: "invalid_token" | "insufficient_scope", message: string) {
+  status: 401 | 403 | 503;
+  code: "invalid_token" | "insufficient_scope" | "temporarily_unavailable";
+  constructor(
+    status: 401 | 403 | 503,
+    code: "invalid_token" | "insufficient_scope" | "temporarily_unavailable",
+    message: string,
+  ) {
     super(message);
     this.status = status;
     this.code = code;
@@ -54,10 +76,14 @@ export interface OAuthVerifier {
   config: OAuthConfig;
   /** Where a client learns which provider to ask: sent in the 401 and served by the server. */
   metadataUrl: string;
-  /** Where the keys are, found by discovery or declared. */
-  jwksUri: string;
+  /** Where the keys are, found by discovery or declared; none when only introspection is used. */
+  jwksUri?: string;
+  /** Where tokens are asked about, if they are. */
+  introspectionUrl?: string;
   /** The body of that document (RFC 9728). */
   metadata(): Record<string, unknown>;
+  /** What the provider says about a token, unchecked and uncached (for `oauth check`); none without introspection. */
+  inspect(token: string): Promise<Record<string, unknown> | undefined>;
   /** The person behind a token, or an OAuthError. */
   verify(token: string): Promise<{ identity: string; scopes: string[] }>;
 }
@@ -108,9 +134,9 @@ async function fetchJson(url: string, fetchImpl: typeof fetch): Promise<Record<s
 }
 
 /**
- * Finds where the provider's keys are (by its published metadata, or from what was declared) and
- * returns the verifier. It fails closed: a provider that cannot be reached, or whose metadata names
- * another issuer, is an error at start, not a server that accepts anything.
+ * Finds where the provider's keys and its introspection endpoint are (by its published metadata, or from
+ * what was declared) and returns the verifier. It fails closed: a provider that cannot be reached, or
+ * whose metadata names another issuer, is an error at start, not a server that accepts anything.
  */
 export async function createOAuthVerifier(
   config: OAuthConfig,
@@ -120,9 +146,13 @@ export async function createOAuthVerifier(
   const issuer = config.issuer;
   requireHttps(config.resource, "The public URL of this server");
   let jwksUri = config.jwksUri;
-  if (jwksUri) {
-    requireHttps(jwksUri, "The JWKS address");
-  } else {
+  let introspectionUrl = config.introspection?.url;
+  if (jwksUri) requireHttps(jwksUri, "The JWKS address");
+  if (introspectionUrl) requireHttps(introspectionUrl, "The introspection address");
+  // Ask the provider for what was not declared. When everything needed is declared, it is not asked.
+  const needKeys = !jwksUri && config.introspection?.mode !== "always";
+  const needIntrospection = Boolean(config.introspection) && !introspectionUrl;
+  if (needKeys || needIntrospection) {
     let found: Record<string, unknown> | null = null;
     for (const url of discoveryUrls(issuer)) {
       found = await fetchJson(url, fetchImpl);
@@ -130,7 +160,7 @@ export async function createOAuthVerifier(
     }
     if (!found) {
       throw new Error(
-        `Cannot find the metadata of the OAuth issuer ${issuer} (tried ${discoveryUrls(issuer).join(", ")}). Check the issuer, or declare where its keys are (--oauth-jwks-uri).`,
+        `Cannot find the metadata of the OAuth issuer ${issuer} (tried ${discoveryUrls(issuer).join(", ")}). Check the issuer, or declare what it would say: where its keys are (--oauth-jwks-uri) or where tokens are asked about (--oauth-introspection-url).`,
       );
     }
     // The metadata must say it is the issuer asked for: otherwise a document fetched from one place could name another provider's keys.
@@ -143,23 +173,115 @@ export async function createOAuthVerifier(
         `The metadata found for ${issuer} names another issuer (${String(found.issuer)}): refusing it.${slash}`,
       );
     }
-    if (typeof found.jwks_uri !== "string")
-      throw new Error(`The metadata of ${issuer} has no jwks_uri: declare where its keys are (--oauth-jwks-uri).`);
-    requireHttps(found.jwks_uri, "The JWKS address of the issuer");
-    jwksUri = found.jwks_uri;
+    if (needKeys) {
+      if (typeof found.jwks_uri === "string") {
+        requireHttps(found.jwks_uri, "The JWKS address of the issuer");
+        jwksUri = found.jwks_uri;
+      } else if (!config.introspection) {
+        throw new Error(
+          `The metadata of ${issuer} has no jwks_uri: declare where its keys are (--oauth-jwks-uri), or, if it issues opaque tokens, how to ask about them (--oauth-client-id and --oauth-client-secret).`,
+        );
+      }
+    }
+    if (needIntrospection) {
+      if (typeof found.introspection_endpoint !== "string") {
+        throw new Error(
+          `The metadata of ${issuer} has no introspection_endpoint: declare it (--oauth-introspection-url).`,
+        );
+      }
+      requireHttps(found.introspection_endpoint, "The introspection address of the issuer");
+      introspectionUrl = found.introspection_endpoint;
+    }
   }
-  const keys = createRemoteJWKSet(new URL(jwksUri), {
-    timeoutDuration: 5000,
-    cooldownDuration: config.jwksCooldownMs,
-    cacheMaxAge: 10 * 60_000,
-  });
+  const keys = jwksUri
+    ? createRemoteJWKSet(new URL(jwksUri), {
+        timeoutDuration: 5000,
+        cooldownDuration: config.jwksCooldownMs,
+        cacheMaxAge: 10 * 60_000,
+      })
+    : undefined;
   const resourceUrl = new URL(config.resource);
   const metadataPath = `/.well-known/oauth-protected-resource${resourceUrl.pathname === "/" ? "" : resourceUrl.pathname}`;
   const metadataUrl = `${resourceUrl.origin}${metadataPath}`;
 
+  /** What the provider says about a token (RFC 7662), authenticating as this server. Anything but a clear answer is "not now". */
+  const ask = async (token: string): Promise<Record<string, unknown>> => {
+    const { clientId, clientSecret } = config.introspection!;
+    let response: Response;
+    try {
+      response = await fetchImpl(introspectionUrl!, {
+        method: "POST",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+          accept: "application/json",
+          // RFC 6749 2.3.1: the id and the secret are form-encoded before they are joined
+          authorization: `Basic ${Buffer.from(`${encodeURIComponent(clientId)}:${encodeURIComponent(clientSecret)}`).toString("base64")}`,
+        },
+        body: new URLSearchParams({ token, token_type_hint: "access_token" }),
+        signal: AbortSignal.timeout(5000),
+        redirect: "error",
+      });
+    } catch {
+      throw new OAuthError(503, "temporarily_unavailable", "the provider cannot be reached");
+    }
+    if (response.status === 401 || response.status === 403) {
+      // Not the caller's fault: this server's own credentials at the provider are wrong.
+      throw new OAuthError(
+        503,
+        "temporarily_unavailable",
+        `the provider refused this server's own credentials (${response.status})`,
+      );
+    }
+    if (!response.ok) throw new OAuthError(503, "temporarily_unavailable", `the provider answered ${response.status}`);
+    try {
+      return (await response.json()) as Record<string, unknown>;
+    } catch {
+      throw new OAuthError(503, "temporarily_unavailable", "the provider's answer is not JSON");
+    }
+  };
+
+  // A good answer is kept until the token expires or for 30 s, a bad one for 5 s: a flood of bad tokens
+  // does not become a flood of questions to the provider, and a revoked token stops within half a minute.
+  const cache = new Map<string, { until: number; claims: Record<string, unknown> | null }>();
+  const introspect = async (token: string): Promise<Record<string, unknown>> => {
+    const key = createHash("sha256").update(token).digest("hex");
+    const hit = cache.get(key);
+    if (hit && hit.until > Date.now()) {
+      if (!hit.claims) throw new OAuthError(401, "invalid_token", "inactive");
+      return hit.claims;
+    }
+    const claims = await ask(token);
+    const now = Date.now();
+    const exp = typeof claims.exp === "number" ? claims.exp * 1000 : Infinity;
+    if (claims.active !== true) {
+      cache.set(key, { until: now + 5_000, claims: null });
+      throw new OAuthError(401, "invalid_token", "inactive");
+    }
+    if (cache.size >= 1000) cache.clear();
+    cache.set(key, { until: Math.min(now + (config.introspectionCacheMs ?? 30_000), exp), claims });
+    return claims;
+  };
+
+  /** What a token that was not a JWT says, through the checks a JWT gets from `jose`. */
+  const checkClaims = (claims: Record<string, unknown>): JWTPayload => {
+    const now = Date.now() / 1000;
+    const tolerance = config.clockToleranceSec;
+    if (typeof claims.iss === "string" && claims.iss !== issuer) throw new OAuthError(401, "invalid_token", "iss");
+    if (typeof claims.exp === "number" && claims.exp + tolerance < now)
+      throw new OAuthError(401, "invalid_token", "exp");
+    if (typeof claims.nbf === "number" && claims.nbf - tolerance > now)
+      throw new OAuthError(401, "invalid_token", "nbf");
+    const aud = Array.isArray(claims.aud) ? claims.aud : claims.aud === undefined ? [] : [claims.aud];
+    if (aud.length ? !aud.includes(config.audience) : !config.allowNoAudience) {
+      throw new OAuthError(401, "invalid_token", "aud");
+    }
+    return claims as JWTPayload;
+  };
+
   return {
     config,
     jwksUri,
+    introspectionUrl,
     metadataUrl,
     metadata: () => ({
       resource: config.resource,
@@ -168,19 +290,27 @@ export async function createOAuthVerifier(
       bearer_methods_supported: ["header"],
       resource_name: "help-me-ops",
     }),
+    inspect: async (token) => (introspectionUrl ? await ask(token) : undefined),
     async verify(token) {
+      const jwtShaped = token.split(".").length === 3;
       let payload: JWTPayload;
-      try {
-        ({ payload } = await jwtVerify(token, keys, {
-          issuer,
-          audience: config.audience,
-          algorithms: config.algorithms,
-          clockTolerance: config.clockToleranceSec,
-          requiredClaims: ["exp"],
-        }));
-      } catch (error) {
-        // Why it failed is for the log, not for the caller: the code of the library, never the token.
-        throw new OAuthError(401, "invalid_token", (error as { code?: string }).code ?? "invalid");
+      if (introspectionUrl && (config.introspection!.mode === "always" || !jwtShaped || !keys)) {
+        payload = checkClaims(await introspect(token));
+      } else if (keys && jwtShaped) {
+        try {
+          ({ payload } = await jwtVerify(token, keys, {
+            issuer,
+            audience: config.audience,
+            algorithms: config.algorithms,
+            clockTolerance: config.clockToleranceSec,
+            requiredClaims: ["exp"],
+          }));
+        } catch (error) {
+          // Why it failed is for the log, not for the caller: the code of the library, never the token.
+          throw new OAuthError(401, "invalid_token", (error as { code?: string }).code ?? "invalid");
+        }
+      } else {
+        throw new OAuthError(401, "invalid_token", "not a JWT, and no way to ask the provider about it");
       }
       const scopes = scopesOf(payload);
       const missing = config.scopes.filter((s) => !scopes.includes(s));
@@ -212,6 +342,17 @@ function identityOf(payload: JWTPayload, claims: string[]): string {
 
 /** The first value that is set: an empty variable (a compose file passes them empty) is not set. */
 const first = (...values: (string | undefined)[]) => values.find((v) => v !== undefined && v.trim() !== "");
+
+function readSecret(path: string): string {
+  try {
+    return readFileSync(path, "utf8").trim();
+  } catch (error) {
+    throw new Error(
+      `OPS_MCP_OAUTH_CLIENT_SECRET_FILE: cannot read ${path}: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
+}
 
 const list = (text: string | undefined) =>
   (text ?? "")
@@ -255,8 +396,29 @@ export function oauthConfigFrom(
     throw new Error(
       `The algorithm ${unsafe} is not accepted: a token signed with a shared secret or not at all proves nothing here.`,
     );
+  const clientId = first(one("--oauth-client-id"), env.OPS_MCP_OAUTH_CLIENT_ID);
+  const secretFile = first(env.OPS_MCP_OAUTH_CLIENT_SECRET_FILE);
+  const clientSecret = first(
+    one("--oauth-client-secret"),
+    env.OPS_MCP_OAUTH_CLIENT_SECRET,
+    secretFile ? readSecret(secretFile) : undefined,
+  );
+  const url = first(one("--oauth-introspection-url"), env.OPS_MCP_OAUTH_INTROSPECTION_URL);
+  if (Boolean(clientId) !== Boolean(clientSecret)) {
+    throw new Error(
+      "Asking the provider about tokens needs both --oauth-client-id and --oauth-client-secret (or their variables).",
+    );
+  }
+  const mode = first(one("--oauth-introspect"), env.OPS_MCP_OAUTH_INTROSPECT) ?? "auto";
+  if (mode !== "auto" && mode !== "always") throw new Error(`--oauth-introspect is auto or always, not "${mode}".`);
+  if (url && !clientId)
+    throw new Error(
+      "--oauth-introspection-url needs --oauth-client-id and --oauth-client-secret: the provider wants to know who asks.",
+    );
   return {
     issuer,
+    introspection: clientId && clientSecret ? { url, clientId, clientSecret, mode } : undefined,
+    allowNoAudience: argv.includes("--oauth-allow-no-audience") || env.OPS_MCP_OAUTH_ALLOW_NO_AUDIENCE === "true",
     jwksUri: first(one("--oauth-jwks-uri"), env.OPS_MCP_OAUTH_JWKS_URI),
     audience: first(one("--oauth-audience"), env.OPS_MCP_OAUTH_AUDIENCE) ?? resource,
     resource,
@@ -284,29 +446,46 @@ export function readToken(token: string): { header: Record<string, unknown>; cla
  * Why a token would be refused, in words, from what it says and what is configured: which of the checks the
  * server makes fail, and what to change. The server's own answer to a bad token is only `invalid_token`, on purpose.
  */
-export function explainToken(config: OAuthConfig, token: string, now = Date.now()): { ok: boolean; lines: string[] } {
-  const read = readToken(token);
-  if (!read)
-    return {
-      ok: false,
-      lines: ["✘ this is not a JWT (three parts, base64): an opaque token cannot be checked here (see ADR 0017)"],
-    };
-  const { header, claims } = read;
+export function explainToken(
+  config: OAuthConfig,
+  token: string | { claims: Record<string, unknown> },
+  now = Date.now(),
+): { ok: boolean; lines: string[] } {
+  let header: Record<string, unknown> | undefined;
+  let claims: Record<string, unknown>;
+  if (typeof token === "string") {
+    const read = readToken(token);
+    if (!read) {
+      return {
+        ok: false,
+        lines: [
+          "✘ this is not a JWT (three parts, base64): it can only be checked by asking the provider (--oauth-client-id and --oauth-client-secret)",
+        ],
+      };
+    }
+    ({ header, claims } = read);
+  } else claims = token.claims;
   const lines: string[] = [];
   let ok = true;
   const say = (good: boolean, text: string) => {
     if (!good) ok = false;
     lines.push(`${good ? "✔" : "✘"} ${text}`);
   };
-  const alg = String(header.alg);
-  say(
-    config.algorithms.includes(alg),
-    config.algorithms.includes(alg)
-      ? `signature algorithm ${alg}`
-      : `signature algorithm ${alg} is not accepted (accepted: ${config.algorithms.join(", ")})`,
-  );
+  if (claims.active === false)
+    say(false, "the provider says this token is not active (revoked, expired, or never issued)");
+  if (header) {
+    const alg = String(header.alg);
+    say(
+      config.algorithms.includes(alg),
+      config.algorithms.includes(alg)
+        ? `signature algorithm ${alg}`
+        : `signature algorithm ${alg} is not accepted (accepted: ${config.algorithms.join(", ")})`,
+    );
+  }
   const iss = claims.iss;
-  if (iss === config.issuer) say(true, `issuer ${String(iss)}`);
+  if (iss === undefined && !header)
+    say(true, "the provider's answer does not state an issuer (allowed when it is the provider that answers)");
+  else if (iss === config.issuer) say(true, `issuer ${String(iss)}`);
   else {
     const slash = typeof iss === "string" && iss.replace(/\/+$/, "") === config.issuer.replace(/\/+$/, "");
     say(
@@ -320,7 +499,7 @@ export function explainToken(config: OAuthConfig, token: string, now = Date.now(
       ? []
       : [String(claims.aud)];
   say(
-    aud.includes(config.audience),
+    aud.includes(config.audience) || (!aud.length && config.allowNoAudience),
     aud.includes(config.audience)
       ? `audience ${config.audience}`
       : `audience: the token is for ${JSON.stringify(aud)}, the server expects ${JSON.stringify(config.audience)} (set the API identifier at the provider, or --oauth-audience)`,

@@ -4,6 +4,7 @@
 //            --tls-cert cert.pem --tls-key key.pem --no-auth (this machine only)
 //   OAuth with a company identity provider (ADR 0017): --oauth-issuer https://login.company.example/realms/ops
 //            --public-url https://mcp.company.example/mcp [--oauth-jwks-uri ...] [--oauth-audience ...] [--oauth-scope ...]
+//            [--oauth-client-id ... --oauth-client-secret ...]   (opaque tokens: asked about, RFC 7662)
 //   or by environment, as in a container: OPS_MCP_HOST, OPS_MCP_PORT, OPS_MCP_PATH,
 //   OPS_MCP_PUBLIC_HOSTS, OPS_MCP_TOKENS, OPS_MCP_TOKENS_FILE, OPS_MCP_OAUTH_ISSUER (and _JWKS_URI, _AUDIENCE, _SCOPES,
 //   _IDENTITY_CLAIMS, _ALGORITHMS), OPS_MCP_PUBLIC_URL

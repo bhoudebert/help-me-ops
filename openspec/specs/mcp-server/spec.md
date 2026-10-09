@@ -112,6 +112,22 @@ keys address or the public URL is not https (a loopback address excepted).
 - **WHEN** a client sends an unsigned token, or an HS256 token signed with the provider's public key as the secret
 - **THEN** the server answers 401
 
+### Requirement: Tokens checked either way a provider issues them
+
+A token that is a JWT SHALL be verified with the provider's published keys. A token that
+is not a JWT, or every token when so configured, SHALL be validated by asking the
+provider (RFC 7662) with this server's own client credentials, requiring `active`, the
+issuer, the audience, the expiry and the scopes as for a JWT. A positive answer MAY be
+kept for at most 30 seconds and a negative one for less. When the provider cannot be
+asked, or refuses this server's credentials, the answer to the caller SHALL be `503`
+with `retry-after`, not `401`. A token naming no audience SHALL be refused unless
+configured otherwise. A machine token without a subject SHALL be named by `client_id`.
+
+#### Scenario: An opaque token
+
+- **WHEN** the provider issues opaque tokens and the server has a client at it
+- **THEN** a good token is accepted, a revoked, expired or foreign-audience one is `401`, and a provider that is down is `503`
+
 ### Requirement: Any provider, written as it writes itself
 
 The issuer SHALL be used exactly as configured, for the `iss` check and for the

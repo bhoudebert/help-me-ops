@@ -202,13 +202,13 @@ export async function startHttpServer(toolbox: Toolbox, options: HttpOptions): P
    */
   const authenticate = async (
     req: IncomingMessage,
-  ): Promise<{ identity: string } | { status: 401 | 403; error?: string; code?: string; reason: string }> => {
+  ): Promise<{ identity: string } | { status: 401 | 403 | 503; error?: string; code?: string; reason: string }> => {
     if (options.noAuth) return { identity: "local" };
     const given = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? "")?.[1];
     if (!given) return { status: 401, reason: "no token" };
     const hash = digest(given);
     for (const t of accepted) if (timingSafeEqual(t.hash, hash)) return { identity: t.name };
-    if (options.oauth && given.split(".").length === 3) {
+    if (options.oauth) {
       try {
         return { identity: (await options.oauth.verify(given)).identity };
       } catch (error) {
@@ -283,9 +283,11 @@ export async function startHttpServer(toolbox: Toolbox, options: HttpOptions): P
           error:
             who.status === 403
               ? "This token may not use this server"
-              : "A token is needed: Authorization: Bearer <token>",
+              : who.status === 503
+                ? "The identity provider cannot be asked just now: try again in a moment"
+                : "A token is needed: Authorization: Bearer <token>",
         },
-        { "www-authenticate": challenge(who) },
+        who.status === 503 ? { "retry-after": "5" } : { "www-authenticate": challenge(who) },
       );
     }
     const identity = who.identity;

@@ -73,6 +73,7 @@ const config = (issuer: string, extra: Partial<OAuthConfig> = {}): OAuthConfig =
   algorithms: [...OAUTH_DEFAULTS.algorithms],
   clockToleranceSec: 30,
   jwksCooldownMs: 0,
+  allowNoAudience: false,
   ...extra,
 });
 
@@ -551,7 +552,7 @@ test("oauth check: a token is explained check by check, so a misconfiguration is
   assert.match(text, /scopes: missing mcp:tools \(the token has none\)/);
   assert.match(
     text,
-    /no claim names the person: tried preferred_username, email, upn, sub; the token has iss, aud, exp/,
+    /no claim names the person: tried preferred_username, email, upn, username, sub, client_id; the token has iss, aud, exp/,
   );
   assert.match(explainToken(cfg, "opaque-token", now).lines[0]!, /not a JWT/);
   assert.match(

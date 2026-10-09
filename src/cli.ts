@@ -57,7 +57,7 @@ try {
       `issuer     ${config.issuer}\naudience   ${config.audience}\nresource   ${config.resource}\nscopes     ${config.scopes.join(" ") || "none required"}\nperson     first of ${config.identityClaims.join(", ")}\nalgorithms ${config.algorithms.join(", ")}`,
     );
     const verifier = await createOAuthVerifier(config);
-    const keys = (await (await fetch(verifier.jwksUri)).json().catch(() => ({}))) as {
+    const keys = (verifier.jwksUri ? await (await fetch(verifier.jwksUri)).json().catch(() => ({})) : {}) as {
       keys?: { kid?: string; alg?: string; kty?: string }[];
     };
     console.log(
@@ -66,7 +66,10 @@ try {
     console.log(`✔ clients are told to ask it, from ${verifier.metadataUrl}`);
     const token = flag("--token") ?? process.env.OPS_CHECK_TOKEN;
     if (token) {
-      const why = explainToken(config, token);
+      // a JWT is read from the token itself; any other token is asked about, as the server would
+      const asked = token.split(".").length === 3 ? undefined : await verifier.inspect(token).catch((e: Error) => e);
+      if (asked instanceof Error) console.log(`✘ the provider could not be asked: ${asked.message}`);
+      const why = explainToken(config, asked && !(asked instanceof Error) ? { claims: asked } : token);
       console.log(why.lines.join("\n"));
       try {
         const who = await verifier.verify(token);
