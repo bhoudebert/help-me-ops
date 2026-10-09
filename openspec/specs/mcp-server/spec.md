@@ -111,3 +111,21 @@ keys address or the public URL is not https (a loopback address excepted).
 
 - **WHEN** a client sends an unsigned token, or an HS256 token signed with the provider's public key as the secret
 - **THEN** the server answers 401
+
+### Requirement: Any provider, written as it writes itself
+
+The issuer SHALL be used exactly as configured, for the `iss` check and for the
+metadata names it is compared with, and SHALL NOT be normalised: an issuer that ends
+with a slash (Auth0, Microsoft v1 tokens) and one that does not (Keycloak, Okta,
+Microsoft v2) are different issuers. When the metadata names the issuer with or without
+a trailing slash where the configuration has the other, the error SHALL say so. An empty
+variable SHALL count as not set. When no public host is given, the host of the public
+URL SHALL be the one the Host check accepts. `ops oauth check` SHALL find the provider
+and its keys with the same rules as the server and, given a token, SHALL say for each
+check of the server (algorithm, issuer, audience, expiry, scopes, the claim naming the
+person) whether it passes and what differs, without verifying the signature itself.
+
+#### Scenario: A provider whose issuer ends with a slash
+
+- **WHEN** the provider's metadata and tokens name the issuer `https://tenant.example/` and the server is configured with exactly that
+- **THEN** its tokens are accepted, and configured without the slash the server refuses to start and says the slash is the difference

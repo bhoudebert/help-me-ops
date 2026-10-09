@@ -49,6 +49,12 @@ issues no token**: that is the provider's job.
   error at start, never a server that accepts anything.
 - **Static tokens keep working beside it** (service accounts, a pipeline), so
   turning OAuth on does not lock out what already runs.
+- **Nothing specific to a provider.** The issuer is used as written (an Auth0 issuer
+  ends with a slash, a Keycloak one does not, and they are different issuers); the
+  name of the person, the audience and the scopes are settings, not assumptions about
+  where a provider puts them. A `help-me-ops-oauth` service driven by the `OPS_MCP_OAUTH_*`
+  variables takes any provider, and `ops oauth check` explains a token check by check,
+  because the server itself says only `invalid_token`.
 - **A Keycloak to try it with.** The default services of `compose.yml` (the static-token server is the `tokens` profile) and a realm
   in `deploy/keycloak/`, with `npm run keycloak:check`, so the whole path (a client
   registering itself, a login with PKCE, a token used on the server) runs against a

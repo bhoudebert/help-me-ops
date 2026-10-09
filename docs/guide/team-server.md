@@ -140,60 +140,17 @@ Things to know:
 
 ## Sign in with the company login (OAuth 2)
 
-Static tokens suit a few people. A company usually wants its people to sign in with the login it already has (Entra ID, Okta, Keycloak, Auth0...), with a second factor, and to lose access in one place when they leave. help-me-ops supports that as an **OAuth 2 resource server**: it does not log anyone in, it **checks the tokens your identity provider issues** and tells clients which provider to ask.
-
-```
- person ──signs in──▶ identity provider ──access token──▶ client ──token──▶ help-me-ops
-                       (your company's)                                    checks signature, issuer,
-                                                                           audience, expiry, scopes
-```
-
-It is configuration only. Two things say where the provider is:
+Static tokens suit a few people. A company usually wants its people to sign in with the login it already has (Auth0, Okta, Entra ID, Keycloak...), with a second factor, and to lose access in one place when they leave. help-me-ops supports that as an **OAuth 2 resource server**: it does not log anyone in, it **checks the tokens your identity provider issues** and tells clients which provider to ask. It is **configuration only, the same for every provider**:
 
 ```bash
-# discovery: the server reads the provider's published metadata and finds its keys
-OPS_MCP_OAUTH_ISSUER=https://login.company.example/realms/ops \
-OPS_MCP_PUBLIC_URL=https://mcp.company.example/mcp \
-OPS_MCP_PUBLIC_HOSTS=mcp.company.example \
-  npm run mcp:http -- --workspace /srv/ops
-
-# or declared by hand, when the server cannot reach the provider's metadata
-OPS_MCP_OAUTH_ISSUER=https://login.company.example/realms/ops \
-OPS_MCP_OAUTH_JWKS_URI=https://login.company.example/realms/ops/protocol/openid-connect/certs \
-  …
+# in .env next to compose.yml
+OPS_MCP_OAUTH_ISSUER=https://login.company.example/realms/ops      # exactly as the "iss" of its tokens
+OPS_MCP_PUBLIC_URL=https://mcp.company.example/mcp                 # how people reach this server
+docker compose --profile oauth up -d --build help-me-ops-oauth
+npm run ops -- oauth check                                         # finds the provider; explains a token
 ```
 
-| Variable (or flag)                                         | What                                                                             | Default                               |
-| ---------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------- |
-| `OPS_MCP_OAUTH_ISSUER` (`--oauth-issuer`)                  | the provider's issuer URL, exactly as in the `iss` of its tokens; turns OAuth on | none                                  |
-| `OPS_MCP_PUBLIC_URL` (`--public-url`)                      | this server's address as clients reach it (https)                                | `https://<first public host><path>`   |
-| `OPS_MCP_OAUTH_JWKS_URI` (`--oauth-jwks-uri`)              | where the provider's public keys are, instead of discovery                       | found by discovery                    |
-| `OPS_MCP_OAUTH_AUDIENCE` (`--oauth-audience`)              | what a token must be issued for (`aud`)                                          | the public URL                        |
-| `OPS_MCP_OAUTH_SCOPES` (`--oauth-scope`)                   | scopes a token must carry, all of them                                           | none                                  |
-| `OPS_MCP_OAUTH_IDENTITY_CLAIMS` (`--oauth-identity-claim`) | claims naming the person, tried in order                                         | `preferred_username, email, upn, sub` |
-| `OPS_MCP_OAUTH_ALGORITHMS` (`--oauth-algorithm`)           | signature algorithms accepted                                                    | `RS256, PS256, ES256`                 |
-
-**What it checks, on every request:** the signature against the provider's keys (fetched once, refreshed when the provider rotates them), the issuer, the **audience**, that the token has not expired, and the scopes. `none` and shared-secret (`HS…`) algorithms are refused outright. Static tokens keep working beside it, for a pipeline or a service account.
-
-**What a client sees:** a request without a token gets `401` with a `WWW-Authenticate` header pointing at `/.well-known/oauth-protected-resource`, which says which provider to ask. A client that speaks MCP's OAuth flow (Claude Code does, through `/mcp` and a browser sign-in) takes it from there: it opens the provider's login, gets a token and sends it.
-
-**What you set up at the provider**, whatever its name for it:
-
-1. an application or API for this server, with an **identifier that becomes the `aud` of its tokens** (give the same to `--oauth-audience`, or use the public URL as the identifier);
-2. a way for MCP clients to be known to the provider: **dynamic client registration** if it offers it, or a registered client whose id you give people (what a client accepts depends on the client; check `claude mcp add --help` and your provider's documentation);
-3. optionally a scope such as `mcp:tools` that you require with `--oauth-scope`;
-4. short access-token lifetimes, since a token stays good until it expires.
-
-Starting points, **written from the providers' documented formats and not tried against a real one**:
-
-| Provider           | Issuer (`OPS_MCP_OAUTH_ISSUER`)                           | Audience                               | Scope claim |
-| ------------------ | --------------------------------------------------------- | -------------------------------------- | ----------- |
-| Keycloak           | `https://<host>/realms/<realm>`                           | an audience mapper on the client scope | `scope`     |
-| Microsoft Entra ID | `https://login.microsoftonline.com/<tenant-id>/v2.0`      | the application's id or `api://<id>`   | `scp`       |
-| Okta               | `https://<org>.okta.com/oauth2/<authorization-server-id>` | the authorization server's audience    | `scp`       |
-| Auth0              | `https://<tenant>.auth0.com/`                             | the API identifier                     | `scope`     |
-
-The server **refuses to start** if it cannot reach the provider's metadata (and no `--oauth-jwks-uri` is given), if that metadata names another issuer, or if the issuer, keys or public URL are not https (this machine excepted).
+**[How the company login works, and how to set it up](/sign-in)** has the whole picture: what happens between the person, the client, the provider and the server, where each token is kept, every setting, what to configure at Auth0, Okta, Entra ID or Keycloak, and what to do when it does not work.
 
 ### Try it with a Keycloak on your machine
 
@@ -219,7 +176,7 @@ claude mcp add --transport http ops-oauth http://localhost:8809/mcp
 claude                      # then /mcp, choose ops-oauth, Authenticate: a browser opens on Keycloak
 ```
 
-Sign in as `alice` / `alice` and accept the consent screen (it appears because the client registered itself). If your client wants a client id that is already registered instead of registering itself, the realm has one with a fixed callback: `claude mcp add --transport http ops-oauth http://localhost:8809/mcp --client-id claude-code --callback-port 8765`. In the log of the server (`docker compose logs -f help-me-ops-oauth`) every call carries `"identity":"oauth:alice"`. Stop it with `docker compose down`.
+Sign in as `alice` / `alice` and accept the consent screen (it appears because the client registered itself). If your client wants a client id that is already registered instead of registering itself, the realm has one with a fixed callback: `claude mcp add --transport http ops-oauth http://localhost:8809/mcp --client-id claude-code --callback-port 8765`. In the log of the server (`docker compose logs -f help-me-ops-demo`) every call carries `"identity":"oauth:alice"`. Stop it with `docker compose down`.
 
 A few things the demo shows about a real setup: the token's `aud` is the server's address (set by the `help-me-ops` scope in the realm, an audience mapper), the required scope is `help-me-ops` (`OPS_MCP_OAUTH_SCOPES`), and the server shares Keycloak's network only so that `localhost:8080` means the same Keycloak to the browser and to the server (a real provider has a name). The realm is in [`deploy/keycloak/ops-realm.json`](https://github.com/bhoudebert/help-me-ops/blob/main/deploy/keycloak/ops-realm.json): copy what you need.
 
