@@ -13,21 +13,31 @@ export function fileLogs(options: { id: string; description: string; path: strin
     async search(input: SearchInput): Promise<Evidence[]> {
       const text = await readFile(options.path, "utf8");
       // Every word must be in the line, in any order: "slow checkout" finds "checkout ... slow".
-      const words = input.query.toLowerCase().split(/\s+/).filter(Boolean);
+      const words = [...new Set(input.query.toLowerCase().split(/\s+/).filter(Boolean))];
       const from = input.from ? Date.parse(input.from) : -Infinity;
       const to = input.to ? Date.parse(input.to) : Infinity;
-      const found: Evidence[] = [];
+      const limit = input.limit ?? DEFAULT_LIMIT;
+      const candidates: { evidence: Evidence; matched: number }[] = [];
       for (const line of text.split("\n")) {
         const lower = line.toLowerCase();
-        if (!words.length || !words.every((word) => lower.includes(word))) continue;
+        const matched = words.filter((word) => lower.includes(word)).length;
+        if (!matched) continue;
         const at = STAMP.exec(line)?.[1] ?? null;
         const ms = at ? Date.parse(at) : NaN;
         // A line without a time is kept only when no window was asked for.
         if (Number.isNaN(ms) ? input.from || input.to : ms < from || ms > to) continue;
-        found.push({ source: options.id, at, summary: line.trim(), data: { line } });
-        if (found.length >= (input.limit ?? DEFAULT_LIMIT)) break;
+        candidates.push({ evidence: { source: options.id, at, summary: line.trim(), data: { line } }, matched });
       }
-      return found;
+      const whole = candidates.filter((c) => c.matched === words.length).map((c) => c.evidence);
+      if (whole.length || words.length < 2) return whole.slice(0, limit);
+      // No line has every word: the lines with the most of them, best first, marked as partial.
+      return candidates
+        .sort((a, b) => b.matched - a.matched)
+        .slice(0, limit)
+        .map(({ evidence, matched }) => ({
+          ...evidence,
+          data: { line: (evidence.data as { line: string }).line, partial: `${matched} of ${words.length} words` },
+        }));
     },
   };
 }

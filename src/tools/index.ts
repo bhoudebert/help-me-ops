@@ -141,7 +141,11 @@ export function createToolDefinitions({
           source: found.id,
           evidence,
           ...(evidence.length
-            ? {}
+            ? evidence.every((e) => typeof (e.data as { partial?: unknown } | null)?.partial === "string")
+              ? {
+                  note: "No line has every word of the query. These are the lines with the most of them, best first (`data.partial` says how many): read them, or search the words one at a time.",
+                }
+              : {}
             : {
                 note: "No match. Matching is on the words as written in the source: try fewer or different words (an id, a code, a service name), or a wider time window.",
               }),
