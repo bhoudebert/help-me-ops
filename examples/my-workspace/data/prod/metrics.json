@@ -32,6 +32,59 @@
         ["2026-10-07T10:00:00Z", 96],
         ["2026-10-07T10:01:00Z", 0]
       ]
+    },
+    "api_latency_p95_ms": {
+      "description": "p95 latency of POST /checkout, budget 500 ms",
+      "unit": "ms",
+      "points": [
+        ["2026-10-08T13:50:00Z", 180],
+        ["2026-10-08T14:00:00Z", 190],
+        ["2026-10-08T14:10:00Z", 2900],
+        ["2026-10-08T14:20:00Z", 4100],
+        ["2026-10-08T14:30:00Z", 5000]
+      ]
+    },
+    "db_cpu_percent": {
+      "description": "primary database CPU",
+      "unit": "%",
+      "points": [
+        ["2026-10-08T13:50:00Z", 22],
+        ["2026-10-08T14:00:00Z", 24],
+        ["2026-10-08T14:10:00Z", 78],
+        ["2026-10-08T14:20:00Z", 91],
+        ["2026-10-08T14:30:00Z", 97]
+      ]
+    },
+    "db_connections_in_use": {
+      "description": "connections in use in the shop-api pool, limit 100",
+      "unit": "connections",
+      "points": [
+        ["2026-10-08T13:50:00Z", 12],
+        ["2026-10-08T14:00:00Z", 13],
+        ["2026-10-08T14:10:00Z", 60],
+        ["2026-10-08T14:20:00Z", 91],
+        ["2026-10-08T14:30:00Z", 100]
+      ]
+    },
+    "emails_sent_per_min": {
+      "description": "order confirmation emails handed to the mail provider",
+      "unit": "emails/min",
+      "points": [
+        ["2026-10-08T23:50:00Z", 6],
+        ["2026-10-08T23:58:00Z", 7],
+        ["2026-10-09T00:00:00Z", 0],
+        ["2026-10-09T00:10:00Z", 0],
+        ["2026-10-09T06:30:00Z", 0]
+      ]
+    },
+    "mail_queue_depth": {
+      "description": "confirmation emails waiting to be sent",
+      "unit": "emails",
+      "points": [
+        ["2026-10-08T23:50:00Z", 0],
+        ["2026-10-09T00:05:00Z", 14],
+        ["2026-10-09T06:30:00Z", 212]
+      ]
     }
   }
 }

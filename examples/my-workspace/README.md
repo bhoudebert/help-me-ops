@@ -9,7 +9,7 @@ ops.config.json   apps, environments, sources, and the settings of each addon
 addons/           order, metrics, health (read recorded files); _shopdb (a real database, off)
 playbooks/        how the shop's team investigates a stuck order
 logs/, data/      the demo's fake backend: sample logs and recorded data
-scenarios/        the test script of the demo (the assistant never reads it)
+scenarios/        the test scripts of the demo: three incidents, with what a good answer names (the assistant never reads them)
 docker/           optional: a real PostgreSQL for the _shopdb addon
 package.json      optional: the driver (pg) that _shopdb needs
 ```

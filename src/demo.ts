@@ -20,6 +20,11 @@ export interface Scenario {
   question: string;
   /** What a person would answer to "which app, which environment?". */
   scope?: { app?: string; env?: string };
+  /** Wanted by `ops demo` when no scenario is named; else the first by name. */
+  default?: boolean;
+  /** When the person asks, in the world of the scenario: a model has no other way to know what "last night" is. */
+  now?: string;
+  playbook?: string;
   expect?: Expect;
   steps: { why: string; tool: string; input: Record<string, unknown> }[];
   conclusion: Record<string, unknown>;
@@ -35,6 +40,11 @@ export interface DemoOptions {
 
 const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 const cut = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
+
+/** The scenario to run when none is named: the one marked `default`, else the first. */
+export function defaultScenario(all: Scenario[]): Scenario | undefined {
+  return all.find((s) => s.default) ?? all[0];
+}
 
 export function scenarios(workspace: string): Scenario[] {
   const dir = join(workspace, "scenarios");
@@ -93,7 +103,7 @@ export async function runDemo(
   write: (line: string) => void,
 ): Promise<{ ok: boolean }> {
   const all = scenarios(workspace);
-  const scenario = options.scenario ? all.find((s) => s.id === options.scenario) : all[0];
+  const scenario = options.scenario ? all.find((s) => s.id === options.scenario) : defaultScenario(all);
   if (!scenario) {
     throw new Error(
       all.length

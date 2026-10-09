@@ -62,10 +62,15 @@ export class Session {
   private messages: Message[] = [];
   private tokens = 0;
 
-  constructor(toolbox: Toolbox, model: Model, fetchImpl: typeof fetch = globalThis.fetch) {
+  /** `now`: the date the assistant is told, as an ISO time; the clock when absent. */
+  constructor(toolbox: Toolbox, model: Model, fetchImpl: typeof fetch = globalThis.fetch, now?: string) {
     this.model = model;
     this.fetchImpl = fetchImpl;
-    this.system = { role: "system", content: `${instructionsFor(toolbox)}\n\n${SYSTEM}` };
+    const when = now ?? new Date().toISOString();
+    this.system = {
+      role: "system",
+      content: `${instructionsFor(toolbox)}\n\n${SYSTEM}\nThe current date and time is ${when} (UTC): work out words like "today" or "last night" from it, and search in that time.`,
+    };
     this.tools = createToolDefinitions(toolbox);
     this.specs = this.tools.map((tool) => {
       const { $schema: _schema, ...parameters } = z.toJSONSchema(tool.inputSchema) as Record<string, unknown>;

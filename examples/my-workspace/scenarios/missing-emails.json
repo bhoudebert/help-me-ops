@@ -1,0 +1,121 @@
+{
+  "id": "missing-emails",
+  "question": "Customers say they stopped receiving their order confirmation emails since last night",
+  "now": "2026-10-09T07:30:00Z",
+  "scope": {
+    "app": "shop",
+    "env": "prod"
+  },
+  "steps": [
+    {
+      "why": "Which app and environment?",
+      "tool": "scope",
+      "input": {
+        "question": "Customers say they stopped receiving their order confirmation emails since last night, in production"
+      }
+    },
+    {
+      "why": "What does the mailer say?",
+      "tool": "searchSource",
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "mailer"
+      }
+    },
+    {
+      "why": "Why do the sends fail?",
+      "tool": "searchSource",
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "certificate"
+      }
+    },
+    {
+      "why": "Is the mail provider reachable?",
+      "tool": "health.checkHealth",
+      "input": {
+        "env": "prod",
+        "target": "mail"
+      }
+    },
+    {
+      "why": "When did sending stop?",
+      "tool": "metrics.queryMetric",
+      "input": {
+        "env": "prod",
+        "metric": "emails_sent_per_min"
+      }
+    },
+    {
+      "why": "What is piling up?",
+      "tool": "searchSource",
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "mail queue"
+      }
+    }
+  ],
+  "expect": {
+    "facts": [
+      {
+        "name": "a TLS certificate",
+        "any": ["certificate", "cert "],
+        "required": true
+      },
+      {
+        "name": "that has expired",
+        "any": ["expired", "expiry", "expire"],
+        "required": true
+      },
+      {
+        "name": "the mail provider smtp.mailprov.example",
+        "any": ["mailprov", "mail provider", "smtp"]
+      },
+      {
+        "name": "confirmation emails are waiting in a queue",
+        "any": ["queue"]
+      }
+    ]
+  },
+  "conclusion": {
+    "app": "shop",
+    "env": "prod",
+    "cause": "The TLS certificate of the mail provider smtp.mailprov.example expired at 2026-10-09T00:00:00Z, so every confirmation email fails its TLS handshake and waits in the mail queue (212 by 06:30). Orders and payments are not affected.",
+    "certainty": "confirmed",
+    "evidence": [
+      {
+        "source": "app-logs",
+        "at": "2026-10-09T00:00:12Z",
+        "quote": "order=4612 confirmation not sent: TLS handshake with smtp.mailprov.example failed: certificate has expired (notAfter=2026-10-09T00:00:00Z)"
+      },
+      {
+        "source": "health",
+        "at": "2026-10-09T00:10:00Z",
+        "quote": "mail provider smtp.mailprov.example:465 -> 0 in 310ms (TLS handshake failed: certificate has expired)"
+      },
+      {
+        "source": "health",
+        "at": "2026-10-08T23:55:00Z",
+        "quote": "mail provider smtp.mailprov.example:465 -> 200 in 120ms (TLS ok)"
+      },
+      {
+        "source": "metrics",
+        "at": "2026-10-09T00:00:00Z",
+        "quote": "emails_sent_per_min = 0 emails/min at 2026-10-09T00:00:00Z"
+      },
+      {
+        "source": "app-logs",
+        "at": "2026-10-09T06:30:15Z",
+        "quote": "mail queue depth=212, oldest=6h30m"
+      }
+    ],
+    "unknowns": [
+      "Whether the provider is already renewing the certificate, or we must change something on our side.",
+      "Whether the queued emails are re-sent by themselves once the handshake works (the mailer retries every 300 s)."
+    ],
+    "next": "Ask the mail provider to renew the certificate (or check the certificate chain they present), then confirm the mail queue drains and tell support that customers will receive their confirmations late."
+  }
+}

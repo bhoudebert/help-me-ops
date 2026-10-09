@@ -1,6 +1,8 @@
 {
   "id": "stuck-order",
+  "default": true,
   "question": "Client u-881 paid but cannot find order 4512",
+  "now": "2026-10-07T10:20:00Z",
   "scope": {
     "app": "shop",
     "env": "prod"

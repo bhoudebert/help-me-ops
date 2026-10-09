@@ -94,7 +94,7 @@ a private network address or an outside host.
 
 ### Requirement: Measuring a model
 
-`ops eval` SHALL run a scenario of the workspace against each combination of the
+`ops eval` SHALL run the scenarios of the workspace (all of them unless some are named) against each combination of the
 given models and reasoning settings a given number of times, each run in a new
 conversation with a new ledger, and report per setting how many runs the
 conclusion check accepted, how many named every required fact of the scenario's
@@ -136,3 +136,8 @@ string in the address SHALL be kept on the chat endpoint and SHALL NOT be shown 
 
 - **WHEN** the address has `?api-version=…` and `headers` has `api-key`
 - **THEN** the request goes to `…/chat/completions?api-version=…` with the `api-key` header and no `Authorization`
+
+#### Scenario: Several incidents
+
+- **WHEN** `ops eval` runs on a workspace with three scenarios
+- **THEN** it prints one report per scenario and then the settings added up over all of them

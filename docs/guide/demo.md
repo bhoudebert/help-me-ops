@@ -97,8 +97,8 @@ No client, no model, nothing to set up:
 npm run ops -- demo
 ```
 
-It takes the scenario of the demo workspace (`scenarios/stuck-order.json`: the
-question, the calls an investigation makes, the conclusion) and replays it through
+It takes a scenario of the demo workspace (by default `scenarios/stuck-order.json`: the
+question, the calls an investigation makes, the conclusion; `--scenario` picks another) and replays it through
 the **real tools**: each step is printed with what the tool answered (the first
 four pieces of evidence, with their time), and it ends with the conclusion passed
 through the **same check** an assistant's conclusion goes through. If a quote were
@@ -114,6 +114,18 @@ non-zero code, so it also serves as a smoke test of an install.
 Colours appear in a terminal and not when the output is piped or `NO_COLOR` is set.
 If you add a `privacy.mask` to the demo configuration, the demo shows the stars:
 and its conclusion, which quotes the unmasked line, is refused, as it should be.
+
+## Three incidents in one world
+
+The demo shop holds three different incidents, each a scenario you can replay with `ops demo --scenario <id>`, and the assistant can investigate any of them by asking:
+
+| Scenario                    | The question                                                                            | The cause is, in short                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `stuck-order` (the default) | "Client u-881 paid but cannot find order 4512"                                          | a refused webhook, a full queue, a worker killed for memory since release 2.14.0                         |
+| `slow-checkout`             | "Checkout has been very slow since this afternoon and some customers get timeouts"      | release 2.15.0 added a search with no index; a dashboard polls it; the database connection pool fills up |
+| `missing-emails`            | "Customers say they stopped receiving their order confirmation emails since last night" | the mail provider's TLS certificate expired at midnight; nothing of ours changed                         |
+
+They differ on purpose (a deploy and a resource limit, a missing index under load, an expiry), so a model is measured on [causes it has not been tuned to](/local-models#measure-it-ops-eval). Only the first has a playbook and runbooks: the other two have to be found from the evidence.
 
 ## Without a model
 

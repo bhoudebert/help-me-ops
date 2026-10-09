@@ -17,3 +17,19 @@
 2026-10-07T10:03:12Z WARN  payments  order=4514 webhook payment.succeeded not received, waiting
 2026-10-07T10:15:30Z INFO  api       GET /orders?user=u-881 -> 0 confirmed orders (order 4512 not shown: awaiting_payment)
 2026-10-07T10:16:02Z INFO  support   ticket T-3321 opened by u-881: "paid but no order in my account"
+2026-10-08T13:58:02Z INFO  api       POST /orders user=u-310 -> order=4600 created, total=19.90 EUR
+2026-10-08T14:02:11Z INFO  deploy    shop-api 2.15.0 rolled out (replicas=3): order search by customer reference for the back office
+2026-10-08T14:05:00Z INFO  api       GET /admin/orders/search?customer=u-310 200 142ms client=backoffice-dashboard (polls every 5s)
+2026-10-08T14:10:25Z WARN  api       slow query 3812ms: SELECT * FROM orders WHERE customer_ref = $1 (seq scan, 2104331 rows)
+2026-10-08T14:12:40Z WARN  api       GET /checkout p95=2.9s (budget 500ms)
+2026-10-08T14:20:03Z WARN  db        connection pool 91/100 in use, 14 requests waiting
+2026-10-08T14:24:18Z ERROR api       checkout timeout after 5000ms order=4601 user=u-519
+2026-10-08T14:25:50Z ERROR api       checkout timeout after 5000ms order=4602 user=u-700
+2026-10-08T14:28:31Z ERROR db        connection pool exhausted (100/100), rejecting new requests
+2026-10-08T14:31:09Z INFO  support   ticket T-3340 opened by u-519: "checkout spins forever then fails"
+2026-10-08T23:58:40Z INFO  mailer    order=4611 confirmation sent via smtp.mailprov.example (250 OK)
+2026-10-09T00:00:12Z ERROR mailer    order=4612 confirmation not sent: TLS handshake with smtp.mailprov.example failed: certificate has expired (notAfter=2026-10-09T00:00:00Z)
+2026-10-09T00:02:44Z ERROR mailer    order=4613 confirmation not sent: TLS handshake with smtp.mailprov.example failed: certificate has expired
+2026-10-09T00:05:00Z WARN  mailer    mail queue depth=14, retrying every 300s
+2026-10-09T06:30:15Z WARN  mailer    mail queue depth=212, oldest=6h30m
+2026-10-09T07:12:00Z INFO  support   ticket T-3352 opened by u-233: "no confirmation email after my order"

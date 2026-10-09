@@ -33,6 +33,12 @@ test("file logs: a time window, a limit, case ignored", async () => {
   );
   assert.equal((await logs.search({ query: "order", limit: 2 })).length, 2);
   assert.deepEqual(await logs.search({ query: "nothing like this" }), []);
+  // every word, in any order, case ignored: a natural question finds the line
+  const words = await logs.search({ query: "Queue FULL webhook" });
+  assert.equal(words.length, 1);
+  assert.match(words[0]!.summary, /webhook endpoint \/hooks\/acme-pay returned 503 to provider \(queue full\)/);
+  assert.deepEqual(await logs.search({ query: "queue unicorn" }), [], "one word that is not there is no match");
+  assert.deepEqual(await logs.search({ query: "   " }), [], "an empty search finds nothing");
 });
 
 test("file logs: a line without a time is kept only without a window", async () => {

@@ -46,14 +46,14 @@ Add the file as a **source** of the environment it belongs to, in `ops.config.js
 
 The core tool `searchSource` searches a source by text, within a time window, oldest first:
 
-| Parameter    | What                                                   |
-| ------------ | ------------------------------------------------------ |
-| `source`     | the `id`, e.g. `app-logs`                              |
-| `query`      | a word or identifier, e.g. `order=4512` (case ignored) |
-| `from`, `to` | an ISO 8601 window                                     |
-| `limit`      | most lines to return                                   |
+| Parameter    | What                                                                                                                                |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `source`     | the `id`, e.g. `app-logs`                                                                                                           |
+| `query`      | a few words or an identifier, e.g. `order=4512` or `webhook queue full`: every word must be in the line, in any order, case ignored |
+| `from`, `to` | an ISO 8601 window                                                                                                                  |
+| `limit`      | most lines to return                                                                                                                |
 
-Each matching line becomes evidence with its time. A line with no time is kept only when no window is given.
+Each matching line becomes evidence with its time. When nothing matches, the answer says so and suggests fewer or different words, or a wider window, so an assistant does not take silence for proof. A line with no time is kept only when no window is given.
 
 ## Ask it
 

@@ -3,12 +3,14 @@
 // run ended in an accepted conclusion, and which of the facts the scenario expects
 // the answer names (keywords). The numbers are those of this model on this
 // machine, and the only basis to rely on one.
-import { scenarios, type Scenario } from "../demo.ts";
+import { defaultScenario, scenarios, type Scenario } from "../demo.ts";
 import type { Toolbox } from "../tools/index.ts";
+import { UnreadableToolCall } from "./client.ts";
 import { assertModelAllowed, displayUrl, resolveModel, type Model } from "./endpoint.ts";
 import { Session } from "./loop.ts";
 
 export interface EvalOptions {
+  /** Ids of the scenarios to run, comma separated in the CLI; all of them when absent. */
   scenario?: string;
   runs: number;
   /** Models to compare, as the server names them. */
@@ -78,15 +80,64 @@ export async function runEval(
   fetchImpl: typeof fetch = globalThis.fetch,
   progress: (line: string) => void = () => undefined,
 ): Promise<EvalReport> {
+  const scenario = (
+    options.scenario
+      ? pickScenarios(workspace, options.scenario)
+      : [defaultScenario(pickScenarios(workspace, undefined))!]
+  )[0]!;
+  return evalScenario(toolbox, scenario, options, env, fetchImpl, progress);
+}
+
+/** The scenarios to run: the ones named, or all of them. */
+function pickScenarios(workspace: string, named: string | undefined): Scenario[] {
   const all = scenarios(workspace);
-  const scenario = options.scenario ? all.find((s) => s.id === options.scenario) : all[0];
-  if (!scenario) {
+  if (!all.length) {
     throw new Error(
-      options.scenario
-        ? `No scenario "${options.scenario}" in ${workspace}/scenarios (known: ${all.map((s) => s.id).join(", ") || "none"}).`
-        : `No scenario in ${workspace}/scenarios: ops eval needs a question to ask. The demo workspace has one.`,
+      `No scenario in ${workspace}/scenarios: ops eval needs a question to ask. The demo workspace has some.`,
     );
   }
+  if (!named || named === "all") return all;
+  return named.split(",").map((id) => {
+    const found = all.find((s) => s.id === id.trim());
+    if (!found)
+      throw new Error(
+        `No scenario "${id.trim()}" in ${workspace}/scenarios (known: ${all.map((s) => s.id).join(", ")}).`,
+      );
+    return found;
+  });
+}
+
+export interface EvalSuite {
+  baseUrl: string;
+  reports: EvalReport[];
+}
+
+/** Every scenario asked for, one report each, so a model is measured on causes it has not been tuned to. */
+export async function runSuite(
+  toolbox: Toolbox,
+  workspace: string,
+  options: EvalOptions,
+  env: NodeJS.ProcessEnv = process.env,
+  fetchImpl: typeof fetch = globalThis.fetch,
+  progress: (line: string) => void = () => undefined,
+): Promise<EvalSuite> {
+  const reports: EvalReport[] = [];
+  for (const scenario of pickScenarios(workspace, options.scenario)) {
+    reports.push(
+      await evalScenario(toolbox, scenario, options, env, fetchImpl, (line) => progress(`${scenario.id} · ${line}`)),
+    );
+  }
+  return { baseUrl: reports[0]?.baseUrl ?? "", reports };
+}
+
+async function evalScenario(
+  toolbox: Toolbox,
+  scenario: Scenario,
+  options: EvalOptions,
+  env: NodeJS.ProcessEnv,
+  fetchImpl: typeof fetch,
+  progress: (line: string) => void,
+): Promise<EvalReport> {
   const settings: SettingResult[] = [];
   let baseUrl = "";
   for (const name of options.models) {
@@ -101,7 +152,7 @@ export async function runEval(
         const began = Date.now();
         try {
           // A new session each run: a new ledger, a new conversation.
-          const turn = await new Session(toolbox, model, fetchImpl).turn(questionFor(scenario));
+          const turn = await new Session(toolbox, model, fetchImpl, scenario.now).turn(questionFor(scenario));
           runs.push({
             status: turn.status,
             steps: turn.steps,
@@ -112,7 +163,8 @@ export async function runEval(
           });
         } catch (error) {
           // A server that is not there on the first run is a configuration mistake, not a result.
-          if (!runs.length && i === 1) throw error;
+          // (a model that wrote a tool call nobody could read is a result, not a mistake of the setup)
+          if (!runs.length && i === 1 && !(error instanceof UnreadableToolCall)) throw error;
           runs.push({
             status: "error",
             steps: 0,
@@ -180,4 +232,39 @@ export function formatReport(report: EvalReport): string {
     if (problems.length) out.push(`${s.model} · reasoning ${s.reasoning} did not conclude: ${problems.join("; ")}`);
   }
   return out.join("\n");
+}
+
+/** Several scenarios: each report, then the settings added up over all of them. */
+export function formatSuite(suite: EvalSuite): string {
+  if (suite.reports.length === 1) return formatReport(suite.reports[0]!);
+  const settings = suite.reports[0]!.settings.map((s) => ({ model: s.model, reasoning: s.reasoning }));
+  const rows = settings.map((setting, i) => {
+    const runs = suite.reports.flatMap((r) => r.settings[i]!.runs);
+    const n = runs.length;
+    const byScenario = suite.reports.map(
+      (r) => `${r.settings[i]!.runs.filter((x) => x.cause).length}/${r.settings[i]!.runs.length}`,
+    );
+    return [
+      `${setting.model} · reasoning ${setting.reasoning}`,
+      `${runs.filter((r) => r.status === "concluded").length}/${n}`,
+      `${runs.filter((r) => r.cause).length}/${n}`,
+      byScenario.join("  "),
+      `${Math.round(median(runs.map((r) => r.seconds)))} s`,
+    ];
+  });
+  const head = ["setting", "accepted", "cause", suite.reports.map((r) => r.scenario).join("  "), "time"];
+  const width = head.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i]!.length)));
+  const line = (cells: string[]) =>
+    cells
+      .map((c, i) => c.padEnd(width[i]!))
+      .join("  ")
+      .trimEnd();
+  return [
+    ...suite.reports.map((r) => formatReport(r)),
+    "",
+    `Over all ${suite.reports.length} scenarios (${suite.reports.map((r) => r.scenario).join(", ")}), cause found by scenario in the order shown:`,
+    "",
+    line(head),
+    ...rows.map(line),
+  ].join("\n");
 }
