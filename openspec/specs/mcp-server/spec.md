@@ -98,7 +98,7 @@ refuse the algorithms `none` and `HS*`. A refusal SHALL be 401 `invalid_token`, 
 protected resource metadata (RFC 9728), which the server SHALL serve without
 authentication at `/.well-known/oauth-protected-resource` and with the resource's path.
 The identity SHALL be `oauth:` and the first of the configured claims, restricted to
-characters that cannot forge a log line. The server SHALL refuse to start when the
+characters that cannot forge a log line; a valid token that no configured claim names SHALL be accepted as `oauth:unknown`. The server SHALL refuse to start when the
 provider's metadata cannot be found or names another issuer, or when the issuer, the
 keys address or the public URL is not https (a loopback address excepted).
 

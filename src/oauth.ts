@@ -327,7 +327,10 @@ function scopesOf(payload: JWTPayload): string[] {
   return typeof raw === "string" ? raw.split(/\s+/).filter(Boolean) : [];
 }
 
-/** `oauth:` and the first claim that names the person, kept to characters that cannot forge a log line. */
+/**
+ * `oauth:` and the first claim that names the person, kept to characters that cannot forge a log line.
+ * A valid token never fails for lack of a name: it is `oauth:unknown`, which the audit log shows.
+ */
 function identityOf(payload: JWTPayload, claims: string[]): string {
   for (const claim of claims) {
     const value = payload[claim];
@@ -337,7 +340,7 @@ function identityOf(payload: JWTPayload, claims: string[]): string {
         .replace(/[^\w.@+-]/g, "_")
         .slice(0, 100)}`;
   }
-  throw new OAuthError(401, "invalid_token", "no claim names the person");
+  return "oauth:unknown";
 }
 
 /** The first value that is set: an empty variable (a compose file passes them empty) is not set. */
@@ -521,13 +524,12 @@ export function explainToken(
         : `scopes ${config.scopes.join(" ")}`
       : `no scope required (the token has ${have.join(" ") || "none"})`,
   );
-  try {
-    say(true, `the person is ${identityOf(claims as JWTPayload, config.identityClaims)}`);
-  } catch {
-    say(
-      false,
-      `no claim names the person: tried ${config.identityClaims.join(", ")}; the token has ${Object.keys(claims).join(", ")} (add one at the provider, or name one with --oauth-identity-claim)`,
-    );
-  }
+  const who = identityOf(claims as JWTPayload, config.identityClaims);
+  say(
+    true,
+    who === "oauth:unknown"
+      ? `no claim names the person (tried ${config.identityClaims.join(", ")}; the token has ${Object.keys(claims).join(", ")}): the token is accepted and the log says ${who}; to have names, add a claim at the provider or name one with --oauth-identity-claim`
+      : `the person is ${who}`,
+  );
   return { ok, lines };
 }

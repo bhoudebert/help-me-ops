@@ -203,9 +203,7 @@ test("oauth: what is not a good token is refused, whatever it claims", async () 
       .setAudience("https://mcp.company.example/mcp")
       .sign(idp.pair.privateKey);
     await refused("no exp", forever);
-    // a token with no claim that names the person
-    await refused("nobody", await idp.sign({ azp: "client" }));
-    assert.ok(events.filter((e) => e.event === "auth" && e.ok === false).length >= 9);
+    assert.ok(events.filter((e) => e.event === "auth" && e.ok === false).length >= 8);
     assert.ok(!JSON.stringify(events).includes("eyJ"), "no token in the log");
   } finally {
     await running.close();
@@ -552,7 +550,7 @@ test("oauth check: a token is explained check by check, so a misconfiguration is
   assert.match(text, /scopes: missing mcp:tools \(the token has none\)/);
   assert.match(
     text,
-    /no claim names the person: tried preferred_username, email, upn, username, sub, client_id; the token has iss, aud, exp/,
+    /no claim names the person \(tried preferred_username, email, upn, username, sub, client_id; the token has iss, aud, exp\): the token is accepted and the log says oauth:unknown/,
   );
   assert.match(explainToken(cfg, "opaque-token", now).lines[0]!, /not a JWT/);
   assert.match(

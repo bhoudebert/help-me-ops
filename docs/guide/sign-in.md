@@ -51,7 +51,7 @@ help-me-ops is what the OAuth world calls a **resource server**. That is deliber
 - **The audience** (`aud`): the token must have been issued **for this server**. A token for another application is refused, even from your own provider.
 - **The expiry** (`exp`): required, and not passed (30 seconds of clock tolerance).
 - **The scopes**, if you require some.
-- **A name for the person** (`preferred_username`, `email`, `upn`, `username`, `sub` or, for a machine, `client_id`, in that order, settable): it goes in the audit log as `oauth:alice@company.example`, and a session belongs to that person.
+- **A name for the person** (`preferred_username`, `email`, `upn`, `username`, `sub` or, for a machine, `client_id`, in that order, settable): it goes in the audit log as `oauth:alice@company.example`, and a session belongs to that person. A valid token with none of them is still accepted, as `oauth:unknown`: the log cannot say who, and such sessions share one owner.
 
 ### Where things are kept
 
@@ -186,7 +186,7 @@ It prints what is configured, finds the provider and its keys (or says why not),
 ✘ audience: the token is for ["api://other"], the server expects "https://mcp.company.example/mcp" (set the API identifier at the provider, or --oauth-audience)
 ✔ expires in 299 s
 ✘ scopes: missing mcp:tools (the token has none)
-✘ no claim names the person: tried preferred_username, email, upn, username, sub, client_id; the token has iss, aud, exp (add one at the provider, or name one with --oauth-identity-claim)
+✔ no claim names the person (tried preferred_username, email, upn, username, sub, client_id; the token has iss, aud, exp): the token is accepted and the log says oauth:unknown; to have names, add a claim at the provider or name one with --oauth-identity-claim
 ✘ the server would refuse this token (ERR_JWT_CLAIM_VALIDATION_FAILED)
 ```
 
