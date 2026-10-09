@@ -180,7 +180,7 @@ Sign in as `alice` / `alice` and accept the consent screen (it appears because t
 
 A few things the demo shows about a real setup: the token's `aud` is the server's address (set by the `help-me-ops` scope in the realm, an audience mapper), the required scope is `help-me-ops` (`OPS_MCP_OAUTH_SCOPES`), and the server shares Keycloak's network only so that `localhost:8080` means the same Keycloak to the browser and to the server (a real provider has a name). The realm is in [`deploy/keycloak/ops-realm.json`](https://github.com/bhoudebert/help-me-ops/blob/main/deploy/keycloak/ops-realm.json): copy what you need.
 
-**Not supported yet:** providers that issue **opaque** access tokens (not JWTs), which would need a call to the provider per request (token introspection); a list of revoked tokens (keep lifetimes short); permissions per person from groups or roles in the token.
+**Not supported yet:** permissions per person from groups or roles in the token. A JWT stays good until it expires (keep lifetimes short, or have every token asked about: [sign-in](./sign-in.md)); opaque tokens are asked about at the provider.
 
 ## What it does and does not do
 

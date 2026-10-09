@@ -51,7 +51,7 @@ help-me-ops is what the OAuth world calls a **resource server**. That is deliber
 - **The audience** (`aud`): the token must have been issued **for this server**. A token for another application is refused, even from your own provider.
 - **The expiry** (`exp`): required, and not passed (30 seconds of clock tolerance).
 - **The scopes**, if you require some.
-- **A name for the person** (`preferred_username`, `email`, `upn` or `sub`, in that order, settable): it goes in the audit log as `oauth:alice@company.example`, and a session belongs to that person.
+- **A name for the person** (`preferred_username`, `email`, `upn`, `username`, `sub` or, for a machine, `client_id`, in that order, settable): it goes in the audit log as `oauth:alice@company.example`, and a session belongs to that person.
 
 ### Where things are kept
 
@@ -87,30 +87,49 @@ help-me-ops does **not** use your identity to read your logs and databases: it r
 
 ### All the settings
 
-| Variable (flag)                                            | What                                                                                                  | Default                               |
-| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `OPS_MCP_OAUTH_ISSUER` (`--oauth-issuer`)                  | the provider's issuer, **character for character** as in the `iss` of its tokens; turns OAuth on      | none                                  |
-| `OPS_MCP_PUBLIC_URL` (`--public-url`)                      | this server's address as clients reach it (https; the name in it is the one the `Host` check accepts) | `https://<public host><path>`         |
-| `OPS_MCP_OAUTH_AUDIENCE` (`--oauth-audience`)              | what a token must be issued for (`aud`)                                                               | the public URL                        |
-| `OPS_MCP_OAUTH_JWKS_URI` (`--oauth-jwks-uri`)              | where the provider's public keys are, **instead of** finding them from its metadata                   | found by discovery                    |
-| `OPS_MCP_OAUTH_SCOPES` (`--oauth-scope`)                   | scopes a token must carry, all of them (`scope` or `scp`)                                             | none                                  |
-| `OPS_MCP_OAUTH_IDENTITY_CLAIMS` (`--oauth-identity-claim`) | claims that name the person, tried in order; custom claims are fine                                   | `preferred_username, email, upn, sub` |
-| `OPS_MCP_OAUTH_ALGORITHMS` (`--oauth-algorithm`)           | signature algorithms accepted                                                                         | `RS256, PS256, ES256`                 |
+| Variable (flag)                                                 | What                                                                                                                                       | Default                                                    |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `OPS_MCP_OAUTH_ISSUER` (`--oauth-issuer`)                       | the provider's issuer, **character for character** as in the `iss` of its tokens; turns OAuth on                                           | none                                                       |
+| `OPS_MCP_PUBLIC_URL` (`--public-url`)                           | this server's address as clients reach it (https; the name in it is the one the `Host` check accepts)                                      | `https://<public host><path>`                              |
+| `OPS_MCP_OAUTH_AUDIENCE` (`--oauth-audience`)                   | what a token must be issued for (`aud`)                                                                                                    | the public URL                                             |
+| `OPS_MCP_OAUTH_JWKS_URI` (`--oauth-jwks-uri`)                   | where the provider's public keys are, **instead of** finding them from its metadata                                                        | found by discovery                                         |
+| `OPS_MCP_OAUTH_SCOPES` (`--oauth-scope`)                        | scopes a token must carry, all of them (`scope` or `scp`)                                                                                  | none                                                       |
+| `OPS_MCP_OAUTH_IDENTITY_CLAIMS` (`--oauth-identity-claim`)      | claims that name the person, tried in order; custom claims are fine                                                                        | `preferred_username, email, upn, username, sub, client_id` |
+| `OPS_MCP_OAUTH_CLIENT_ID`, `_CLIENT_SECRET` (`_SECRET_FILE`)    | this server's own client at the provider: needed to **ask it about a token** (introspection, RFC 7662), for opaque tokens                  | none                                                       |
+| `OPS_MCP_OAUTH_INTROSPECTION_URL` (`--oauth-introspection-url`) | where to ask, **instead of** the provider's metadata                                                                                       | found by discovery                                         |
+| `OPS_MCP_OAUTH_INTROSPECT` (`--oauth-introspect`)               | `auto`: JWTs are checked here with the keys, anything else is asked about; `always`: every token is asked about (sees revocations at once) | `auto`                                                     |
+| `OPS_MCP_OAUTH_ALLOW_NO_AUDIENCE` (`--oauth-allow-no-audience`) | accept a token that names no audience, when the provider serves only this server                                                           | off                                                        |
+| `OPS_MCP_OAUTH_ALGORITHMS` (`--oauth-algorithm`)                | signature algorithms accepted                                                                                                              | `RS256, PS256, ES256`                                      |
 
 An empty variable counts as not set. Static tokens (`OPS_MCP_TOKENS`) keep working beside OAuth, for a pipeline or a service account.
 
 **Finding the keys, two ways.** By **discovery**: from the issuer, the server reads the provider's published metadata (OpenID Connect, then RFC 8414) and takes its `jwks_uri`; the metadata has to name the same issuer. Or **declared by hand** (`OPS_MCP_OAUTH_JWKS_URI`), when the server cannot reach the metadata (a firewall, an air gap). The server **refuses to start** when it can do neither, when the issuer is not what the metadata says, or when an address that carries keys or tokens is not https (this machine excepted).
 
-## Using your own provider: what is the same, what is yours
+## Using your own provider: what is guaranteed, what is not
 
-help-me-ops assumes only this of a provider, and every mainstream one does it:
+OAuth 2 (RFC 6749) says how a client gets a token. It does **not** say what the token looks like, how a server that receives it checks it, how the server's clients are registered, or what its audience is: those are other standards (RFC 9068 and 7662 for the token, RFC 7591 for registration, RFC 8707 for the audience, RFC 8414 and OpenID Connect for discovery), each of which a provider may or may not implement. So "it is OAuth 2, it works" cannot be promised by anybody; what can be promised is **which standard ways of doing each part are supported**, and tested.
 
-- it issues **access tokens that are JWTs**, signed with RS256, PS256 or ES256;
-- it publishes **metadata** (or you give the address of its keys);
-- the token carries an **audience** you can set to this server, and optionally scopes;
-- MCP clients can be **known to it**, by dynamic registration or by an id you give them.
+help-me-ops checks a token in the two standard ways, and picks by what arrives:
 
-Nothing else is specific to a provider. The same `help-me-ops-oauth` service takes Keycloak, Auth0, Okta or Entra ID: only the values change.
+| The provider issues                                   | help-me-ops                                                                                                          | Revocation seen            |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **JWT access tokens** (RS256, PS256, ES256)           | checks signature, issuer, audience, expiry, scopes here, with the provider's published keys                          | when the token expires     |
+| **Opaque tokens**, or any token you want checked live | **asks the provider** (introspection, RFC 7662) with its own client id and secret; remembers the answer 30 s at most | within 30 s (`0`: at once) |
+
+What a provider must still give, whatever the token: the **issuer** written exactly as in its tokens, a way to find keys or the introspection endpoint (its metadata, or the address you declare), a **name for the person** in the token (or `client_id` for a machine), and an **audience** that is this server (or `allow-no-audience` when the provider serves only it). Those are the settings; nothing else is provider specific. The login of a person in Claude Code also needs the client to be **known** to the provider (dynamic registration, or an id you give it).
+
+### What was run, and what was not
+
+| Tested against                                                                                             | How                                                                 | Covers                                                                                             |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Keycloak 26** (real)                                                                                     | `npm run keycloak:check`, by hand with Claude Code (not part of CI) | discovery, dynamic registration, PKCE login, offline tokens, a JWT accepted                        |
+| **node-oidc-provider** (an implementation certified by the OpenID Foundation), in the tests of the project | `test/oauth-conformance.test.ts`, on every run                      | JWT and opaque tokens, discovery, introspection, revocation, expiry, wrong audience, provider down |
+| A fake provider shaped like **Auth0**                                                                      | `test/oauth.test.ts`                                                | trailing-slash issuer, audience list, namespaced claim, `sub` like `auth0\|123`                    |
+| Auth0, Okta, Entra ID (real tenants)                                                                       | **not run**                                                         | written from their documentation; run `oauth check` with a real token before relying on it         |
+
+A signed JWT cannot be revoked before it expires unless every token is asked about (`always`), which costs a call to the provider per token every 30 s. Keep access tokens short.
+
+The same `help-me-ops-oauth` service takes Keycloak, Auth0, Okta or Entra ID: only the values change.
 
 |                                | Keycloak                                                            | Auth0                                                                                                                                                                                    | Okta                                                    | Microsoft Entra ID                                                                                                            |
 | ------------------------------ | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -167,7 +186,7 @@ It prints what is configured, finds the provider and its keys (or says why not),
 ✘ audience: the token is for ["api://other"], the server expects "https://mcp.company.example/mcp" (set the API identifier at the provider, or --oauth-audience)
 ✔ expires in 299 s
 ✘ scopes: missing mcp:tools (the token has none)
-✘ no claim names the person: tried preferred_username, email, upn, sub; the token has iss, aud, exp (add one at the provider, or name one with --oauth-identity-claim)
+✘ no claim names the person: tried preferred_username, email, upn, username, sub, client_id; the token has iss, aud, exp (add one at the provider, or name one with --oauth-identity-claim)
 ✘ the server would refuse this token (ERR_JWT_CLAIM_VALIDATION_FAILED)
 ```
 

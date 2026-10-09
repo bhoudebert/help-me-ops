@@ -9,8 +9,8 @@
 # Keycloak: http://localhost:8080 (admin / admin; users alice/alice and bob/bob, tests only)
 # help-me-ops: http://localhost:8809/mcp
 #
-# To use YOUR identity provider (Auth0, Okta, Entra ID, Keycloak, anything that issues JWT access
-# tokens), the "oauth" profile: put its settings in .env next to this file (or export them) and
+# To use YOUR identity provider (Auth0, Okta, Entra ID, Keycloak, anything that issues access
+# tokens, JWTs or opaque), the "oauth" profile: put its settings in .env next to this file (or export them) and
 #
 #   docker compose --profile oauth up -d --build help-me-ops-oauth
 #   npm run ops -- oauth check             # does it find your provider, and would it accept a token?
@@ -18,7 +18,7 @@
 #   OPS_MCP_OAUTH_ISSUER=https://tenant.auth0.com/        # exactly as the "iss" of its tokens
 #   OPS_MCP_PUBLIC_URL=https://mcp.company.example/mcp    # how people reach this server (a TLS proxy)
 #   OPS_MCP_OAUTH_AUDIENCE=https://mcp.company.example/mcp   # if the provider's "aud" is not the URL
-#   (and OPS_MCP_OAUTH_SCOPES, _IDENTITY_CLAIMS, _JWKS_URI: see the guide, "One server for the team")
+#   (and OPS_MCP_OAUTH_SCOPES, _IDENTITY_CLAIMS, _JWKS_URI, and _CLIENT_ID/_CLIENT_SECRET for opaque tokens: see the guide, "One server for the team")
 #
 # For a server with static tokens instead (no identity provider), use the "tokens" profile:
 #
@@ -100,6 +100,13 @@ services:
       OPS_MCP_OAUTH_SCOPES: ${OPS_MCP_OAUTH_SCOPES:-}
       OPS_MCP_OAUTH_IDENTITY_CLAIMS: ${OPS_MCP_OAUTH_IDENTITY_CLAIMS:-}
       OPS_MCP_OAUTH_ALGORITHMS: ${OPS_MCP_OAUTH_ALGORITHMS:-}
+      # Opaque access tokens (not JWTs): the server asks the provider about them (RFC 7662),
+      # with its own client at the provider.
+      OPS_MCP_OAUTH_CLIENT_ID: ${OPS_MCP_OAUTH_CLIENT_ID:-}
+      OPS_MCP_OAUTH_CLIENT_SECRET: ${OPS_MCP_OAUTH_CLIENT_SECRET:-}
+      OPS_MCP_OAUTH_INTROSPECTION_URL: ${OPS_MCP_OAUTH_INTROSPECTION_URL:-}
+      OPS_MCP_OAUTH_INTROSPECT: ${OPS_MCP_OAUTH_INTROSPECT:-}
+      OPS_MCP_OAUTH_ALLOW_NO_AUDIENCE: ${OPS_MCP_OAUTH_ALLOW_NO_AUDIENCE:-}
       # static tokens beside it (a pipeline, a service account), if you want them
       OPS_MCP_TOKENS: ${OPS_MCP_TOKENS:-}
     env_file:

@@ -72,10 +72,9 @@ issues no token**: that is the provider's job.
   per-person permissions (groups or roles in the token, a later decision).
 - **What is not here.** The server is not an authorization server: a client that
   needs the provider to support dynamic client registration, or a registered
-  client id, depends on the provider's settings. **Opaque tokens** (not JWTs, so
-  validated by asking the provider: RFC 7662 introspection) are not supported.
-  There is no token revocation list: a token is good until it expires, so keep
-  lifetimes short.
+  client id, depends on the provider's settings. There is no revocation list of
+  our own: a JWT is good until it expires, so keep lifetimes short, or ask the
+  provider about every token (below).
 - More to get right on the provider's side: the audience of the tokens must be set
   to this server's identifier, which the guide shows for common providers, untested
   against a real one.
@@ -91,8 +90,15 @@ keeping static tokens behind it. Works today, adds a component and loses the
 identity inside the server (the audit log would say the proxy); still possible, and
 this does not rule it out.
 
-**Opaque tokens through introspection first.** Some providers issue them; JWTs
-are what the common ones issue to an API by default, and validating them needs no
-call to the provider per request. Introspection can be added.
+**Opaque tokens through introspection first.** Done after all, as the second
+standard way: JWTs are checked here with the provider's keys (no call per request),
+anything else is asked about with RFC 7662, using this server's own client at the
+provider, the answer kept for at most 30 s so a flood of tokens is not a flood of
+questions. `always` asks about every token to see revocations quickly. A provider
+being unreachable is `503` with `retry-after`, never a `401`: the person's token is
+not the problem. Conformance is tested against node-oidc-provider (certified by the
+OpenID Foundation) in both formats, and real Keycloak by hand; "any OAuth 2
+provider" is not claimed, because RFC 6749 leaves the token format, its validation,
+the audience and registration to other standards a provider may not implement.
 
 **Writing the JWT verification here.** No.
