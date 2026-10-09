@@ -17,5 +17,6 @@
 | [0012](0012-declare-the-data-and-a-strict-mode.md) | Declare which sources hold personal data, and an optional strict mode | accepted |
 | [0013](0013-stable-placeholders.md) | Stable placeholders, as an option next to the stars | accepted |
 | [0014](0014-api-mode-and-local-models.md) | An optional API mode: the toolbox driven by a model you choose, local or hosted | accepted |
+| [0015](0015-one-mcp-server-over-http-for-a-team.md) | One MCP server over HTTP for a team, next to the one on stdio | accepted |
 
 New records start from [template.md](template.md).

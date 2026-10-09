@@ -52,6 +52,7 @@
   `expect`, follow-up questions in `eval`, guided mode if the numbers call for it,
   an Anthropic Messages adapter.
 - **A benchmark page and stored results** (`bench/results/`), more scenarios with different causes (a bad deploy, an expired certificate, a database lock) so a model is measured on causes it has not seen, then a re-run of the models. Not a leaderboard: one scenario is a snapshot.
+- **MCP over HTTP for a team** (done, ADR 0015: tokens, one ledger per session, an audit line per call). Next: OAuth in front of it for clients that need it, per-person permissions on sources, and rate limits.
 - **Case files**: an investigation saved with its question, steps, evidence
   and conclusion, so the next one starts from what is known.
 

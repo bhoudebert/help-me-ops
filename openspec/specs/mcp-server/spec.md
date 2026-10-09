@@ -31,3 +31,26 @@ An `investigate` prompt SHALL carry the method and the reported problem.
 
 - **WHEN** the user runs `/mcp__help-me-ops__investigate order 4512 stuck`
 - **THEN** the model receives the method and the problem, and the tools to follow it
+
+### Requirement: The same server over HTTP, for a team
+
+A second entry point SHALL serve the same tools, instructions and prompt over
+Streamable HTTP (`npm run mcp:http`), built by the same factory as the stdio
+server. Each MCP session SHALL have its own tools and so its own ledger for the
+checked conclusion. The server SHALL answer only requests with a valid bearer
+token (401 otherwise), SHALL bind a session to the token that opened it, and SHALL
+refuse to start without tokens (except `--no-auth` on a loopback address) and
+refuse to listen beyond loopback without a public host name. It SHALL refuse a
+request whose Host is not an allowed one or that has an Origin, cap a request body
+at 1 MB and the sessions at 100, and log one JSON line per session event and per
+tool call with the identity, never the input or the evidence.
+
+#### Scenario: Two people, one server
+
+- **WHEN** alice and bob each open a session and alice reads a log line
+- **THEN** a conclusion quoting that line is accepted in alice's session and refused in bob's
+
+#### Scenario: No token
+
+- **WHEN** a request reaches `/mcp` without a valid `Authorization: Bearer` header
+- **THEN** the server answers 401 and runs nothing

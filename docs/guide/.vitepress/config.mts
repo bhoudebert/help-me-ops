@@ -34,6 +34,7 @@ export default defineConfig({
         items: [
           { text: "Getting started", link: "/getting-started" },
           { text: "Claude Code, Codex and Copilot", link: "/clients" },
+          { text: "One server for the team", link: "/team-server" },
           { text: "Try the demo", link: "/demo" },
           { text: "…with a real database", link: "/database" },
           { text: "Investigate a problem", link: "/investigate" },
