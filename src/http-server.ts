@@ -19,7 +19,10 @@ export interface HttpOptions {
   port: number;
   path: string;
   /** The people who may connect, by the name that identifies their sessions. Empty with `noAuth`. */
-  tokens: { name: string; token: string }[];
+  tokens: {
+    name: string;
+    /** SHA-256 of the token, in hex: the server never needs the token itself. */ hash: string;
+  }[];
   /** Serve without a token: only on a loopback address, and only when asked for in so many words. */
   noAuth: boolean;
   /** Names the server is reached by, behind a proxy (`mcp.company.example`); the Host header must be one of them. */
@@ -53,8 +56,18 @@ const NAME = /^[a-z][a-z0-9_-]{0,31}$/;
 /** A token that cannot be guessed: 256 random bits. */
 export const newToken = () => randomBytes(32).toString("base64url");
 
-/** `alice:<token>,bob:<token>` into named tokens; a short or repeated token, or a bad name, is an error. */
-export function parseTokens(text: string | undefined): { name: string; token: string }[] {
+/**
+ * What the server keeps of a token. The token is 256 random bits, so a plain SHA-256 is enough (a password
+ * needs a slow, salted hash because people choose it; nobody chooses this): a leaked file of hashes opens nothing.
+ */
+export const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
+
+/**
+ * `alice:sha256:<hex>` (what `ops token` prints for the server) or `alice:<token>` (the token itself, which
+ * works and leaves it readable in the file), comma-separated. A short or repeated token, a bad name, or a
+ * hash that is not 64 hex digits is an error.
+ */
+export function parseTokens(text: string | undefined): { name: string; hash: string; plain: boolean }[] {
   const tokens = (text ?? "")
     .split(",")
     .map((part) => part.trim())
@@ -62,14 +75,23 @@ export function parseTokens(text: string | undefined): { name: string; token: st
     .map((part) => {
       const at = part.indexOf(":");
       const name = at > 0 ? part.slice(0, at) : "";
-      const token = at > 0 ? part.slice(at + 1) : "";
+      const value = at > 0 ? part.slice(at + 1) : "";
       if (!NAME.test(name))
         throw new Error(`OPS_MCP_TOKENS: "${name}" is not a name (lowercase letters, digits, _ and -, up to 32).`);
-      if (token.length < 24)
+      if (value.startsWith("sha256:")) {
+        const hex = value.slice("sha256:".length).toLowerCase();
+        if (!/^[0-9a-f]{64}$/.test(hex))
+          throw new Error(
+            `OPS_MCP_TOKENS: the hash of "${name}" is not 64 hexadecimal digits; make one with: npm run ops -- token ${name}`,
+          );
+        return { name, hash: hex, plain: false };
+      }
+      if (value.length < 24) {
         throw new Error(
           `OPS_MCP_TOKENS: the token of "${name}" is too short to be safe; make one with: npm run ops -- token ${name}`,
         );
-      return { name, token };
+      }
+      return { name, hash: hashToken(value), plain: true };
     });
   const names = tokens.map((t) => t.name);
   const twice = names.find((n, i) => names.indexOf(n) !== i);
@@ -93,12 +115,20 @@ export function optionsFromArgs(argv: string[], env: NodeJS.ProcessEnv, log: Htt
   if (!Number.isInteger(port) || port < 0 || port > 65535)
     throw new Error(`The port "${one("--port") ?? env.OPS_MCP_PORT}" is not a port number.`);
   const fromFile = env.OPS_MCP_TOKENS_FILE ? readTokensFile(env.OPS_MCP_TOKENS_FILE) : "";
+  const tokens = parseTokens([env.OPS_MCP_TOKENS, fromFile].filter(Boolean).join(","));
+  for (const t of tokens.filter((x) => x.plain)) {
+    log({
+      at: new Date().toISOString(),
+      event: "warning",
+      message: `the token of ${t.name} is readable in the configuration: keep its hash instead (npm run ops -- token ${t.name} prints it)`,
+    });
+  }
   const publicHosts = all("--public-host");
   return {
     host: one("--host") ?? env.OPS_MCP_HOST ?? HTTP_DEFAULTS.host,
     port,
     path: one("--path") ?? env.OPS_MCP_PATH ?? HTTP_DEFAULTS.path,
-    tokens: parseTokens([env.OPS_MCP_TOKENS, fromFile].filter(Boolean).join(",")),
+    tokens: tokens.map(({ name, hash }) => ({ name, hash })),
     noAuth: argv.includes("--no-auth"),
     publicHosts: publicHosts.length
       ? publicHosts
@@ -156,7 +186,7 @@ export async function startHttpServer(toolbox: Toolbox, options: HttpOptions): P
       `The server would listen on ${host}: say which name it is reached by (--public-host mcp.company.example) so the Host header can be checked.`,
     );
   }
-  const accepted = options.tokens.map((t) => ({ name: t.name, hash: digest(t.token) }));
+  const accepted = options.tokens.map((t) => ({ name: t.name, hash: Buffer.from(t.hash, "hex") }));
   const sessions = new Map<string, Session>();
 
   const reply = (res: ServerResponse, status: number, body: object, headers: Record<string, string> = {}) => {

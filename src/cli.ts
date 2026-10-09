@@ -8,7 +8,7 @@ import { resolve } from "node:path";
 import { resolveWorkspace } from "./config.ts";
 import { runAsk, runChat } from "./agent/commands.ts";
 import { formatSuite, runSuite } from "./agent/eval.ts";
-import { newToken } from "./http-server.ts";
+import { hashToken, newToken } from "./http-server.ts";
 import { runInit } from "./init.ts";
 import { createInterface } from "node:readline/promises";
 import { openToolbox } from "./toolbox.ts";
@@ -44,12 +44,17 @@ try {
     );
     if (!result.ok) process.exitCode = 1;
   } else if (command === "token") {
-    const [name] = args;
+    const [name] = args.filter((a) => !a.startsWith("--"));
     if (!name || !/^[a-z][a-z0-9_-]{0,31}$/.test(name))
-      throw new Error("Usage: token <name>   (lowercase letters, digits, _ and -)");
-    console.log(`${name}:${newToken()}`);
+      throw new Error("Usage: token <name> [--plain]   (lowercase letters, digits, _ and -)");
+    const secret = newToken();
+    // The line for the server goes to stdout (>> ops-tokens.txt); the secret, which nothing keeps, to the terminal.
+    console.log(argv.includes("--plain") ? `${name}:${secret}` : `${name}:sha256:${hashToken(secret)}`);
+    console.error(`Give ${name} this secret, once; nothing stores it, and it cannot be shown again:\n\n  ${secret}\n`);
     console.error(
-      `Add it to OPS_MCP_TOKENS on the server (comma-separated), and give the part after "${name}:" to ${name}.`,
+      argv.includes("--plain")
+        ? "The line above holds the token itself: keep it as private as a password."
+        : "The line above is for the server (OPS_MCP_TOKENS or the tokens file): it holds only a hash, which opens nothing.",
     );
   } else if (command === "eval") {
     // the last one wins, so `npm run eval:local -- --runs 5` overrides the script

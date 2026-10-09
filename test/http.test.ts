@@ -13,6 +13,7 @@ import {
   HTTP_DEFAULTS,
   newToken,
   optionsFromArgs,
+  hashToken,
   parseTokens,
   startHttpServer,
   type HttpOptions,
@@ -29,8 +30,8 @@ async function serve(extra: Partial<HttpOptions> = {}) {
     ...HTTP_DEFAULTS,
     port: 0,
     tokens: [
-      { name: "alice", token: alice },
-      { name: "bob", token: bob },
+      { name: "alice", hash: hashToken(alice) },
+      { name: "bob", hash: hashToken(bob) },
     ],
     noAuth: false,
     publicHosts: [],
@@ -220,7 +221,7 @@ test("http: it refuses to start without a token, off this machine without a name
     });
   await assert.rejects(start({}), /No token: a server on a URL reads your systems/);
   await assert.rejects(
-    start({ tokens: [{ name: "a", token: alice }], host: "0.0.0.0" }),
+    start({ tokens: [{ name: "a", hash: hashToken(alice) }], host: "0.0.0.0" }),
     /say which name it is reached by \(--public-host/,
   );
   await assert.rejects(
@@ -238,42 +239,77 @@ test("http: it refuses to start without a token, off this machine without a name
   }
 });
 
-test("tokens: named, long enough, once each; and `ops token` makes one", () => {
-  assert.deepEqual(parseTokens(` alice:${alice} , bob:${bob}`), [
-    { name: "alice", token: alice },
-    { name: "bob", token: bob },
+test("tokens: named, long enough, once each, as a token or as the hash of one", () => {
+  const plain = parseTokens(` alice:${alice} , bob:sha256:${hashToken(bob).toUpperCase()}`);
+  assert.deepEqual(plain, [
+    { name: "alice", hash: hashToken(alice), plain: true },
+    { name: "bob", hash: hashToken(bob), plain: false },
   ]);
   assert.deepEqual(parseTokens(undefined), []);
   assert.throws(() => parseTokens("alice:short"), /too short to be safe; make one with: npm run ops -- token alice/);
+  assert.throws(() => parseTokens("alice:sha256:abc"), /not 64 hexadecimal digits/);
   assert.throws(() => parseTokens(`Alice:${alice}`), /not a name/);
   assert.throws(() => parseTokens(`${alice}`), /not a name/);
-  assert.throws(() => parseTokens(`a:${alice},a:${bob}`), /"a" appears twice/);
+  assert.throws(() => parseTokens(`a:${alice},a:sha256:${hashToken(bob)}`), /"a" appears twice/);
   assert.match(newToken(), /^[A-Za-z0-9_-]{43}$/);
   assert.notEqual(newToken(), newToken());
-  const ops = spawn("node", ["src/cli.ts", "token", "carol"], { stdio: ["ignore", "pipe", "pipe"] });
-  return new Promise<void>((done, fail) => {
+  assert.match(hashToken(alice), /^[0-9a-f]{64}$/);
+});
+
+/** Runs `ops token`, with what each stream carried. */
+const opsToken = (...args: string[]) =>
+  new Promise<{ code: number | null; out: string; err: string }>((done) => {
+    const ops = spawn("node", ["src/cli.ts", "token", ...args], { stdio: ["ignore", "pipe", "pipe"] });
     let out = "";
+    let err = "";
     ops.stdout.on("data", (d) => (out += d));
-    ops.on("close", (code) => {
-      try {
-        assert.equal(code, 0);
-        assert.match(out.trim(), /^carol:[A-Za-z0-9_-]{43}$/);
-        assert.deepEqual(
-          parseTokens(out.trim()).map((t) => t.name),
-          ["carol"],
-        );
-        done();
-      } catch (error) {
-        fail(error);
-      }
-    });
+    ops.stderr.on("data", (d) => (err += d));
+    ops.on("close", (code) => done({ code, out, err }));
   });
+
+test("ops token: the line for the server holds a hash, the secret goes to the person, and it works", async () => {
+  const made = await opsToken("carol");
+  assert.equal(made.code, 0);
+  assert.match(made.out.trim(), /^carol:sha256:[0-9a-f]{64}$/);
+  const secret = /\n {2}([A-Za-z0-9_-]{43})\n/.exec(made.err)![1]!;
+  assert.ok(!made.out.includes(secret), "the secret is not in what goes to the server's file");
+  assert.equal(parseTokens(made.out.trim())[0]!.hash, hashToken(secret), "the hash is the hash of the secret shown");
+  assert.match(made.err, /nothing stores it/);
+  // the other way, for people who want the token itself in their configuration
+  const plain = await opsToken("dave", "--plain");
+  assert.match(plain.out.trim(), /^dave:[A-Za-z0-9_-]{43}$/);
+  assert.match(plain.err, /holds the token itself/);
+  assert.notEqual((await opsToken("bad Name")).code, 0);
+});
+
+test("a hashed token opens the server and a plain one does too, with a warning that it is readable", async () => {
+  const secret = newToken();
+  const events: Record<string, unknown>[] = [];
+  const options = optionsFromArgs([], { OPS_MCP_TOKENS: `erin:sha256:${hashToken(secret)},frank:${alice}` }, (e) =>
+    events.push(e),
+  );
+  assert.equal(events.length, 1);
+  assert.match(
+    String(events[0]!.message),
+    /the token of frank is readable in the configuration: keep its hash instead/,
+  );
+  const { running } = await serve({ tokens: options.tokens });
+  try {
+    const hashed = await connect(running.url, secret);
+    assert.equal((await hashed.listTools()).tools.length, 12);
+    await hashed.close();
+    const readable = await connect(running.url, alice);
+    await readable.close();
+    await assert.rejects(connect(running.url, hashToken(secret)), /401|Unauthorized|HTTP/i);
+  } finally {
+    await running.close();
+  }
 });
 
 test("options: flags beat the environment, tokens come from the variable and from a file, a container needs no flag", () => {
   const dir = mkdtempSync(join(tmpdir(), "ops-http-"));
   const file = join(dir, "tokens.txt");
-  writeFileSync(file, `# the team\nbob:${bob}\n\ncarol:${newToken()}\n`);
+  writeFileSync(file, `# the team\nbob:sha256:${hashToken(bob)}\n\ncarol:${newToken()}\n`);
   const log = () => undefined;
   const fromEnv = optionsFromArgs(
     [],

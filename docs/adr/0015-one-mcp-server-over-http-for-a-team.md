@@ -32,6 +32,10 @@ Add an **HTTP entry point beside the stdio one**, sharing everything else.
 - **Authentication is not optional.** Requests carry `Authorization: Bearer
 <token>`; the server is configured with named tokens
   (`OPS_MCP_TOKENS="alice:<token>,bob:<token>"`; `ops token <name>` makes one).
+  _Since the first version the server keeps only the SHA-256 of a token: `ops token`
+  prints a `name:sha256:<hash>` line for the server and the secret, once, for the
+  person; a plain `name:<token>` still works, with a warning at start. A token is
+  256 random bits, so a fast hash is enough: nobody chooses it._
   A token's name is the **identity** of its sessions. Without tokens the server
   **refuses to start**, except on a loopback address with `--no-auth` written
   out. A session id is bound to the identity that opened it.

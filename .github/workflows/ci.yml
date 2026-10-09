@@ -47,7 +47,8 @@ jobs:
         run: docker build -t help-me-ops:ci .
       - name: Start it on the demo workspace, with a token, read-only
         run: |
-          TOKEN="ci:$(head -c 32 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=\n')"
+          SECRET="$(head -c 32 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=\n')"
+          TOKEN="ci:sha256:$(printf %s "$SECRET" | sha256sum | cut -d' ' -f1)"
           docker run -d --name hmo -p 127.0.0.1:8808:8808 \
             -v "$PWD/examples/my-workspace:/workspace:ro" \
             -e OPS_MCP_TOKENS="$TOKEN" -e OPS_MCP_PUBLIC_HOSTS=localhost:8808 \
@@ -55,6 +56,10 @@ jobs:
           for i in $(seq 1 20); do curl -sf http://localhost:8808/healthz && break; sleep 1; done
           curl -sf http://localhost:8808/healthz
           test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8808/mcp -d '{}')" = 401
+          # the hash is not a token, the secret is
+          H="${TOKEN#ci:sha256:}"
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8808/mcp -H "authorization: Bearer $H" -d '{}')" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8808/mcp -H "authorization: Bearer $SECRET" -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}')" = 200
       - name: Show the log if it failed
         if: failure()
         run: docker logs hmo

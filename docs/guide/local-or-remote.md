@@ -46,8 +46,8 @@ This repository ships a `.mcp.json` for the demo workspace: open Claude Code in 
 **1. On the server**, once:
 
 ```bash
-npm run ops -- token alice                           # alice:<secret>   (one per person)
-OPS_MCP_TOKENS="alice:<secret>" npm run mcp:http -- --workspace /srv/ops
+npm run ops -- token alice          # prints the line for the server (a hash) and, once, the secret for alice
+OPS_MCP_TOKENS="alice:sha256:<hash>" npm run mcp:http -- --workspace /srv/ops
 # or with Docker: docker compose up -d      (see "One server for the team")
 ```
 
