@@ -58,6 +58,12 @@ Copilot Chat in agent mode.
 
 :::
 
+## One server for a team
+
+The server above runs on each person's machine and needs the credentials there.
+To keep them on one server instead, run it over HTTP and give people a URL and a
+token: [one server for the team](/team-server).
+
 ## Ask
 
 ```text
