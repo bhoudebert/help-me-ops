@@ -5,7 +5,7 @@ import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
-import { formatReport, questionFor, runEval, scoreAnswer } from "../src/agent/eval.ts";
+import { formatReport, formatSuite, questionFor, runEval, runSuite, scoreAnswer } from "../src/agent/eval.ts";
 import type { Scenario } from "../src/demo.ts";
 import { scenarios } from "../src/demo.ts";
 import { openToolbox } from "../src/toolbox.ts";
@@ -143,7 +143,7 @@ test("eval: a limit or a refusal is counted, what was never named is listed, and
     assert.match(text, /did not conclude: the step cap \(1 rounds/);
     await assert.rejects(
       runEval(toolbox, workspace, { scenario: "nope", runs: 1, models: ["fake"], reasoning: ["default"] }, {}),
-      /No scenario "nope".*known: stuck-order/,
+      /No scenario "nope".*known: missing-emails, slow-checkout, stuck-order/,
     );
   } finally {
     await server.close();
@@ -207,17 +207,86 @@ test("the command: ops eval prints the table, --json the numbers, and it needs a
       child.on("close", (code) => done({ code, stdout, stderr }));
     });
   try {
-    const table = await run(["--runs", "1", "--model", "fake", "--base-url", server.url]);
+    const table = await run(["--runs", "1", "--scenario", "stuck-order", "--model", "fake", "--base-url", server.url]);
     assert.equal(table.code, 0, table.stderr);
     assert.match(table.stdout, /ops eval: stuck-order · 1 run\(s\) per setting/);
     assert.match(table.stdout, /fake · reasoning default\s+1\/1\s+1\/1\s+5\.0\/5/);
     assert.match(table.stderr, /fake · reasoning default · run 1\/1/);
-    const json = await run(["--runs", "1", "--model", "fake", "--base-url", server.url, "--json"]);
-    const report = JSON.parse(json.stdout) as { settings: { runs: { status: string }[] }[] };
-    assert.equal(report.settings[0]!.runs[0]!.status, "concluded");
+    const json = await run([
+      "--runs",
+      "1",
+      "--scenario",
+      "stuck-order",
+      "--model",
+      "fake",
+      "--base-url",
+      server.url,
+      "--json",
+    ]);
+    const suite = JSON.parse(json.stdout) as { reports: { settings: { runs: { status: string }[] }[] }[] };
+    assert.equal(suite.reports[0]!.settings[0]!.runs[0]!.status, "concluded");
     const none = await run([]);
     assert.equal(none.code, 1);
     assert.match(none.stderr, /ops eval needs a model/);
+  } finally {
+    await server.close();
+  }
+});
+
+test("eval over several scenarios: one report each, then the settings added up; the default is all of them", async () => {
+  const replay = (id: string): Step[] => {
+    const s = JSON.parse(readFileSync(join(workspace, "scenarios", `${id}.json`), "utf8")) as {
+      steps: { tool: string; input: object }[];
+      conclusion: object;
+    };
+    return [...s.steps.map((x) => call(wire(x.tool), x.input)), call("checkConclusion", s.conclusion)];
+  };
+  // the emails scenario is answered well, the checkout one is not answered at all
+  const server = await fakeChat([
+    ...replay("missing-emails"),
+    { content: "no idea" },
+    ...replay("stuck-order"),
+    ...replay("stuck-order"),
+  ]);
+  try {
+    const toolbox = await openToolbox(workspace);
+    const progress: string[] = [];
+    const suite = await runSuite(
+      toolbox,
+      workspace,
+      {
+        scenario: "missing-emails,slow-checkout,stuck-order",
+        runs: 1,
+        models: ["fake"],
+        reasoning: ["default"],
+        baseUrl: server.url,
+      },
+      {},
+      globalThis.fetch,
+      (line) => progress.push(line),
+    );
+    assert.deepEqual(
+      suite.reports.map((r) => r.scenario),
+      ["missing-emails", "slow-checkout", "stuck-order"],
+    );
+    assert.match(progress[0]!, /^missing-emails · fake · reasoning default · run 1\/1$/);
+    assert.deepEqual(
+      suite.reports.map((r) => r.settings[0]!.runs[0]!.cause),
+      [true, false, true],
+    );
+    const text = formatSuite(suite);
+    assert.match(text, /ops eval: missing-emails/);
+    assert.match(text, /ops eval: slow-checkout/);
+    assert.match(text, /Over all 3 scenarios \(missing-emails, slow-checkout, stuck-order\)/);
+    assert.match(text, /fake · reasoning default\s+2\/3\s+2\/3\s+1\/1\s+0\/1\s+1\/1/);
+    // one scenario prints as the single report did
+    const one = await runSuite(
+      toolbox,
+      workspace,
+      { scenario: "stuck-order", runs: 1, models: ["fake"], reasoning: ["default"], baseUrl: server.url },
+      {},
+    );
+    assert.equal(one.reports.length, 1);
   } finally {
     await server.close();
   }

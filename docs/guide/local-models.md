@@ -147,15 +147,16 @@ It depends on the model, and a small one will investigate worse than a large hos
 
 ## Measure it: `ops eval`
 
-Instead of judging from one run, count. `ops eval` asks the scenario's question of your model several times, each in a fresh conversation, and reports what happened:
+Instead of judging from one run, count. `ops eval` asks the question of each scenario (the demo has [three, with different causes](/demo#three-incidents-in-one-world)) of your model several times, each in a fresh conversation, and reports what happened:
 
 ```bash
 npm run ops -- eval --runs 5 --model qwen3:8b --reasoning none,default
 npm run ops -- eval --model qwen3:8b,llama3.1:8b --runs 5      # compare models
+npm run ops -- eval --scenario missing-emails --runs 5          # one scenario (a list: a,b; the default is all)
 npm run eval:local                                              # the same on a local Ollama, 3 runs
 ```
 
-`--model` and `--reasoning` take a comma-separated list, and every combination is run. The columns:
+`--model`, `--reasoning` and `--scenario` take a comma-separated list, and every combination is run. With several scenarios you get one table each, then the settings added up over all of them (how many runs found the cause, scenario by scenario), so a model that only knows one incident shows. `--json` prints `reports`, one per scenario. The columns:
 
 | Column                    | Meaning                                                                                                             |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -192,7 +193,7 @@ It is not intelligent (any question gets the scenario's investigation); it shows
 
 ### What one setup measured
 
-The only numbers this project has, from the maintainer's machine on 2026-10-08: an RTX 5080 with 16 GB, Ollama 0.32.14 (CUDA), the demo's `stuck-order` scenario (the question, then "It is the shop app, in the prod environment", since nobody is there to answer when the model asks), 5 runs per setting, temperature 0:
+The only numbers this project has, from the maintainer's machine on 2026-10-08, **on the `stuck-order` scenario alone and before the two other incidents were added to the demo world** (they will be re-measured on all three): an RTX 5080 with 16 GB, Ollama 0.32.14 (CUDA), the demo's `stuck-order` scenario (the question, then "It is the shop app, in the prod environment", since nobody is there to answer when the model asks), 5 runs per setting, temperature 0:
 
 ```
 setting                          accepted  cause  facts  steps  tokens  time

@@ -48,6 +48,62 @@
       "status": 200,
       "ms": 15,
       "note": "api up"
+    },
+    {
+      "at": "2026-10-08T13:55:00Z",
+      "target": "shop /checkout",
+      "status": 200,
+      "ms": 190,
+      "note": "ok"
+    },
+    {
+      "at": "2026-10-08T14:15:00Z",
+      "target": "shop /checkout",
+      "status": 200,
+      "ms": 3100,
+      "note": "slow"
+    },
+    {
+      "at": "2026-10-08T14:30:00Z",
+      "target": "shop /checkout",
+      "status": 504,
+      "ms": 5000,
+      "note": "timeout"
+    },
+    {
+      "at": "2026-10-08T14:30:00Z",
+      "target": "shop /health",
+      "status": 200,
+      "ms": 15,
+      "note": "api up"
+    },
+    {
+      "at": "2026-10-08T23:55:00Z",
+      "target": "mail provider smtp.mailprov.example:465",
+      "status": 200,
+      "ms": 120,
+      "note": "TLS ok"
+    },
+    {
+      "at": "2026-10-09T00:10:00Z",
+      "target": "mail provider smtp.mailprov.example:465",
+      "status": 0,
+      "ms": 310,
+      "note": "TLS handshake failed: certificate has expired"
+    },
+    {
+      "at": "2026-10-09T06:30:00Z",
+      "target": "mail provider smtp.mailprov.example:465",
+      "status": 0,
+      "ms": 290,
+      "note": "TLS handshake failed: certificate has expired"
+    },
+    {
+      "at": "2026-10-09T06:30:00Z",
+      "target": "shop /health",
+      "status": 200,
+      "ms": 14,
+      "note": "api up"
     }
   ]
 }

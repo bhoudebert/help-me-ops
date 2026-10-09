@@ -7,7 +7,7 @@ import { runCommand, startupNotices, USAGE } from "./commands.ts";
 import { resolve } from "node:path";
 import { resolveWorkspace } from "./config.ts";
 import { runAsk, runChat } from "./agent/commands.ts";
-import { formatReport, runEval } from "./agent/eval.ts";
+import { formatSuite, runSuite } from "./agent/eval.ts";
 import { runInit } from "./init.ts";
 import { createInterface } from "node:readline/promises";
 import { openToolbox } from "./toolbox.ts";
@@ -57,7 +57,7 @@ try {
     const model = flag("--model") ?? process.env.OPS_MODEL ?? toolbox.model?.model;
     if (!model)
       throw new Error('ops eval needs a model: --model <name>[,<name>] (or OPS_MODEL, or "model" in ops.config.json).');
-    const report = await runEval(
+    const report = await runSuite(
       toolbox,
       workspace,
       {
@@ -71,7 +71,7 @@ try {
       globalThis.fetch,
       (line) => console.error(line),
     );
-    console.log(argv.includes("--json") ? JSON.stringify(report, null, 2) : formatReport(report));
+    console.log(argv.includes("--json") ? JSON.stringify(report, null, 2) : formatSuite(report));
   } else if (command === "ask" || command === "chat") {
     const flag = (name: string) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : undefined);
     const flags = {

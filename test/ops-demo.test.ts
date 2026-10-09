@@ -74,7 +74,10 @@ test("demo run: the mask applies, and a workspace without scenarios or an unknow
     play(none),
     /has no scenarios\/ folder to replay\. The demo workspace is examples\/my-workspace/,
   );
-  await assert.rejects(play(demo, { scenario: "nope" }), /No scenario "nope".*Known: stuck-order\./);
+  await assert.rejects(
+    play(demo, { scenario: "nope" }),
+    /No scenario "nope".*Known: missing-emails, slow-checkout, stuck-order\./,
+  );
 });
 
 test("demo run: the command needs no setup, exits 0 on success, and ignores OPS_WORKSPACE unless --workspace is given", () => {

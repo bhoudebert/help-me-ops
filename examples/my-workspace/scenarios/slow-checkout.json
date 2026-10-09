@@ -1,0 +1,159 @@
+{
+  "id": "slow-checkout",
+  "question": "Checkout has been very slow since this afternoon and some customers get timeouts",
+  "scope": {
+    "app": "shop",
+    "env": "prod"
+  },
+  "steps": [
+    {
+      "why": "Which app and environment?",
+      "tool": "scope",
+      "input": {
+        "question": "Checkout has been very slow since this afternoon and some customers get timeouts, in production"
+      }
+    },
+    {
+      "why": "What does the log say about checkout this afternoon?",
+      "tool": "searchSource",
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "checkout",
+        "from": "2026-10-08T13:00:00Z",
+        "to": "2026-10-08T16:00:00Z"
+      }
+    },
+    {
+      "why": "Is the checkout endpoint slow when probed?",
+      "tool": "health.checkHealth",
+      "input": {
+        "env": "prod",
+        "target": "checkout"
+      }
+    },
+    {
+      "why": "How did latency move?",
+      "tool": "metrics.queryMetric",
+      "input": {
+        "env": "prod",
+        "metric": "api_latency_p95_ms"
+      }
+    },
+    {
+      "why": "What is the database doing?",
+      "tool": "metrics.queryMetric",
+      "input": {
+        "env": "prod",
+        "metric": "db_connections_in_use"
+      }
+    },
+    {
+      "why": "Anything slow or exhausted in the logs?",
+      "tool": "searchSource",
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "slow query"
+      }
+    },
+    {
+      "why": "The pool: when did it fill up?",
+      "tool": "searchSource",
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "pool"
+      }
+    },
+    {
+      "why": "Did something change this afternoon?",
+      "tool": "searchSource",
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "deploy",
+        "from": "2026-10-08T00:00:00Z"
+      }
+    },
+    {
+      "why": "Who calls the new search?",
+      "tool": "searchSource",
+      "input": {
+        "env": "prod",
+        "source": "app-logs",
+        "query": "backoffice"
+      }
+    }
+  ],
+  "expect": {
+    "facts": [
+      {
+        "name": "a slow query that scans the whole table (no index)",
+        "any": ["index", "seq scan", "sequential scan", "full table scan", "full scan"],
+        "required": true
+      },
+      {
+        "name": "since release 2.15.0",
+        "any": ["2.15.0"],
+        "required": true
+      },
+      {
+        "name": "the new order search for the back office",
+        "any": ["search"]
+      },
+      {
+        "name": "the connection pool is exhausted",
+        "any": ["pool"]
+      }
+    ]
+  },
+  "conclusion": {
+    "app": "shop",
+    "env": "prod",
+    "cause": "Release 2.15.0 added an order search by customer reference with no index on orders.customer_ref. The back-office dashboard polls it every 5 s, each query scans 2.1 million rows (3.8 s), the database connection pool fills up (100/100), and checkout requests time out waiting for a connection.",
+    "certainty": "likely",
+    "evidence": [
+      {
+        "source": "app-logs",
+        "at": "2026-10-08T14:02:11Z",
+        "quote": "shop-api 2.15.0 rolled out (replicas=3): order search by customer reference for the back office"
+      },
+      {
+        "source": "app-logs",
+        "at": "2026-10-08T14:05:00Z",
+        "quote": "GET /admin/orders/search?customer=u-310 200 142ms client=backoffice-dashboard (polls every 5s)"
+      },
+      {
+        "source": "app-logs",
+        "at": "2026-10-08T14:10:25Z",
+        "quote": "slow query 3812ms: SELECT * FROM orders WHERE customer_ref = $1 (seq scan, 2104331 rows)"
+      },
+      {
+        "source": "app-logs",
+        "at": "2026-10-08T14:28:31Z",
+        "quote": "connection pool exhausted (100/100), rejecting new requests"
+      },
+      {
+        "source": "metrics",
+        "at": "2026-10-08T14:00:00Z",
+        "quote": "api_latency_p95_ms = 190 ms at 2026-10-08T14:00:00Z"
+      },
+      {
+        "source": "metrics",
+        "at": "2026-10-08T14:30:00Z",
+        "quote": "db_connections_in_use = 100 connections at 2026-10-08T14:30:00Z"
+      },
+      {
+        "source": "health",
+        "at": "2026-10-08T14:30:00Z",
+        "quote": "shop /checkout -> 504 in 5000ms (timeout)"
+      }
+    ],
+    "unknowns": [
+      "Whether an index on orders.customer_ref is enough, or the dashboard should poll less often.",
+      "Whether other endpoints that share the database are slow too."
+    ],
+    "next": "Stop or slow the back-office dashboard polling, then add an index on orders.customer_ref (or roll back 2.15.0 if that cannot wait), and watch the connection pool and checkout latency recover."
+  }
+}

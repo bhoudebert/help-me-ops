@@ -38,7 +38,7 @@ test("backend: orders and health of each environment, behind a token, read-only"
     }[];
     assert.deepEqual(
       since.map((o) => o.id),
-      ["4513", "4514"],
+      ["4513", "4514", "4600", "4601", "4602", "4611", "4612", "4613"],
     );
     assert.equal(((await (await get(`${live.url("prod")}/orders/4512`)).json()) as { user: string }).user, "u-881");
     assert.deepEqual(
