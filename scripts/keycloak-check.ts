@@ -51,7 +51,8 @@ const authorize = `${issuer}/protocol/openid-connect/auth?${new URLSearchParams(
   client_id: clientId,
   response_type: "code",
   redirect_uri: callback,
-  scope: "openid",
+  // Claude Code also asks to stay signed in: a refresh token that does not expire
+  scope: "openid offline_access",
   code_challenge: challenge,
   code_challenge_method: "S256",
   state: "check",
@@ -65,18 +66,23 @@ page = await call(decode(login), {
   headers: { "content-type": "application/x-www-form-urlencoded" },
   body: new URLSearchParams({ username: "alice", password: "alice", credentialId: "" }),
 });
-// a dynamically registered client asks for the person's consent
-for (let i = 0; i < 3 && page.status === 200 && /name="accept"/.test(page.body); i++) {
-  const action = decode(/<form[^>]*action="([^"]+)"/.exec(page.body)![1]!);
-  const fields = new URLSearchParams();
-  for (const m of page.body.matchAll(/<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"/g))
-    fields.set(m[1]!, decode(m[2]!));
-  fields.set("accept", "Yes");
-  page = await call(action, {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: fields,
-  });
+// a dynamically registered client asks for the person's consent, on a page the provider redirects to
+const toProvider = (location: string) => (location.startsWith("/") ? `${new URL(issuer).origin}${location}` : location);
+for (let i = 0; i < 4; i++) {
+  if (page.status >= 300 && page.status < 400 && page.location && !page.location.startsWith(callback)) {
+    page = await call(toProvider(page.location));
+  } else if (page.status === 200 && /name="accept"/.test(page.body)) {
+    const action = toProvider(decode(/<form[^>]*action="([^"]+)"/.exec(page.body)![1]!));
+    const fields = new URLSearchParams();
+    for (const m of page.body.matchAll(/<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"/g))
+      fields.set(m[1]!, decode(m[2]!));
+    fields.set("accept", "Yes");
+    page = await call(action, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: fields,
+    });
+  } else break;
 }
 const code = new URL(page.location || "http://none").searchParams.get("code");
 if (!code) throw new Error(`The sign-in gave no code (status ${page.status}).`);
@@ -94,8 +100,14 @@ const tokenResponse = await fetch(`${issuer}/protocol/openid-connect/token`, {
     code_verifier: verifier,
   }),
 });
-const token = ((await tokenResponse.json()) as { access_token?: string }).access_token;
-if (!token) throw new Error("The provider issued no token.");
+const issued = (await tokenResponse.json()) as {
+  access_token?: string;
+  refresh_token?: string;
+  error_description?: string;
+};
+const token = issued.access_token;
+if (!token) throw new Error(`The provider issued no token: ${issued.error_description ?? tokenResponse.status}`);
+if (!issued.refresh_token) throw new Error("No refresh token: a client that asks to stay signed in would be refused.");
 const claims = JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString()) as Record<string, unknown>;
 step(
   `got a token: iss ${String(claims.iss)}, aud ${JSON.stringify(claims.aud)}, scope "${String(claims.scope)}", user ${String(claims.preferred_username)}`,

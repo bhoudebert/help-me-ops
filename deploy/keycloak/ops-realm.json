@@ -18,7 +18,8 @@
           "value": "alice",
           "temporary": false
         }
-      ]
+      ],
+      "realmRoles": ["offline_access"]
     },
     {
       "username": "bob",
@@ -33,7 +34,8 @@
           "value": "bob",
           "temporary": false
         }
-      ]
+      ],
+      "realmRoles": ["offline_access"]
     }
   ],
   "clientScopes": [
@@ -143,6 +145,16 @@
           }
         }
       ]
+    },
+    {
+      "name": "offline_access",
+      "description": "Lets a client keep a refresh token: Claude Code asks for it so that you sign in once",
+      "protocol": "openid-connect",
+      "attributes": {
+        "consent.screen.text": "Stay signed in",
+        "display.on.consent.screen": "true",
+        "include.in.token.scope": "true"
+      }
     }
   ],
   "clients": [
@@ -157,7 +169,8 @@
       "attributes": {
         "pkce.code.challenge.method": "S256"
       },
-      "defaultClientScopes": ["basic", "profile", "email", "help-me-ops"]
+      "defaultClientScopes": ["basic", "profile", "email", "help-me-ops"],
+      "optionalClientScopes": ["offline_access"]
     },
     {
       "clientId": "ops-cli",
@@ -166,7 +179,8 @@
       "publicClient": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": true,
-      "defaultClientScopes": ["basic", "profile", "email", "help-me-ops"]
+      "defaultClientScopes": ["basic", "profile", "email", "help-me-ops"],
+      "optionalClientScopes": ["offline_access"]
     }
   ],
   "defaultDefaultClientScopes": ["basic", "profile", "email", "help-me-ops"],
@@ -196,7 +210,7 @@
         "subType": "anonymous",
         "config": {
           "allow-default-scopes": ["true"],
-          "allowed-client-scopes": ["help-me-ops", "profile", "email", "basic"]
+          "allowed-client-scopes": ["help-me-ops", "profile", "email", "basic", "offline_access"]
         }
       },
       {
@@ -214,5 +228,6 @@
         }
       }
     ]
-  }
+  },
+  "defaultOptionalClientScopes": ["offline_access"]
 }
