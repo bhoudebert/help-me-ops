@@ -120,12 +120,12 @@ What a provider must still give, whatever the token: the **issuer** written exac
 
 ### What was run, and what was not
 
-| Tested against                                                                                             | How                                                                 | Covers                                                                                             |
-| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Keycloak 26** (real)                                                                                     | `npm run keycloak:check`, by hand with Claude Code (not part of CI) | discovery, dynamic registration, PKCE login, offline tokens, a JWT accepted                        |
-| **node-oidc-provider** (an implementation certified by the OpenID Foundation), in the tests of the project | `test/oauth-conformance.test.ts`, on every run                      | JWT and opaque tokens, discovery, introspection, revocation, expiry, wrong audience, provider down |
-| A fake provider shaped like **Auth0**                                                                      | `test/oauth.test.ts`                                                | trailing-slash issuer, audience list, namespaced claim, `sub` like `auth0\|123`                    |
-| Auth0, Okta, Entra ID (real tenants)                                                                       | **not run**                                                         | written from their documentation; run `oauth check` with a real token before relying on it         |
+| Tested against                                                                                             | How                                                                 | Covers                                                                                                                                                        |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Keycloak 26** (real)                                                                                     | `npm run keycloak:check`, by hand with Claude Code (not part of CI) | discovery, dynamic registration, PKCE login, offline tokens, a JWT accepted                                                                                   |
+| **node-oidc-provider** (an implementation certified by the OpenID Foundation), in the tests of the project | `test/oauth-conformance.test.ts`, on every run                      | JWT and opaque tokens, discovery, introspection, revocation, expiry, wrong audience, provider down                                                            |
+| A fake provider shaped like **Auth0**                                                                      | `test/oauth.test.ts`                                                | trailing-slash issuer, audience list, namespaced claim, `sub` like `auth0\|123`                                                                               |
+| Auth0, Okta, Entra ID (real tenants)                                                                       | **not run**                                                         | written from their documentation; run `oauth check` with a real token before relying on it, and [tell us](#your-provider-does-not-work-tell-us) what you find |
 
 A signed JWT cannot be revoked before it expires unless every token is asked about (`always`), which costs a call to the provider per token every 30 s. Keep access tokens short.
 
@@ -205,6 +205,28 @@ To get a token to check: from a client's debug output, or from the provider's ow
 | Everyone is `oauth:auth0_…` or `oauth:<uuid>` in the log                  | the token has no name claim, only `sub`                              | add one at the provider and set `OPS_MCP_OAUTH_IDENTITY_CLAIMS`                                                                             |
 | _Offline tokens not allowed_                                              | the client asks to stay signed in and the provider does not allow it | allow the `offline_access` scope for the user and the client (Auth0: _Allow Offline Access_ on the API)                                     |
 | It worked for an hour, then 401                                           | the access token expired and the client cannot refresh               | check the refresh token and its lifetime at the provider                                                                                    |
+
+## Your provider does not work? Tell us
+
+Providers differ in small ways, and only some have been run for real (see "What was run" above). If something does not work with yours, **open an issue or send a pull request**: we will gladly fix it, and nobody should have to patch the code or the image to get their login working. A report that it **works** is just as welcome: it moves your provider into the tested table.
+
+**To open an issue** ([new issue, "Identity provider"](https://github.com/bhoudebert/help-me-ops/issues/new?template=identity_provider.md)), give us:
+
+- the provider and its version or edition (Auth0, Okta, Entra ID, a Keycloak version, ...), and whether it issues JWT or opaque access tokens;
+- the output of `npm run ops -- oauth check --token <token>`;
+- what the server logs (`docker compose logs help-me-ops-oauth`) and what you expected;
+- the **names** of the claims in the token and the `iss` and `aud` values, which is what `oauth check` prints.
+
+**Never paste a token, a client secret or the content of `server.env`.** A token is a password for as long as it lives; the claim names and the `oauth check` output are enough.
+
+**To send a pull request**, the way a provider is supported is the same as for the ones already here:
+
+1. a failing test first, in `test/oauth.test.ts` (a fake provider shaped like yours, as for Auth0) or `test/oauth-conformance.test.ts` (a real implementation run in the tests);
+2. the fix in `src/oauth.ts`, kept to what the standards say where it can be, or a documented setting where providers really differ;
+3. the requirement in `openspec/specs/mcp-server/spec.md`, and a row for your provider in the guide;
+4. `npm run quality` must pass. [CONTRIBUTING.md](https://github.com/bhoudebert/help-me-ops/blob/main/CONTRIBUTING.md) has the rest.
+
+What we will not do is loosen a check (the signature, the issuer, the audience, the expiry) to make a provider pass: if a provider's tokens cannot satisfy one, we look for the setting or the standard behind it together.
 
 ## Try it without a provider of your own
 

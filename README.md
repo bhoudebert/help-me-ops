@@ -153,7 +153,7 @@ there. `npm run mcp:http` runs it **once, on a server, over HTTP**: people hold 
 URL and a token (`npm run ops -- token <name>`), the credentials stay on the server,
 and each session has its own checked conclusion. It refuses to start without tokens,
 with an optional **company login (OAuth 2)** checked against your identity provider, and JWT or opaque tokens, and puts what it cannot do (per-person permissions) in plain words:
-[one server for the team](docs/guide/team-server.md). The company login, step by step and per provider: [how it works](docs/guide/sign-in.md).
+[one server for the team](docs/guide/team-server.md). The company login, step by step and per provider: [how it works](docs/guide/sign-in.md). Something not working with your provider? [Open an issue or a pull request](docs/guide/sign-in.md#your-provider-does-not-work-tell-us).
 
 ## No AI client? Use your own model
 
