@@ -84,3 +84,64 @@ token itself instead of its hash.
 
 - **WHEN** the tokens file holds `alice:sha256:<hash>` and someone sends that hash as a bearer token
 - **THEN** the server answers 401
+
+### Requirement: OAuth 2 with a company identity provider
+
+When an issuer is configured (`--oauth-issuer` or `OPS_MCP_OAUTH_ISSUER`), the HTTP
+server SHALL accept access tokens that are JWTs signed by that provider, beside the
+static tokens, and SHALL check on every request the signature (against the keys at the
+declared JWKS address, or found by discovery of the issuer's metadata, which SHALL
+name the same issuer), the issuer, the audience (the public URL by default), the
+expiry (an `exp` is required), and the required scopes from `scope` or `scp`. It SHALL
+refuse the algorithms `none` and `HS*`. A refusal SHALL be 401 `invalid_token`, or 403
+`insufficient_scope`, with a `WWW-Authenticate` header carrying the address of the
+protected resource metadata (RFC 9728), which the server SHALL serve without
+authentication at `/.well-known/oauth-protected-resource` and with the resource's path.
+The identity SHALL be `oauth:` and the first of the configured claims, restricted to
+characters that cannot forge a log line; a valid token that no configured claim names SHALL be accepted as `oauth:unknown`. The server SHALL refuse to start when the
+provider's metadata cannot be found or names another issuer, or when the issuer, the
+keys address or the public URL is not https (a loopback address excepted).
+
+#### Scenario: A token for another audience
+
+- **WHEN** a client sends a token signed by the provider whose `aud` is another resource
+- **THEN** the server answers 401 with `error="invalid_token"` and runs nothing
+
+#### Scenario: The classic attacks
+
+- **WHEN** a client sends an unsigned token, or an HS256 token signed with the provider's public key as the secret
+- **THEN** the server answers 401
+
+### Requirement: Tokens checked either way a provider issues them
+
+A token that is a JWT SHALL be verified with the provider's published keys. A token that
+is not a JWT, or every token when so configured, SHALL be validated by asking the
+provider (RFC 7662) with this server's own client credentials, requiring `active`, the
+issuer, the audience, the expiry and the scopes as for a JWT. A positive answer MAY be
+kept for at most 30 seconds and a negative one for less. When the provider cannot be
+asked, or refuses this server's credentials, the answer to the caller SHALL be `503`
+with `retry-after`, not `401`. A token naming no audience SHALL be refused unless
+configured otherwise. A machine token without a subject SHALL be named by `client_id`.
+
+#### Scenario: An opaque token
+
+- **WHEN** the provider issues opaque tokens and the server has a client at it
+- **THEN** a good token is accepted, a revoked, expired or foreign-audience one is `401`, and a provider that is down is `503`
+
+### Requirement: Any provider, written as it writes itself
+
+The issuer SHALL be used exactly as configured, for the `iss` check and for the
+metadata names it is compared with, and SHALL NOT be normalised: an issuer that ends
+with a slash (Auth0, Microsoft v1 tokens) and one that does not (Keycloak, Okta,
+Microsoft v2) are different issuers. When the metadata names the issuer with or without
+a trailing slash where the configuration has the other, the error SHALL say so. An empty
+variable SHALL count as not set. When no public host is given, the host of the public
+URL SHALL be the one the Host check accepts. `ops oauth check` SHALL find the provider
+and its keys with the same rules as the server and, given a token, SHALL say for each
+check of the server (algorithm, issuer, audience, expiry, scopes, the claim naming the
+person) whether it passes and what differs, without verifying the signature itself.
+
+#### Scenario: A provider whose issuer ends with a slash
+
+- **WHEN** the provider's metadata and tokens name the issuer `https://tenant.example/` and the server is configured with exactly that
+- **THEN** its tokens are accepted, and configured without the slash the server refuses to start and says the slash is the difference

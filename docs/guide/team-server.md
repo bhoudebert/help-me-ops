@@ -59,7 +59,7 @@ claude mcp add --transport http help-me-ops http://127.0.0.1:8808/mcp \
 
 :::
 
-How a client sends a header, and whether it can reach a remote server at all, depends on the client and its version: check its documentation. A client that only speaks OAuth for remote servers cannot connect yet (see the limits below).
+How a client sends a header, and whether it can reach a remote server at all, depends on the client and its version: check its documentation. A client that signs in through OAuth needs the [company login setup](#sign-in-with-the-company-login-oauth-2) instead of a token.
 
 For a quick look **on this machine only**, `--no-auth` serves without a token, and refuses to when the address is not a loopback one.
 
@@ -103,19 +103,23 @@ Restart=on-failure
 The repository has a `Dockerfile` and a `compose.yml`. The image holds the server and the shipped addons; **your workspace is mounted, not baked in**, so config, playbooks, knowledge and your own addons stay with you, and the image is the same for everyone.
 
 ```bash
-# 1. a token per person: the line for the server goes to the secret file, the secret is shown
-#    on the terminal, once, for you to hand to alice
-npm run ops -- token alice >> ops-tokens.txt
-
-# 2. the credentials your sources read (the ${VAR} of ops.config.json), not committed
+# 1. the credentials your sources read (the ${VAR} of ops.config.json), not committed
 printf 'SHOPDB_PROD_URL=postgres://readonly:…@db.internal/shop\n' > server.env
 
-# 3. start it, on your workspace (the demo workspace by default)
-OPS_WORKSPACE_DIR=./my-ops OPS_PUBLIC_HOST=localhost:8808 docker compose up -d --build
+# 2. a token per person: the line for the server (a hash) is printed on the standard output,
+#    the secret on the terminal, once, for you to hand to alice. Several people: join with commas.
+export OPS_MCP_TOKENS="$(npm run -s ops -- token alice)"
+
+# 3. start the server with static tokens, on your workspace (the demo workspace by default)
+OPS_WORKSPACE_DIR=./my-ops OPS_PUBLIC_HOST=localhost:8808 \
+  docker compose --profile tokens up -d --build help-me-ops
 curl http://localhost:8808/healthz        # {"ok":true}
+
+# or, to try the company login instead, with a test Keycloak and nothing else to set up:
+docker compose up -d --build              # see "Try it with a Keycloak" below
 ```
 
-`compose.yml` publishes the port on **127.0.0.1 only**, mounts the workspace **read-only** at `/workspace`, gives the tokens as a secret, runs with a read-only filesystem, no capabilities and `no-new-privileges`, and has a health check. For a team, change the published address only when a proxy with TLS is in front, and set `OPS_PUBLIC_HOST` to the name people use (`mcp.company.example`).
+`compose.yml` publishes the port on **127.0.0.1 only**, mounts the workspace **read-only** at `/workspace`, takes the tokens from the environment (or, if you uncomment the lines, from a secret file: `OPS_MCP_TOKENS_FILE`), runs with a read-only filesystem, no capabilities and `no-new-privileges`, and has a health check. For a team, change the published address only when a proxy with TLS is in front, and set `OPS_PUBLIC_HOST` to the name people use (`mcp.company.example`).
 
 The container is configured by environment (the flags still win):
 
@@ -134,6 +138,50 @@ Things to know:
 - **Updating** is `docker compose up -d --build` after a `git pull`. No image is published to a registry yet.
 - **Logs** (`docker compose logs`) hold the audit lines, one JSON object per call.
 
+## Sign in with the company login (OAuth 2)
+
+Static tokens suit a few people. A company usually wants its people to sign in with the login it already has (Auth0, Okta, Entra ID, Keycloak...), with a second factor, and to lose access in one place when they leave. help-me-ops supports that as an **OAuth 2 resource server**: it does not log anyone in, it **checks the tokens your identity provider issues** and tells clients which provider to ask. It is **configuration only, the same for every provider**:
+
+```bash
+# in .env next to compose.yml
+OPS_MCP_OAUTH_ISSUER=https://login.company.example/realms/ops      # exactly as the "iss" of its tokens
+OPS_MCP_PUBLIC_URL=https://mcp.company.example/mcp                 # how people reach this server
+docker compose --profile oauth up -d --build help-me-ops-oauth
+npm run ops -- oauth check                                         # finds the provider; explains a token
+```
+
+**[How the company login works, and how to set it up](/sign-in)** has the whole picture: what happens between the person, the client, the provider and the server, where each token is kept, every setting, what to configure at Auth0, Okta, Entra ID or Keycloak, and what to do when it does not work.
+
+### Try it with a Keycloak on your machine
+
+`compose.yml` starts, **by default**, a **test identity provider**: a Keycloak with a ready realm (`ops`), two people (`alice` / `alice`, `bob` / `bob`), and a second help-me-ops that trusts it. It is for trying the sign-in, never for production (plain http, `admin` / `admin`, passwords equal to names, client registration open from this machine).
+
+```bash
+docker compose up -d --build           # no token and no secret file needed
+# Keycloak:    http://localhost:8080   (admin / admin)
+# help-me-ops: http://localhost:8809/mcp   (the one that trusts it)
+
+npm run keycloak:check
+# ✔ registered a client            ← what an MCP client does when the provider allows it
+# ✔ alice signed in                ← the login page, with PKCE
+# ✔ got a token: iss …/realms/ops, aud "http://localhost:8809/mcp", scope "openid help-me-ops profile email", user alice
+# ✔ the MCP server accepted it: 12 tools, 3 pieces of evidence
+# ✔ and refuses a request with no token (401), pointing at …/.well-known/oauth-protected-resource/mcp
+```
+
+`npm run keycloak:check` does headless, in a few seconds, what a client does for you in a browser. To use **Claude Code** itself, from a folder that is not this repository:
+
+```bash
+claude mcp add --transport http ops-oauth http://localhost:8809/mcp
+claude                      # then /mcp, choose ops-oauth, Authenticate: a browser opens on Keycloak
+```
+
+Sign in as `alice` / `alice` and accept the consent screen (it appears because the client registered itself). If your client wants a client id that is already registered instead of registering itself, the realm has one with a fixed callback: `claude mcp add --transport http ops-oauth http://localhost:8809/mcp --client-id claude-code --callback-port 8765`. In the log of the server (`docker compose logs -f help-me-ops-demo`) every call carries `"identity":"oauth:alice"`. Stop it with `docker compose down`.
+
+A few things the demo shows about a real setup: the token's `aud` is the server's address (set by the `help-me-ops` scope in the realm, an audience mapper), the required scope is `help-me-ops` (`OPS_MCP_OAUTH_SCOPES`), and the server shares Keycloak's network only so that `localhost:8080` means the same Keycloak to the browser and to the server (a real provider has a name). The realm is in [`deploy/keycloak/ops-realm.json`](https://github.com/bhoudebert/help-me-ops/blob/main/deploy/keycloak/ops-realm.json): copy what you need.
+
+**Not supported yet:** permissions per person from groups or roles in the token. A JWT stays good until it expires (keep lifetimes short, or have every token asked about: [sign-in](./sign-in.md)); opaque tokens are asked about at the provider.
+
 ## What it does and does not do
 
 **It does:**
@@ -148,7 +196,6 @@ Things to know:
 **It does not (yet):**
 
 - **Per-person permissions.** A token reads everything the workspace reads. What a person may see is decided by who gets a token, and by the read-only accounts behind the sources.
-- **OAuth.** Clients that only connect to remote servers through OAuth cannot use it; put an authenticating proxy in front, or wait.
 - **Rate limits** beyond the caps above, or **token rotation** (remove, add, restart).
 - **Hide anything from the AI provider.** What a tool returns still goes to the provider of the client the person uses: the [personal-data page](/privacy) applies as ever, and the mask and strict mode are enforced here, once, for everybody.
 

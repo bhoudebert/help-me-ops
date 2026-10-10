@@ -19,5 +19,6 @@
 | [0014](0014-api-mode-and-local-models.md) | An optional API mode: the toolbox driven by a model you choose, local or hosted | accepted |
 | [0015](0015-one-mcp-server-over-http-for-a-team.md) | One MCP server over HTTP for a team, next to the one on stdio | accepted |
 | [0016](0016-a-docker-image-and-compose-file-for-the-team-server.md) | A Docker image and a compose file for the team server | accepted |
+| [0017](0017-oauth-2-with-a-company-identity-provider.md) | OAuth 2 with a company identity provider, as a resource server | accepted |
 
 New records start from [template.md](template.md).

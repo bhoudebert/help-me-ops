@@ -1,17 +1,125 @@
-# The MCP server over HTTP for a team (ADR 0016).
+# The MCP server over HTTP for a team (ADR 0016, 0017).
 #
-#   1. a token per person:   npm run ops -- token alice   >> ops-tokens.txt
-#      (the line for the server, a hash, goes to the file; the secret is shown on the
-#      terminal, once, for you to give to alice)
-#   2. your workspace:       OPS_WORKSPACE_DIR=./my-workspace (default: the demo)
-#   3. the credentials your sources read (${VAR} in ops.config.json): server.env
-#   4. docker compose up -d --build
+# By default this file starts a TRY-IT setup: a test Keycloak (the company login) and a
+# help-me-ops that trusts it, so nothing else is needed, no secret file, no token:
 #
-# Clients connect to http://localhost:8808/mcp with "Authorization: Bearer <token>".
-# For a team, put a proxy with TLS in front, set OPS_PUBLIC_HOST to the name people
-# use (mcp.company.example) and publish the port only to the proxy.
+#   docker compose up -d --build
+#   npm run keycloak:check                 # sign in as alice and use the server, headless
+#
+# Keycloak: http://localhost:8080 (admin / admin; users alice/alice and bob/bob, tests only)
+# help-me-ops: http://localhost:8809/mcp
+#
+# To use YOUR identity provider (Auth0, Okta, Entra ID, Keycloak, anything that issues access
+# tokens, JWTs or opaque), the "oauth" profile: put its settings in .env next to this file (or export them) and
+#
+#   docker compose --profile oauth up -d --build help-me-ops-oauth
+#   npm run ops -- oauth check             # does it find your provider, and would it accept a token?
+#
+#   OPS_MCP_OAUTH_ISSUER=https://tenant.auth0.com/        # exactly as the "iss" of its tokens
+#   OPS_MCP_PUBLIC_URL=https://mcp.company.example/mcp    # how people reach this server (a TLS proxy)
+#   OPS_MCP_OAUTH_AUDIENCE=https://mcp.company.example/mcp   # if the provider's "aud" is not the URL
+#   (and OPS_MCP_OAUTH_SCOPES, _IDENTITY_CLAIMS, _JWKS_URI, and _CLIENT_ID/_CLIENT_SECRET for opaque tokens: see the guide, "One server for the team")
+#
+# For a server with static tokens instead (no identity provider), use the "tokens" profile:
+#
+#   OPS_MCP_TOKENS="$(npm run -s ops -- token alice)" \
+#     docker compose --profile tokens up -d --build help-me-ops
+#
+# which listens on http://localhost:8808/mcp. `npm run ops -- token alice` prints the line for
+# the server (a hash) on the standard output and the secret for alice on the terminal, once.
+# With several people, join the lines with commas; or keep them in a file and use the secret
+# below instead of the variable.
+#
+# Your own workspace for either: OPS_WORKSPACE_DIR=./my-workspace. The credentials your
+# sources read (${VAR} in ops.config.json) go in server.env, which is not committed.
+# For a team, put a proxy with TLS in front, set OPS_PUBLIC_HOST (tokens) or the public URL
+# (OAuth) to the name people use, and publish the port only to the proxy.
+
+x-hardening: &hardening
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+
 services:
+  # --- Try-it: a test identity provider ------------------------------------------------
+  # It shares its network with help-me-ops-oauth so that "localhost:8080" is the same Keycloak
+  # for the browser and for the server: the issuer in a token and the address the server
+  # fetches the keys from are then one. A real provider has a name and needs none of this.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://localhost:8080
+    ports:
+      - "127.0.0.1:8080:8080"
+      # the help-me-ops below, which lives in this network
+      - "127.0.0.1:8809:8808"
+    volumes:
+      - ./deploy/keycloak:/opt/keycloak/data/import:ro
+
+  help-me-ops-demo:
+    build: .
+    network_mode: "service:keycloak"
+    depends_on:
+      - keycloak
+    environment:
+      OPS_MCP_OAUTH_ISSUER: http://localhost:8080/realms/ops
+      OPS_MCP_PUBLIC_URL: http://localhost:8809/mcp
+      OPS_MCP_PUBLIC_HOSTS: localhost:8809
+      OPS_MCP_OAUTH_SCOPES: help-me-ops
+    env_file:
+      - path: ./server.env
+        required: false
+    volumes:
+      - ${OPS_WORKSPACE_DIR:-./examples/my-workspace}:/workspace:ro
+    <<: *hardening
+    # Keycloak takes a while to start: the server refuses to start without its provider, and tries again.
+    restart: on-failure
+
+  # --- A server that trusts YOUR identity provider ----------------------------------------
+  # Nothing here is specific to a provider: it is the OPS_MCP_OAUTH_* settings, from .env or the
+  # environment. Keycloak, Auth0, Okta, Entra ID: the same service, other values.
+  help-me-ops-oauth:
+    profiles: ["oauth"]
+    build: .
+    ports:
+      # Loopback only: put a proxy with TLS in front and publish that.
+      - "127.0.0.1:8808:8808"
+    environment:
+      # both are needed: without them the server says so and stops
+      OPS_MCP_OAUTH_ISSUER: ${OPS_MCP_OAUTH_ISSUER:-}
+      OPS_MCP_PUBLIC_URL: ${OPS_MCP_PUBLIC_URL:-}
+      OPS_MCP_OAUTH_AUDIENCE: ${OPS_MCP_OAUTH_AUDIENCE:-}
+      OPS_MCP_OAUTH_JWKS_URI: ${OPS_MCP_OAUTH_JWKS_URI:-}
+      OPS_MCP_OAUTH_SCOPES: ${OPS_MCP_OAUTH_SCOPES:-}
+      OPS_MCP_OAUTH_IDENTITY_CLAIMS: ${OPS_MCP_OAUTH_IDENTITY_CLAIMS:-}
+      OPS_MCP_OAUTH_ALGORITHMS: ${OPS_MCP_OAUTH_ALGORITHMS:-}
+      # Opaque access tokens (not JWTs): the server asks the provider about them (RFC 7662),
+      # with its own client at the provider.
+      OPS_MCP_OAUTH_CLIENT_ID: ${OPS_MCP_OAUTH_CLIENT_ID:-}
+      OPS_MCP_OAUTH_CLIENT_SECRET: ${OPS_MCP_OAUTH_CLIENT_SECRET:-}
+      OPS_MCP_OAUTH_INTROSPECTION_URL: ${OPS_MCP_OAUTH_INTROSPECTION_URL:-}
+      OPS_MCP_OAUTH_INTROSPECT: ${OPS_MCP_OAUTH_INTROSPECT:-}
+      OPS_MCP_OAUTH_ALLOW_NO_AUDIENCE: ${OPS_MCP_OAUTH_ALLOW_NO_AUDIENCE:-}
+      # static tokens beside it (a pipeline, a service account), if you want them
+      OPS_MCP_TOKENS: ${OPS_MCP_TOKENS:-}
+    env_file:
+      - path: ./server.env
+        required: false
+    volumes:
+      - ${OPS_WORKSPACE_DIR:-./examples/my-workspace}:/workspace:ro
+    <<: *hardening
+    restart: unless-stopped
+
+  # --- A server with static tokens, no identity provider --------------------------------
   help-me-ops:
+    profiles: ["tokens"]
     build: .
     ports:
       # Loopback only, until you have TLS in front and tokens you trust.
@@ -19,24 +127,22 @@ services:
     environment:
       # The names the server is reached by: its Host header must be one of them.
       OPS_MCP_PUBLIC_HOSTS: ${OPS_PUBLIC_HOST:-localhost:8808}
-      OPS_MCP_TOKENS_FILE: /run/secrets/ops_tokens
+      # name:sha256:<hash> entries, comma-separated (npm run ops -- token <name>).
+      OPS_MCP_TOKENS: ${OPS_MCP_TOKENS:-}
+      # To keep the tokens in a file instead of the environment: uncomment this, the
+      # "secrets" lines below and the secret at the bottom, and put the lines in ops-tokens.txt.
+      # OPS_MCP_TOKENS_FILE: /run/secrets/ops_tokens
     env_file:
       - path: ./server.env
         required: false
     volumes:
       # Config, playbooks, knowledge and your own addons live outside the image.
       - ${OPS_WORKSPACE_DIR:-./examples/my-workspace}:/workspace:ro
-    secrets:
-      - ops_tokens
-    read_only: true
-    tmpfs:
-      - /tmp
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
+    # secrets:
+    #   - ops_tokens
+    <<: *hardening
     restart: unless-stopped
 
-secrets:
-  ops_tokens:
-    file: ./ops-tokens.txt
+# secrets:
+#   ops_tokens:
+#     file: ./ops-tokens.txt

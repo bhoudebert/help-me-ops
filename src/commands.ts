@@ -9,6 +9,7 @@ export const USAGE = `Usage: npm run ops -- <command>
 
   setup [claude|codex|copilot|all]      The configuration that connects an AI client, with your paths, checked
   demo [--scenario <id>] [--pace <ms>]  Watch an investigation of the demo shop in the terminal, no model needed
+  oauth check [--token <jwt>]           Check the OAuth settings of the MCP server against your identity provider, and why a token is accepted or refused
   token <name>                          A new token for the MCP server over HTTP: a hash line for OPS_MCP_TOKENS, and the secret for the person (once)
   chat                                  A conversation in the terminal with a model you configure (a local one: Ollama, llama.cpp, LM Studio)
   eval [--scenario a,b] [--runs N] [--temperature T] [--model a,b] [--reasoning none,default]

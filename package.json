@@ -12,6 +12,7 @@
     "mcp": "node --env-file-if-exists=.env src/mcp.ts",
     "bench": "node --env-file-if-exists=.env scripts/bench.ts",
     "bench:table": "node scripts/bench.ts --table",
+    "keycloak:check": "node scripts/keycloak-check.ts",
     "mock:model": "node scripts/mock-model.ts",
     "eval:local": "node --env-file-if-exists=.env src/cli.ts eval --base-url ${OLLAMA_URL:-http://localhost:11434/v1} --model ${OPS_EVAL_MODELS:-qwen3:8b} --reasoning none,default --runs 3",
     "mcp:http": "node --env-file-if-exists=.env src/mcp-http.ts",
@@ -29,6 +30,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.0",
+    "jose": "^6.2.12",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -41,6 +43,7 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
     "lint-staged": "^17.6.0",
+    "oidc-provider": "^9.12.2",
     "prettier": "^3.9.9",
     "simple-git-hooks": "^2.14.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
