@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.2.0](https://github.com/bhoudebert/help-me-ops/compare/v1.1.0...v1.2.0) (2026-10-10)
+
+
+### Features
+
+* **addons:** ship experimental prometheus, loki and elasticsearch addons, with mocks ([#39](https://github.com/bhoudebert/help-me-ops/issues/39)) ([442e5c5](https://github.com/bhoudebert/help-me-ops/commit/442e5c5a586f5ba7d741a8a6dc1825678d2f27c7))
+* **agent:** chat and ask drive the toolbox with a model you configure, any OpenAI-compatible URL ([#44](https://github.com/bhoudebert/help-me-ops/issues/44)) ([116f296](https://github.com/bhoudebert/help-me-ops/commit/116f29693934c466a9f803b16f54c32f8ee3977a))
+* **agent:** ops eval counts how often a model reaches an accepted, expected conclusion ([#45](https://github.com/bhoudebert/help-me-ops/issues/45)) ([88e8183](https://github.com/bhoudebert/help-me-ops/commit/88e818385804f8a5cd5f45be81cabd1ce4e29abc))
+* **agent:** retries for busy servers, and the headers, keys and addresses other providers need ([#46](https://github.com/bhoudebert/help-me-ops/issues/46)) ([4f28f22](https://github.com/bhoudebert/help-me-ops/commit/4f28f224c767446b65eda9d446a6292726accf8b))
+* **agent:** send provider headers, read keys from the environment, keep a query string ([#47](https://github.com/bhoudebert/help-me-ops/issues/47)) ([ab82a62](https://github.com/bhoudebert/help-me-ops/commit/ab82a62728bd9c327bb0381e087adb2092cad8be))
+* **bench:** keep each eval run as a record and make the guide's table from the records ([#51](https://github.com/bhoudebert/help-me-ops/issues/51)) ([458185c](https://github.com/bhoudebert/help-me-ops/commit/458185c59893540406bf76d721da8618ea5ca71b))
+* **demo:** add two more incidents to the demo world, and eval over all scenarios ([#50](https://github.com/bhoudebert/help-me-ops/issues/50)) ([efb6431](https://github.com/bhoudebert/help-me-ops/commit/efb6431065f3037b2819131a29e300fb0cadd347))
+* **demo:** replay an investigation in the terminal with ops demo ([#36](https://github.com/bhoudebert/help-me-ops/issues/36)) ([ecdcfb6](https://github.com/bhoudebert/help-me-ops/commit/ecdcfb688d478930ff653118b1beeae4f99cd786))
+* **docker:** an image and a compose file for the team server, and a guide on local or remote ([#54](https://github.com/bhoudebert/help-me-ops/issues/54)) ([3482171](https://github.com/bhoudebert/help-me-ops/commit/3482171c038e659e3d95e730adb6148bf78ea760))
+* **logs:** partial matches, and a re-measure at temperature 0.7 with what was tried ([#52](https://github.com/bhoudebert/help-me-ops/issues/52)) ([e61a3e2](https://github.com/bhoudebert/help-me-ops/commit/e61a3e293d974353cc7aaa514cb833f7443323ac))
+* **mcp:** accept access tokens from a company identity provider (OAuth 2) ([#56](https://github.com/bhoudebert/help-me-ops/issues/56)) ([82d9c28](https://github.com/bhoudebert/help-me-ops/commit/82d9c28cca50fb807eea8063d32fe358fd7bd10c))
+* **mcp:** keep only the hash of a token on the server ([#55](https://github.com/bhoudebert/help-me-ops/issues/55)) ([45fd7f1](https://github.com/bhoudebert/help-me-ops/commit/45fd7f15098e50238e7a98e35ffab6206d88ef72))
+* **mcp:** serve the MCP server over HTTP for a team, with tokens ([#53](https://github.com/bhoudebert/help-me-ops/issues/53)) ([bbb9843](https://github.com/bhoudebert/help-me-ops/commit/bbb9843e913ffb7529b928c0fcddc082d87b8a45))
+* **privacy:** declare which sources hold personal data, with an optional strict mode ([#41](https://github.com/bhoudebert/help-me-ops/issues/41)) ([d211095](https://github.com/bhoudebert/help-me-ops/commit/d2110951a9de0f9f084d2cdedb27505ff93e3515))
+* **privacy:** hide values behind stable placeholders so one customer can be followed across sources ([#42](https://github.com/bhoudebert/help-me-ops/issues/42)) ([6b94595](https://github.com/bhoudebert/help-me-ops/commit/6b945953250b155d44b50d34e2e80ddf0dede6a5))
+* **setup:** print the configuration of each AI client with your paths, after checking it ([#37](https://github.com/bhoudebert/help-me-ops/issues/37)) ([abca095](https://github.com/bhoudebert/help-me-ops/commit/abca095f53ae284be727c9419ad10514a5d845a4))
+
 ## [1.1.0](https://github.com/bhoudebert/help-me-ops/compare/v1.0.0...v1.1.0) (2026-10-08)
 
 
